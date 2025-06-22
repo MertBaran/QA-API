@@ -1,0 +1,23 @@
+# Node.js
+node_modules/
+
+# Ortak config ve environment dosyaları
+.env
+config/env/config.env
+
+# Log dosyaları
+logs/
+*.log
+
+# Yüklenen dosyalar
+public/uploads/
+
+# Sistem dosyaları
+.DS_Store
+Thumbs.db
+
+# IDE/editor dosyaları
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project 
