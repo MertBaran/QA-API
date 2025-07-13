@@ -7,6 +7,43 @@ const {
   comparePassword,
 } = require("../helpers/input/inputHelpers");
 const sendEmail = require("../helpers/libraries/sendEmail");
+const { OAuth2Client } = require("google-auth-library");
+const dotenv = require("dotenv");
+
+dotenv.config({
+  path: "./config/env/config.env",
+});
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+const googleLogin = async (req, res, next) => {
+  const { token } = req.body;
+  console.log(token);
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    console.log(ticket);
+    const payload = ticket.getPayload();
+    const { email, name } = payload;
+
+    let user = await User.findOne({ email });
+    console.log(user);
+    if (!user) {
+      user = await User.create({
+        name,
+        email,
+        password: Math.random().toString(36),
+      }); // random password
+    }
+
+    sendJwtToClient(user, res);
+  } catch (err) {
+    console.log(err);
+    return next(new CustomError("Google ile giriş başarısız oldu", 401));
+  }
+};
 
 //asyncErrorWrapper ile try-catch kodunu kaldırarak kodu aşağıdaki hale getiriyoruz
 //try-catch yazmak yerine wrapper bu exception handling işlerini görüyor
@@ -108,13 +145,18 @@ const forgotpassword = asyncErrorWrapper(async (req, res, next) => {
     expire: user.resetPasswordExpire,
   });
 
-  const resetPasswordUrl = `http://localhost:5000/api/auth/resetpassword?resetPasswordToken=${resetPasswordToken}`;
+  const clientUrl = process.env.CLIENT_URL || "https://localhost:3001";
+  const resetPasswordUrl = `${clientUrl}/reset-password?token=${resetPasswordToken}`;
   const emailTemplate = `
-    <h1>Reset Password</h1>
-    <p>This is your reset password link: <a href="${resetPasswordUrl}">${resetPasswordUrl}</a></p>
-    <p>This link will expire in 1 hour</p>
-    <p>If you did not request this, you can safely ignore this email</p>
-    `;
+    <div style="font-family: Arial, sans-serif; background: #f9f9f9; padding: 32px; border-radius: 8px; max-width: 480px; margin: 0 auto;">
+      <h2 style="color: #1976d2;">Şifre Sıfırlama Talebi</h2>
+      <p>Hesabınız için bir şifre sıfırlama isteği aldık. Şifrenizi sıfırlamak için aşağıdaki butona tıklayın:</p>
+      <a href="${resetPasswordUrl}" style="display: inline-block; padding: 12px 24px; background: #1976d2; color: #fff; border-radius: 4px; text-decoration: none; font-weight: bold; margin: 16px 0;">Şifreyi Sıfırla</a>
+      <p style="font-size: 14px; color: #555;">Eğer buton çalışmazsa, aşağıdaki bağlantıyı kopyalayıp tarayıcınıza yapıştırabilirsiniz:</p>
+      <div style="background: #eee; padding: 8px; border-radius: 4px; word-break: break-all; font-size: 13px;">${resetPasswordUrl}</div>
+      <p style="font-size: 13px; color: #888; margin-top: 24px;">Bu bağlantı 1 saat boyunca geçerlidir. Eğer bu işlemi siz başlatmadıysanız, bu e-postayı dikkate almayabilirsiniz.</p>
+    </div>
+  `;
   try {
     await sendEmail({
       from: process.env.SMTP_USER,
@@ -142,6 +184,7 @@ const resetpassword = asyncErrorWrapper(async (req, res, next) => {
   // Şimdi normal aramayı yapalım ama expire kontrolü olmadan
   const user = await User.findOne({
     resetPasswordToken: resetPasswordToken,
+    resetPasswordExpire: { $gt: Date.now() },
   }).select("+password");
 
   if (!resetPasswordToken) {
@@ -185,4 +228,5 @@ module.exports = {
   forgotpassword,
   resetpassword,
   editDetails,
+  googleLogin,
 };
