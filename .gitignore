@@ -1,0 +1,62 @@
+# Node.js
+node_modules/
+
+# Ortak config ve environment dosyaları
+.env
+config/env/config.env
+config/env/config.env.test
+config/env/config.env.docker
+config/env/config.env.prod
+
+# Log dosyaları
+logs/
+*.log
+
+# Yüklenen dosyalar
+public/uploads/
+
+# Sistem dosyaları
+.DS_Store
+Thumbs.db
+
+# IDE/editor dosyaları
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Derleme çıktısı
+dist/
+
+# Test coverage
+coverage/
+*.lcov
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Log dosyaları
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Geçici dosyalar
+*.swp
+*.swo
+*.bak
+*.temp-secrets/
+
+# Ortam dosyaları
+.env.local
+.env.test
+.env.production
+.env.*.local
+
+# Performance test sonuçları
+performance/results/
+performance/reports/
+
+# Docker ve deployment secrets
+config/env/*.docker
+config/env/*.prod
+temp-secrets/ 

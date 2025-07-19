@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qa-api
+  labels:
+    app: qa-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: qa-api
+  template:
+    metadata:
+      labels:
+        app: qa-api
+    spec:
+      containers:
+        - name: qa-api
+          image: mertbaran98/qa-api:latest # Gerekirse tag değiştir
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: qa-api-secrets
+                  key: MONGO_URI
+            - name: JWT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: qa-api-secrets
+                  key: JWT_SECRET_KEY
+            - name: SMTP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: qa-api-secrets
+                  key: SMTP_USER
+            - name: SMTP_APP_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: qa-api-secrets
+                  key: SMTP_APP_PASS
+            # Diğer env/config değişkenlerini de ekleyebilirsin
+          # Liveness/readiness probe eklemek istersen buraya ekle 

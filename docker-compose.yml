@@ -1,0 +1,23 @@
+version: "3.8"
+services:
+  redis:
+    image: redis:7
+    container_name: qa-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  # Opsiyonel: Backend'i de compose ile başlatmak için aşağıyı açabilirsin
+  qa-api:
+    build: .
+    container_name: qa-api
+    env_file:
+      - ./config/env/config.env
+    ports:
+      - "5000:5000"
+    depends_on:
+      - redis
+    # environment:
+    #   - REDIS_HOST=redis
+    #   - REDIS_PORT=6379
+    command: npm start

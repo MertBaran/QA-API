@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2022", // Modern JS özellikleri için
+    "module": "NodeNext", // Node 18+ ve ESM desteği için
+    "moduleResolution": "NodeNext", // Modern modül çözümleme
+    "outDir": "dist",
+    "rootDir": "./",
+    "strict": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true, // JSON import desteği
+    "noUncheckedIndexedAccess": true, // Daha güvenli index erişimi
+    "noPropertyAccessFromIndexSignature": true, // Daha güvenli property erişimi
+    "useUnknownInCatchVariables": true // Hatalarda 'any' yerine 'unknown' kullanımı
+  },
+  "include": [
+    "./**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+} 
