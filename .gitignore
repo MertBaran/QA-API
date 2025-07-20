@@ -7,6 +7,7 @@ config/env/config.env
 config/env/config.env.test
 config/env/config.env.docker
 config/env/config.env.prod
+config/env/config.env.dev
 
 # Log dosyaları
 logs/
