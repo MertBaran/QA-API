@@ -1,25 +1,21 @@
-import request from "supertest";
-import app from "../../APP";
-import { container } from "tsyringe";
-import { FakeUserDataSource } from "../mocks/datasource/FakeUserDataSource";
-import { FakeQuestionDataSource } from "../mocks/datasource/FakeQuestionDataSource";
-import { FakeAnswerDataSource } from "../mocks/datasource/FakeAnswerDataSource";
-import { AuthManager } from "../../services/managers/AuthManager";
-import { QuestionManager } from "../../services/managers/QuestionManager";
-import { AnswerManager } from "../../services/managers/AnswerManager";
-import { UserRepository } from "../../repositories/UserRepository";
-import { QuestionRepository } from "../../repositories/QuestionRepository";
-import { AnswerRepository } from "../../repositories/AnswerRepository";
-import bcrypt from "bcryptjs";
+import request from 'supertest';
+import app from '../../APP';
+import { container } from 'tsyringe';
+import { FakeUserDataSource } from '../mocks/datasource/FakeUserDataSource';
+import { AuthManager } from '../../services/managers/AuthManager';
+import { QuestionManager } from '../../services/managers/QuestionManager';
+import { AnswerManager } from '../../services/managers/AnswerManager';
+
+import bcrypt from 'bcryptjs';
 
 export async function registerTestUser({
-  firstName = "Test",
-  lastName = "User",
+  firstName = 'Test',
+  lastName = 'User',
   email = `test+${Date.now()}_${Math.random()
     .toString(36)
     .substr(2, 9)}@example.com`,
-  password = "password123",
-  role = "user",
+  password = 'password123',
+  role = 'user',
 }: Partial<{
   firstName: string;
   lastName: string;
@@ -30,7 +26,7 @@ export async function registerTestUser({
   try {
     // Use fake data source directly for tests
     const userDataSource =
-      container.resolve<FakeUserDataSource>("UserDataSource");
+      container.resolve<FakeUserDataSource>('UserDataSource');
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await userDataSource.create({
@@ -38,13 +34,13 @@ export async function registerTestUser({
       email,
       password: hashedPassword,
       role: role as any,
-      profile_image: "",
+      profile_image: '',
       blocked: false,
     });
 
     return { email, password, user };
   } catch (error) {
-    console.error("registerTestUser error:", error);
+    console.error('registerTestUser error:', error);
     throw error;
   }
 }
@@ -58,7 +54,7 @@ export async function loginTestUser({
 }) {
   try {
     // Use AuthManager directly for tests
-    const authService = container.resolve<AuthManager>("AuthService");
+    const authService = container.resolve<AuthManager>('AuthService');
     const user = await authService.loginUser(email, password);
 
     // Generate a simple test token
@@ -66,7 +62,7 @@ export async function loginTestUser({
 
     return { user, token };
   } catch (error) {
-    console.error("loginTestUser error:", error);
+    console.error('loginTestUser error:', error);
     throw error;
   }
 }
@@ -76,7 +72,7 @@ export async function createTestQuestion({
   title = `Test Question ${Date.now()}_${Math.random()
     .toString(36)
     .substr(2, 9)}`,
-  content = "This is a test question content that is long enough to meet the minimum requirement.",
+  content = 'This is a test question content that is long enough to meet the minimum requirement.',
 }: {
   token: string;
   title?: string;
@@ -84,26 +80,26 @@ export async function createTestQuestion({
 }) {
   try {
     // Extract user ID from test token
-    const userId = token.split("-").pop();
+    const userId = token.split('-').pop();
     if (!userId) {
-      throw new Error("Invalid test token format");
+      throw new Error('Invalid test token format');
     }
 
     // Use QuestionManager directly for tests
     const questionService =
-      container.resolve<QuestionManager>("QuestionService");
+      container.resolve<QuestionManager>('QuestionService');
     const question = await questionService.createQuestion(
       {
         title,
         content,
-        slug: title.toLowerCase().replace(/\s+/g, "-"),
+        slug: title.toLowerCase().replace(/\s+/g, '-'),
       },
       userId
     );
 
     return question;
   } catch (error) {
-    console.error("createTestQuestion error:", error);
+    console.error('createTestQuestion error:', error);
     throw error;
   }
 }
@@ -111,7 +107,7 @@ export async function createTestQuestion({
 export async function createTestAnswer({
   token,
   questionId,
-  content = "This is a test answer content that is long enough.",
+  content = 'This is a test answer content that is long enough.',
 }: {
   token: string;
   questionId: string;
@@ -119,13 +115,13 @@ export async function createTestAnswer({
 }) {
   try {
     // Extract user ID from test token
-    const userId = token.split("-").pop();
+    const userId = token.split('-').pop();
     if (!userId) {
-      throw new Error("Invalid test token format");
+      throw new Error('Invalid test token format');
     }
 
     // Use AnswerManager directly for tests
-    const answerService = container.resolve<AnswerManager>("AnswerService");
+    const answerService = container.resolve<AnswerManager>('AnswerService');
     const answer = await answerService.createAnswer(
       { content },
       questionId,
@@ -134,20 +130,20 @@ export async function createTestAnswer({
 
     return answer;
   } catch (error) {
-    console.error("createTestAnswer error:", error);
+    console.error('createTestAnswer error:', error);
     throw error;
   }
 }
 
 // Keep API test functions for integration tests
 export async function registerTestUserAPI({
-  firstName = "Test",
-  lastName = "User",
+  firstName = 'Test',
+  lastName = 'User',
   email = `test+${Date.now()}_${Math.random()
     .toString(36)
     .substr(2, 9)}@example.com`,
-  password = "password123",
-  role = "user",
+  password = 'password123',
+  role = 'user',
 }: Partial<{
   firstName: string;
   lastName: string;
@@ -156,10 +152,10 @@ export async function registerTestUserAPI({
   role: string;
 }> = {}) {
   const response = await request(app)
-    .post("/api/auth/register")
+    .post('/api/auth/register')
     .send({ firstName, lastName, email, password, role });
   if (response.status !== 200) {
-    console.error("Register failed:", response.body);
+    console.error('Register failed:', response.body);
   }
   expect(response.status).toBe(200);
   return { email, password, user: response.body.data };
@@ -173,10 +169,10 @@ export async function loginTestUserAPI({
   password: string;
 }) {
   const response = await request(app)
-    .post("/api/auth/login")
+    .post('/api/auth/login')
     .send({ email, password });
   if (response.status !== 200) {
-    console.error("Login failed:", response.body);
+    console.error('Login failed:', response.body);
   }
   expect(response.status).toBe(200);
   expect(response.body.access_token).toBeDefined();
@@ -188,18 +184,18 @@ export async function createTestQuestionAPI({
   title = `Test Question ${Date.now()}_${Math.random()
     .toString(36)
     .substr(2, 9)}`,
-  content = "This is a test question content that is long enough to meet the minimum requirement.",
+  content = 'This is a test question content that is long enough to meet the minimum requirement.',
 }: {
   token: string;
   title?: string;
   content?: string;
 }) {
   const response = await request(app)
-    .post("/api/questions/ask")
-    .set("Authorization", `Bearer ${token}`)
+    .post('/api/questions/ask')
+    .set('Authorization', `Bearer ${token}`)
     .send({ title, content });
   if (response.status !== 200) {
-    console.error("Question creation failed:", response.body);
+    console.error('Question creation failed:', response.body);
   }
   expect(response.status).toBe(200);
   expect(response.body.data).toBeDefined();
@@ -209,7 +205,7 @@ export async function createTestQuestionAPI({
 export async function createTestAnswerAPI({
   token,
   questionId,
-  content = "This is a test answer content that is long enough.",
+  content = 'This is a test answer content that is long enough.',
 }: {
   token: string;
   questionId: string;
@@ -217,10 +213,10 @@ export async function createTestAnswerAPI({
 }) {
   const response = await request(app)
     .post(`/api/questions/${questionId}/answers`)
-    .set("Authorization", `Bearer ${token}`)
+    .set('Authorization', `Bearer ${token}`)
     .send({ content });
   if (response.status !== 200) {
-    console.error("Answer creation failed:", response.body);
+    console.error('Answer creation failed:', response.body);
   }
   expect(response.status).toBe(200);
   expect(response.body.data).toBeDefined();

@@ -19,7 +19,7 @@ export class PostgreSQLAdapter implements IDatabaseAdapter {
       //   connectionString: process.env.DATABASE_URL,
       // });
       // await this.client.connect();
-      
+
       this.isConnectedFlag = true;
       console.log('PostgreSQL connected successfully');
     } catch (error) {
@@ -37,7 +37,10 @@ export class PostgreSQLAdapter implements IDatabaseAdapter {
       console.log('PostgreSQL disconnected successfully');
     } catch (error) {
       console.error('PostgreSQL disconnection error:', error);
-      throw new CustomError('Database error in PostgreSQLAdapter.disconnect', 500);
+      throw new CustomError(
+        'Database error in PostgreSQLAdapter.disconnect',
+        500
+      );
     }
   }
 
@@ -48,4 +51,4 @@ export class PostgreSQLAdapter implements IDatabaseAdapter {
   getIdAdapter(): PostgreSQLIdAdapter {
     return this.idAdapter;
   }
-} 
+}

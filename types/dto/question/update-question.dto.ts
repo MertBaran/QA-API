@@ -5,4 +5,4 @@ export const UpdateQuestionSchema = z.object({
   content: z.string().min(20).optional(),
 });
 
-export type UpdateQuestionDTO = z.infer<typeof UpdateQuestionSchema>; 
+export type UpdateQuestionDTO = z.infer<typeof UpdateQuestionSchema>;

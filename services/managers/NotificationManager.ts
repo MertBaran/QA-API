@@ -1,12 +1,22 @@
-import { NotificationPayload } from "../contracts/NotificationPayload";
-import { NotificationChannel } from "../contracts/NotificationChannel";
+import { injectable, inject } from 'tsyringe';
+import { NotificationPayload } from '../contracts/NotificationPayload';
+import { NotificationChannel } from '../contracts/NotificationChannel';
+import { INotificationService } from '../contracts/INotificationService';
 
-export class NotificationManager {
-  constructor(private channels: NotificationChannel[]) {}
+@injectable()
+export class NotificationManager implements INotificationService {
+  constructor(
+    @inject('IEmailChannel') private emailChannel: NotificationChannel
+  ) {}
 
   async notify(payload: NotificationPayload): Promise<void> {
-    const channel = this.channels.find(c => c.isType(payload.channel));
-    if (!channel) throw new Error(`No handler for channel: ${payload.channel}`);
-    await channel.send(payload);
+    // Şimdilik sadece email destekli
+    if (payload.channel === 'email' || !payload.channel) {
+      await this.emailChannel.send(payload);
+    } else {
+      throw new Error(
+        `Notification channel '${payload.channel}' is not implemented yet.`
+      );
+    }
   }
-} 
+}

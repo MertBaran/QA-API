@@ -1,14 +1,14 @@
-import { Request, Response, NextFunction } from "express";
-import asyncErrorWrapper from "express-async-handler";
-import { injectable, inject } from "tsyringe";
-import { IQuestionService } from "../services/contracts/IQuestionService";
-import { QuestionConstants } from "./constants/ControllerMessages";
-import type { SuccessResponseDTO } from "../types/dto/common/success-response.dto";
-import type { IQuestionModel } from "../models/interfaces/IQuestionModel";
-import type { IdParamDTO } from "../types/dto/common/id-param.dto";
-import type { CreateQuestionDTO } from "../types/dto/question/create-question.dto";
-import type { UpdateQuestionDTO } from "../types/dto/question/update-question.dto";
-import { i18n } from "../types/i18n";
+import { Request, Response, NextFunction } from 'express';
+import asyncErrorWrapper from 'express-async-handler';
+import { injectable, inject } from 'tsyringe';
+import { IQuestionService } from '../services/contracts/IQuestionService';
+import { QuestionConstants } from './constants/ControllerMessages';
+import type { SuccessResponseDTO } from '../types/dto/common/success-response.dto';
+import type { IQuestionModel } from '../models/interfaces/IQuestionModel';
+import type { IdParamDTO } from '../types/dto/common/id-param.dto';
+import type { CreateQuestionDTO } from '../types/dto/question/create-question.dto';
+import type { UpdateQuestionDTO } from '../types/dto/question/update-question.dto';
+import { i18n } from '../types/i18n';
 
 type AuthenticatedRequest<P = any, B = any> = Request<P, any, B> & {
   user?: { id: string };
@@ -17,7 +17,7 @@ type AuthenticatedRequest<P = any, B = any> = Request<P, any, B> & {
 @injectable()
 export class QuestionController {
   constructor(
-    @inject("QuestionService") private questionService: IQuestionService
+    @inject('IQuestionService') private questionService: IQuestionService
   ) {}
 
   askNewQuestion = asyncErrorWrapper(

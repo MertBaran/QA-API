@@ -1,116 +1,110 @@
-import { container } from "tsyringe";
-import UserMongo from "../models/mongodb/UserMongoModel";
-import QuestionMongo from "../models/mongodb/QuestionMongoModel";
-import AnswerMongo from "../models/mongodb/AnswerMongoModel";
-import { UserRepository } from "../repositories/UserRepository";
-import { QuestionRepository } from "../repositories/QuestionRepository";
-import { AnswerRepository } from "../repositories/AnswerRepository";
-import { IAuthService } from "./contracts/IAuthService";
-import { IQuestionService } from "./contracts/IQuestionService";
-import { IAnswerService } from "./contracts/IAnswerService";
-import { IAdminService } from "./contracts/IAdminService";
-import { IEmailService } from "./contracts/IEmailService";
-import { INotificationService } from "./contracts/INotificationService";
-import { NotificationChannel } from "./contracts/NotificationChannel";
-import { AuthManager } from "./managers/AuthManager";
-import { QuestionManager } from "./managers/QuestionManager";
-import { AnswerManager } from "./managers/AnswerManager";
-import { AdminManager } from "./managers/AdminManager";
-import { EmailManager } from "./managers/EmailManager";
-import { NotificationManager } from "./managers/NotificationManager";
-import { EmailChannel } from "./managers/EmailChannel";
-import { IDatabaseAdapter } from "../repositories/adapters/IDatabaseAdapter";
-import { MongoDBAdapter } from "../repositories/adapters/MongoDBAdapter";
-import { UserMongooseDataSource } from "../repositories/mongodb/UserMongooseDataSource";
-import { QuestionMongooseDataSource } from "../repositories/mongodb/QuestionMongooseDataSource";
-import { AnswerMongooseDataSource } from "../repositories/mongodb/AnswerMongooseDataSource";
-import { MongooseModelAdapter } from "../repositories/mongodb/MongooseModelAdapter";
-import { PinoLoggerProvider } from "../infrastructure/logging/PinoLoggerProvider";
-import { MongoAuditProvider } from "../infrastructure/audit/MongoAuditProvider";
-import { RedisCacheProvider } from "../infrastructure/cache/RedisCacheProvider";
-import { ILoggerProvider } from "../infrastructure/logging/ILoggerProvider";
-import { IAuditProvider } from "../infrastructure/audit/IAuditProvider";
-import { ICacheProvider } from "../infrastructure/cache/ICacheProvider";
-import { AuthController } from "../controllers/authController";
-import { UserController } from "../controllers/userController";
-import { AdminController } from "../controllers/adminController";
-import { QuestionController } from "../controllers/questionController";
-import { AnswerController } from "../controllers/answerController";
-import { ZodValidationProvider } from "../infrastructure/validation/ZodValidationProvider";
-import { IValidationProvider } from "../infrastructure/validation/IValidationProvider";
-import { setI18nCacheProvider } from "../types/i18n";
+import 'reflect-metadata';
+import { container } from 'tsyringe';
+import { BootstrapService } from './BootstrapService';
+import { HealthCheckService } from './HealthCheckService';
+import { EnvironmentProvider } from './providers/EnvironmentProvider';
+import { ConfigurationManager } from './managers/ConfigurationManager';
+import { AuthManager } from './managers/AuthManager';
+import { QuestionManager } from './managers/QuestionManager';
+import { AnswerManager } from './managers/AnswerManager';
+import { AdminManager } from './managers/AdminManager';
+import { EmailManager } from './managers/EmailManager';
+import { NotificationManager } from './managers/NotificationManager';
+import { EmailNotificationHandler } from './managers/EmailNotificationHandler';
+import { EmailChannel } from './managers/EmailChannel';
+import { EmailNotificationProvider } from './notification/EmailNotificationProvider';
+import { PinoLoggerProvider } from '../infrastructure/logging/PinoLoggerProvider';
+import { RedisCacheProvider } from '../infrastructure/cache/RedisCacheProvider';
+import { MongoDBAdapter } from '../repositories/adapters/MongoDBAdapter';
+import { UserRepository } from '../repositories/UserRepository';
+import { QuestionRepository } from '../repositories/QuestionRepository';
+import { AnswerRepository } from '../repositories/AnswerRepository';
+import { UserMongooseDataSource } from '../repositories/mongodb/UserMongooseDataSource';
+import { QuestionMongooseDataSource } from '../repositories/mongodb/QuestionMongooseDataSource';
+import { AnswerMongooseDataSource } from '../repositories/mongodb/AnswerMongooseDataSource';
+import { MongoAuditProvider } from '../infrastructure/audit/MongoAuditProvider';
+import { ZodValidationProvider } from '../infrastructure/validation/ZodValidationProvider';
+import UserMongo from '../models/mongodb/UserMongoModel';
+import QuestionMongo from '../models/mongodb/QuestionMongoModel';
+import AnswerMongo from '../models/mongodb/AnswerMongoModel';
+import { AuthController } from '../controllers/authController';
+import { UserController } from '../controllers/userController';
+import { AdminController } from '../controllers/adminController';
+import { QuestionController } from '../controllers/questionController';
+import { AnswerController } from '../controllers/answerController';
 
-// DataSource registration
-container.register("UserDataSource", {
-  useValue: new UserMongooseDataSource(new MongooseModelAdapter(UserMongo)),
-});
-container.register("QuestionDataSource", {
-  useValue: new QuestionMongooseDataSource(
-    new MongooseModelAdapter(QuestionMongo)
-  ),
-});
-container.register("AnswerDataSource", {
-  useValue: new AnswerMongooseDataSource(new MongooseModelAdapter(AnswerMongo)),
-});
+// Register core services first
+container.registerSingleton('BootstrapService', BootstrapService);
 
-// Repository registration
-container.register("UserRepository", UserRepository);
-container.register("QuestionRepository", QuestionRepository);
-container.register("AnswerRepository", AnswerRepository);
+// Now resolve and bootstrap
+const bootstrapService = container.resolve(BootstrapService);
+const config = bootstrapService.bootstrap();
 
-// Service registration
-container.register<IAuthService>("AuthService", AuthManager);
-container.register<IQuestionService>("QuestionService", QuestionManager);
-container.register<IAnswerService>("AnswerService", AnswerManager);
-container.register<IAdminService>("AdminService", AdminManager);
-container.register<IEmailService>("EmailManager", EmailManager);
+// Register core services
+container.registerSingleton('HealthCheckService', HealthCheckService);
 
-// Notification channels
-container.register<NotificationChannel>("EmailChannel", EmailChannel);
+// Register infrastructure providers
+container.registerSingleton('ILoggerProvider', PinoLoggerProvider);
+container.registerSingleton('ICacheProvider', RedisCacheProvider);
+container.registerSingleton('IDatabaseAdapter', MongoDBAdapter);
+container.registerSingleton('IAuditProvider', MongoAuditProvider);
 
-// NotificationManager registration (manuel instance, EmailChannel ile)
-container.register<INotificationService>("NotificationService", {
-  useFactory: (c) =>
-    new NotificationManager([c.resolve<NotificationChannel>("EmailChannel")]),
-});
+// Register data sources
+container.registerSingleton('IUserDataSource', UserMongooseDataSource);
+container.registerSingleton('IQuestionDataSource', QuestionMongooseDataSource);
+container.registerSingleton('IAnswerDataSource', AnswerMongooseDataSource);
 
-// Validation Provider
-container.register<IValidationProvider>("ValidationProvider", {
-  useValue: ZodValidationProvider,
-});
+// Register repositories
+container.registerSingleton('IUserRepository', UserRepository);
+container.registerSingleton('IQuestionRepository', QuestionRepository);
+container.registerSingleton('IAnswerRepository', AnswerRepository);
 
-// Database Adapter registration (MongoDB as default)
-container.registerSingleton<IDatabaseAdapter>(
-  "DatabaseAdapter",
-  MongoDBAdapter
+// Register managers as services
+container.registerSingleton('IAuthService', AuthManager);
+container.registerSingleton('IQuestionService', QuestionManager);
+container.registerSingleton('IAnswerService', AnswerManager);
+container.registerSingleton('IAdminService', AdminManager);
+container.registerSingleton('IEmailService', EmailManager);
+container.registerSingleton('INotificationService', NotificationManager);
+
+// Register notification services
+container.registerSingleton(
+  'IEmailNotificationHandler',
+  EmailNotificationHandler
 );
-// Logger
-container.registerSingleton<ILoggerProvider>(
-  "LoggerProvider",
-  PinoLoggerProvider
-);
-// Audit
-container.registerSingleton<IAuditProvider>(
-  "AuditProvider",
-  MongoAuditProvider
-);
-// Cache
-container.registerSingleton<ICacheProvider>(
-  "CacheProvider",
-  RedisCacheProvider
-);
+container.registerSingleton('IEmailChannel', EmailChannel);
+container.registerSingleton('INotificationProvider', EmailNotificationProvider);
 
-// Setup i18n cache provider
-const cacheProvider = container.resolve<ICacheProvider>("CacheProvider");
-setI18nCacheProvider(cacheProvider);
+// Register legacy services (for backward compatibility)
+container.registerSingleton('EnvironmentProvider', EnvironmentProvider);
+container.registerSingleton('ConfigurationManager', ConfigurationManager);
 
-// Controller registration
-container.register(AuthController, AuthController);
-container.register(UserController, UserController);
-container.register(AdminController, AdminController);
-container.register(QuestionController, QuestionController);
-container.register(AnswerController, AnswerController);
+// Register models for data source compatibility
+container.register('IUserModel', { useValue: UserMongo });
+container.register('IQuestionModel', { useValue: QuestionMongo });
+container.register('IAnswerModel', { useValue: AnswerMongo });
 
-// Örnek resolve (kullanım):
-// const authService = container.resolve<AuthService>("AuthService");
-export { container };
+// Register typed configuration
+container.register('AppConfig', { useValue: config });
+container.register('IDatabaseConnectionConfig', {
+  useValue: { connectionString: config.MONGO_URI },
+});
+container.register('ICacheConnectionConfig', {
+  useValue: {
+    host: config.REDIS_HOST,
+    port: config.REDIS_PORT,
+    url: config.REDIS_URL,
+  },
+});
+
+// Register validation provider
+container.registerSingleton('IValidationProvider', ZodValidationProvider);
+
+// Register controllers
+container.registerSingleton('AuthController', AuthController);
+container.registerSingleton('UserController', UserController);
+container.registerSingleton('AdminController', AdminController);
+container.registerSingleton('QuestionController', QuestionController);
+container.registerSingleton('AnswerController', AnswerController);
+
+export { container, config };

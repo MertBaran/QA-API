@@ -1,8 +1,9 @@
 import { ILoggerProvider } from '../../../infrastructure/logging/ILoggerProvider';
 
 export class FakeLoggerProvider implements ILoggerProvider {
-  info(message: string, meta?: any) {}
-  warn(message: string, meta?: any) {}
-  error(message: string, meta?: any) {}
-  debug(message: string, meta?: any) {}
-} 
+  log(_message: any, _meta?: any): void {}
+  info(_message: any, _meta?: any): void {}
+  warn(_message: any, _meta?: any): void {}
+  error(_message: any, _meta?: any): void {}
+  debug(_message: any, _meta?: any): void {}
+}

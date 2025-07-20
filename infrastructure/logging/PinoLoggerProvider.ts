@@ -13,7 +13,7 @@ export class PinoLoggerProvider implements ILoggerProvider {
           return { level: label };
         },
         bindings(bindings) {
-          return { pid: bindings["pid"], hostname: bindings["hostname"] };
+          return { pid: bindings['pid'], hostname: bindings['hostname'] };
         },
         log(object) {
           // context ve meta'yı ayrı alanlarda göster
@@ -21,14 +21,18 @@ export class PinoLoggerProvider implements ILoggerProvider {
           return {
             ...rest,
             ...(context ? { context } : {}),
-            ...(meta ? { meta } : {})
+            ...(meta ? { meta } : {}),
           };
-        }
+        },
       },
       transport: {
         target: 'pino-pretty',
-        options: { colorize: true, translateTime: 'SYS:standard', ignore: 'pid,hostname' }
-      }
+        options: {
+          colorize: true,
+          translateTime: 'SYS:standard',
+          ignore: 'pid,hostname',
+        },
+      },
     });
   }
 
@@ -42,13 +46,16 @@ export class PinoLoggerProvider implements ILoggerProvider {
     // Hata objesi varsa stack trace'i de ekle
     if (meta instanceof Error) {
       const { message: _msg, ...restMeta } = meta;
-      this.logger.error({
-        meta: {
-          stack: meta.stack,
-          ...restMeta
+      this.logger.error(
+        {
+          meta: {
+            stack: meta.stack,
+            ...restMeta,
+          },
+          context,
         },
-        context
-      }, message);
+        message
+      );
     } else {
       this.logger.error({ meta, context }, message);
     }
@@ -56,4 +63,4 @@ export class PinoLoggerProvider implements ILoggerProvider {
   debug(message: string, meta?: any, context?: string) {
     this.logger.debug({ meta, context }, message);
   }
-} 
+}

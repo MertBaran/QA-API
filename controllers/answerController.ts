@@ -1,16 +1,16 @@
-import { Request, Response, NextFunction } from "express";
-import asyncErrorWrapper from "express-async-handler";
-import { injectable, inject } from "tsyringe";
-import { IAnswerService } from "../services/contracts/IAnswerService";
-import { AnswerConstants } from "./constants/ControllerMessages";
+import { Request, Response, NextFunction } from 'express';
+import asyncErrorWrapper from 'express-async-handler';
+import { injectable, inject } from 'tsyringe';
+import { IAnswerService } from '../services/contracts/IAnswerService';
+import { AnswerConstants } from './constants/ControllerMessages';
 
-import type { QuestionIdParamDTO } from "../types/dto/common/question-id-param.dto";
-import type { AnswerIdParamDTO } from "../types/dto/common/answer-id-param.dto";
-import type { CreateAnswerDTO } from "../types/dto/answer/create-answer.dto";
-import type { UpdateAnswerDTO } from "../types/dto/answer/update-answer.dto";
-import type { SuccessResponseDTO } from "../types/dto/common/success-response.dto";
-import type { IAnswerModel } from "../models/interfaces/IAnswerModel";
-import { i18n } from "../types/i18n";
+import type { QuestionIdParamDTO } from '../types/dto/common/question-id-param.dto';
+import type { AnswerIdParamDTO } from '../types/dto/common/answer-id-param.dto';
+import type { CreateAnswerDTO } from '../types/dto/answer/create-answer.dto';
+import type { UpdateAnswerDTO } from '../types/dto/answer/update-answer.dto';
+import type { SuccessResponseDTO } from '../types/dto/common/success-response.dto';
+import type { IAnswerModel } from '../models/interfaces/IAnswerModel';
+import { i18n } from '../types/i18n';
 
 type AuthenticatedRequest<P = any, B = any> = Request<P, any, B> & {
   user?: {
@@ -19,7 +19,9 @@ type AuthenticatedRequest<P = any, B = any> = Request<P, any, B> & {
 };
 @injectable()
 export class AnswerController {
-  constructor(@inject("AnswerService") private answerService: IAnswerService) {}
+  constructor(
+    @inject('IAnswerService') private answerService: IAnswerService
+  ) {}
 
   addNewAnswerToQuestion = asyncErrorWrapper(
     async (
@@ -45,9 +47,8 @@ export class AnswerController {
       _next: NextFunction
     ): Promise<void> => {
       const { question_id } = req.params;
-      const answers = await this.answerService.getAnswersByQuestion(
-        question_id
-      );
+      const answers =
+        await this.answerService.getAnswersByQuestion(question_id);
       res.status(200).json({ success: true, data: answers });
     }
   );

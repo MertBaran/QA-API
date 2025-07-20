@@ -5,4 +5,4 @@ export interface IDatabaseAdapter {
   disconnect(): Promise<void>;
   isConnected(): boolean;
   getIdAdapter(): IDatabaseIdAdapter;
-} 
+}

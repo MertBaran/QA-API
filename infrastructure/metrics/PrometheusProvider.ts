@@ -16,7 +16,11 @@ const middleware = (req: Request, res: Response, next: NextFunction) => {
   res.on('finish', () => {
     const duration = Date.now() - start;
     httpRequestDurationMicroseconds
-      .labels(req.method, req.route ? req.route.path : req.path, res.statusCode.toString())
+      .labels(
+        req.method,
+        req.route ? req.route.path : req.path,
+        res.statusCode.toString()
+      )
       .observe(duration);
   });
   next();
@@ -30,4 +34,4 @@ const endpoint = (req: Request, res: Response) => {
 export const PrometheusProvider: IMetricsProvider = {
   middleware,
   endpoint,
-}; 
+};

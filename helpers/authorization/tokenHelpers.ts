@@ -1,28 +1,42 @@
-import { Response } from "express";
+import { Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
+
+interface TokenPayload {
+  userId: string;
+  email: string;
+  role: string;
+}
 
 interface UserWithJWT {
-  generateJWTFromUser(): string;
-  name: string;
+  userId: string;
   email: string;
-  [key: string]: any; // Allow additional properties
+  role: string;
 }
 
-interface Request {
-  headers: {
-    authorization?: string;
-  };
-}
+export const generateToken = (payload: TokenPayload): string => {
+  const secret = process.env['JWT_SECRET'] || 'fallback-secret';
+  return jwt.sign(payload, secret, { expiresIn: '24h' });
+};
 
-const sendJwtToClient = (token: string, user: any, res: Response) => {
-  const { JWT_COOKIE, NODE_ENV } = process.env;
+export const verifyToken = (token: string): UserWithJWT => {
+  const secret = process.env['JWT_SECRET'] || 'fallback-secret';
+  const _JWT_COOKIE = process.env['JWT_COOKIE'] || 'token';
+  const _NODE_ENV = process.env['NODE_ENV'] || 'development';
+
+  return jwt.verify(token, secret) as UserWithJWT;
+};
+
+export const sendJwtToClient = (token: string, user: any, res: Response) => {
+  const _JWT_COOKIE = process.env['JWT_COOKIE'] || 'token';
+  const _NODE_ENV = process.env['NODE_ENV'] || 'development';
   return res
     .status(200)
-    .cookie("access_token", token, {
+    .cookie('access_token', token, {
       httpOnly: true,
       expires: new Date(
-        Date.now() + parseInt(process.env["JWT_COOKIE"] || "60") * 1000 * 60
+        Date.now() + parseInt(process.env['JWT_COOKIE'] || '60') * 1000 * 60
       ),
-      secure: process.env["NODE_ENV"] === "development" ? false : true,
+      secure: process.env['NODE_ENV'] === 'development' ? false : true,
     })
     .json({
       success: true,
@@ -37,21 +51,19 @@ const sendJwtToClient = (token: string, user: any, res: Response) => {
     });
 };
 
-const isTokenIncluded = (req: Request): boolean => {
+export const isTokenIncluded = (req: Request): boolean => {
   return !!(
-    req.headers.authorization && req.headers.authorization.startsWith("Bearer ")
+    req.headers.authorization && req.headers.authorization.startsWith('Bearer ')
   );
 };
 
-const getAccessTokenFromHeader = (req: Request): string | undefined => {
+export const getAccessTokenFromHeader = (req: Request): string | undefined => {
   const authorization = req.headers.authorization;
 
   // Only return token if it's a Bearer token
-  if (authorization && authorization.startsWith("Bearer ")) {
-    return authorization.split(" ")[1];
+  if (authorization && authorization.startsWith('Bearer ')) {
+    return authorization.split(' ')[1];
   }
 
   return undefined;
 };
-
-export { sendJwtToClient, isTokenIncluded, getAccessTokenFromHeader };

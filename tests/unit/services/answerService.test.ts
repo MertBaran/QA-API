@@ -21,7 +21,11 @@ describe('AnswerService Unit Tests', () => {
   });
 
   it('should create an answer', async () => {
-    const answer = await answerService.createAnswer({ content: 'Answer1' }, 'q1', 'user1');
+    const answer = await answerService.createAnswer(
+      { content: 'Answer1' },
+      'q1',
+      'user1'
+    );
     expect(answer).toBeDefined();
     expect(answer.content).toBe('Answer1');
     expect(answer.user).toBe('user1');
@@ -29,22 +33,37 @@ describe('AnswerService Unit Tests', () => {
   });
 
   it('should get answer by id', async () => {
-    const answer = await answerService.createAnswer({ content: 'Answer2' }, 'q2', 'user2');
+    const answer = await answerService.createAnswer(
+      { content: 'Answer2' },
+      'q2',
+      'user2'
+    );
     const found = await answerService.getAnswerById(answer._id);
     expect(found).toBeDefined();
     expect(found?._id).toBe(answer._id);
   });
 
   it('should update an answer', async () => {
-    const answer = await answerService.createAnswer({ content: 'Answer3' }, 'q3', 'user3');
-    const updated = await answerService.updateAnswer(answer._id, 'Updated Answer3');
+    const answer = await answerService.createAnswer(
+      { content: 'Answer3' },
+      'q3',
+      'user3'
+    );
+    const updated = await answerService.updateAnswer(
+      answer._id,
+      'Updated Answer3'
+    );
     expect(updated).toBeDefined();
     expect(updated?.content).toBe('Updated Answer3');
   });
 
   it('should delete an answer', async () => {
-    const answer = await answerService.createAnswer({ content: 'Answer4' }, 'q4', 'user4');
+    const answer = await answerService.createAnswer(
+      { content: 'Answer4' },
+      'q4',
+      'user4'
+    );
     await answerService.deleteAnswer(answer._id, 'q4');
     await expect(answerService.getAnswerById(answer._id)).rejects.toThrow();
   });
-}); 
+});

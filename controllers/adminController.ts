@@ -1,16 +1,16 @@
-import { Request, Response, NextFunction } from "express";
-import asyncErrorWrapper from "express-async-handler";
-import { injectable, inject } from "tsyringe";
-import { IAdminService } from "../services/contracts/IAdminService";
-import { AdminConstants } from "./constants/ControllerMessages";
-import { IdParamDTO } from "../types/dto/common/id-param.dto";
-import type { SuccessResponseDTO } from "../types/dto/common/success-response.dto";
-import type { IUserModel } from "../models/interfaces/IUserModel";
-import { i18n } from "../types/i18n";
+import { Request, Response, NextFunction } from 'express';
+import asyncErrorWrapper from 'express-async-handler';
+import { injectable, inject } from 'tsyringe';
+import { IAdminService } from '../services/contracts/IAdminService';
+import { AdminConstants } from './constants/ControllerMessages';
+import { IdParamDTO } from '../types/dto/common/id-param.dto';
+import type { SuccessResponseDTO } from '../types/dto/common/success-response.dto';
+import type { IUserModel } from '../models/interfaces/IUserModel';
+import { i18n } from '../types/i18n';
 
 @injectable()
 export class AdminController {
-  constructor(@inject("AdminService") private adminService: IAdminService) {}
+  constructor(@inject('IAdminService') private adminService: IAdminService) {}
 
   blockUser = asyncErrorWrapper(
     async (

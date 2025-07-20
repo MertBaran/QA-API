@@ -1,2 +1,2 @@
 import { ZodValidationProvider } from './ZodValidationProvider';
-export default ZodValidationProvider; 
+export default ZodValidationProvider;

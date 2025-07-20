@@ -7,16 +7,20 @@ import { UserRepository } from '../../repositories/UserRepository';
 import { QuestionRepository } from '../../repositories/QuestionRepository';
 import { AnswerRepository } from '../../repositories/AnswerRepository';
 
-require('dotenv').config({ path: path.resolve(__dirname, '../../config/env/config.env') });
+require('dotenv').config({
+  path: path.resolve(__dirname, '../../config/env/config.env'),
+});
 
-const MONGODB_URI = process.env["MONGO_URI"];
+const MONGODB_URI = process.env['MONGO_URI'];
 
 if (!MONGODB_URI) {
   console.error('MONGO_URI is not defined in environment variables');
   process.exit(1);
 }
 if (/test/i.test(MONGODB_URI)) {
-  console.error('ERROR: This script will NOT run on a database URI containing "test". Aborting.');
+  console.error(
+    'ERROR: This script will NOT run on a database URI containing "test". Aborting.'
+  );
   process.exit(1);
 }
 
@@ -25,7 +29,8 @@ async function cleanProductionDatabase() {
     await mongoose.connect(MONGODB_URI as string);
     console.log('Connected to production database');
     const userRepo = container.resolve<UserRepository>('UserRepository');
-    const questionRepo = container.resolve<QuestionRepository>('QuestionRepository');
+    const questionRepo =
+      container.resolve<QuestionRepository>('QuestionRepository');
     const answerRepo = container.resolve<AnswerRepository>('AnswerRepository');
     const deletedUsers = await userRepo.deleteAll();
     const deletedQuestions = await questionRepo.deleteAll();
@@ -46,4 +51,4 @@ async function cleanProductionDatabase() {
 
 if (require.main === module) {
   cleanProductionDatabase();
-} 
+}

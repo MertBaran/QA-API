@@ -20,6 +20,8 @@ describe('profileImageUpload middleware', () => {
     const cb = jest.fn();
     fileFilter(req, { mimetype: 'application/pdf' }, cb);
     expect(cb).toHaveBeenCalledWith(expect.any(CustomError));
-    expect((cb.mock.calls[0][0] as CustomError).message).toMatch(/only jpeg, jpg and png/i);
+    expect((cb.mock.calls[0][0] as CustomError).message).toMatch(
+      /only jpeg, jpg and png/i
+    );
   });
-}); 
+});

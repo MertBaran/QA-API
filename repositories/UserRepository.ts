@@ -1,13 +1,16 @@
-import { injectable, inject } from "tsyringe";
-import { IUserModel } from "../models/interfaces/IUserModel";
-import { EntityId } from "../types/database";
-import { BaseRepository } from "./base/BaseRepository";
-import { IUserRepository } from "./interfaces/IUserRepository";
-import { IDataSource } from "./interfaces/IDataSource";
+import { injectable, inject } from 'tsyringe';
+import { IUserModel } from '../models/interfaces/IUserModel';
+import { EntityId } from '../types/database';
+import { BaseRepository } from './base/BaseRepository';
+import { IUserRepository } from './interfaces/IUserRepository';
+import { IDataSource } from './interfaces/IDataSource';
 
 @injectable()
-export class UserRepository extends BaseRepository<IUserModel> implements IUserRepository {
-  constructor(@inject("UserDataSource") dataSource: IDataSource<IUserModel>) {
+export class UserRepository
+  extends BaseRepository<IUserModel>
+  implements IUserRepository
+{
+  constructor(@inject('IUserDataSource') dataSource: IDataSource<IUserModel>) {
     super(dataSource);
   }
 
@@ -19,7 +22,9 @@ export class UserRepository extends BaseRepository<IUserModel> implements IUserR
 
   async findByEmailWithPassword(email: string): Promise<IUserModel | null> {
     // Eğer dataSource'da özel metot varsa onu kullan
-    if (typeof (this.dataSource as any).findByEmailWithPassword === 'function') {
+    if (
+      typeof (this.dataSource as any).findByEmailWithPassword === 'function'
+    ) {
       return (this.dataSource as any).findByEmailWithPassword(email);
     }
     // Uyarı: Bu fallback, password alanı select:false ise undefined dönebilir
@@ -29,10 +34,21 @@ export class UserRepository extends BaseRepository<IUserModel> implements IUserR
 
   async findByResetToken(token: string): Promise<IUserModel | null> {
     const all = await this.dataSource.findAll();
-    return all.find(user => user.resetPasswordToken === token && user.resetPasswordExpire && user.resetPasswordExpire > new Date()) || null;
+    return (
+      all.find(
+        user =>
+          user.resetPasswordToken === token &&
+          user.resetPasswordExpire &&
+          user.resetPasswordExpire > new Date()
+      ) || null
+    );
   }
 
-  async updateResetToken(userId: EntityId, resetToken: string, resetExpire: Date): Promise<IUserModel | null> {
+  async updateResetToken(
+    userId: EntityId,
+    resetToken: string,
+    resetExpire: Date
+  ): Promise<IUserModel | null> {
     return this.updateById(userId, {
       resetPasswordToken: resetToken,
       resetPasswordExpire: resetExpire,
@@ -45,4 +61,4 @@ export class UserRepository extends BaseRepository<IUserModel> implements IUserR
       resetPasswordExpire: undefined,
     });
   }
-} 
+}

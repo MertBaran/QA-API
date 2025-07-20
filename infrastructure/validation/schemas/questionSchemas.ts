@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 export const createQuestionSchema = z.object({
   title: z.string().min(10),
@@ -8,4 +8,4 @@ export const createQuestionSchema = z.object({
 export const updateQuestionSchema = z.object({
   title: z.string().min(10).optional(),
   content: z.string().min(20).optional(),
-}); 
+});

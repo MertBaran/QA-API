@@ -4,7 +4,7 @@ export interface IUserModel {
   _id: EntityId;
   name: string;
   email: string;
-  role: "user" | "admin";
+  role: 'user' | 'admin';
   password: string;
   title?: string;
   about?: string;
@@ -15,4 +15,4 @@ export interface IUserModel {
   resetPasswordToken?: string;
   resetPasswordExpire?: Date;
   createdAt?: Date;
-} 
+}

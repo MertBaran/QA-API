@@ -1,13 +1,18 @@
-import { injectable, inject } from "tsyringe";
-import { IAnswerModel } from "../models/interfaces/IAnswerModel";
-import { EntityId } from "../types/database";
-import { BaseRepository } from "./base/BaseRepository";
-import { IAnswerRepository } from "./interfaces/IAnswerRepository";
-import { IDataSource } from "./interfaces/IDataSource";
+import { injectable, inject } from 'tsyringe';
+import { IAnswerModel } from '../models/interfaces/IAnswerModel';
+import { EntityId } from '../types/database';
+import { BaseRepository } from './base/BaseRepository';
+import { IAnswerRepository } from './interfaces/IAnswerRepository';
+import { IDataSource } from './interfaces/IDataSource';
 
 @injectable()
-export class AnswerRepository extends BaseRepository<IAnswerModel> implements IAnswerRepository {
-  constructor(@inject("AnswerDataSource") dataSource: IDataSource<IAnswerModel>) {
+export class AnswerRepository
+  extends BaseRepository<IAnswerModel>
+  implements IAnswerRepository
+{
+  constructor(
+    @inject('IAnswerDataSource') dataSource: IDataSource<IAnswerModel>
+  ) {
     super(dataSource);
   }
 
@@ -25,7 +30,10 @@ export class AnswerRepository extends BaseRepository<IAnswerModel> implements IA
     return all.filter(a => a.user === userId);
   }
 
-  async likeAnswer(answerId: string, userId: EntityId): Promise<IAnswerModel | null> {
+  async likeAnswer(
+    answerId: string,
+    userId: EntityId
+  ): Promise<IAnswerModel | null> {
     const answer = await this.findById(answerId);
     if (!answer) return null;
     if (answer.likes.includes(userId)) {
@@ -36,7 +44,10 @@ export class AnswerRepository extends BaseRepository<IAnswerModel> implements IA
     return this.updateById(answerId, { likes: answer.likes });
   }
 
-  async unlikeAnswer(answerId: string, userId: EntityId): Promise<IAnswerModel | null> {
+  async unlikeAnswer(
+    answerId: string,
+    userId: EntityId
+  ): Promise<IAnswerModel | null> {
     const answer = await this.findById(answerId);
     if (!answer) return null;
     if (!answer.likes.includes(userId)) {
@@ -47,12 +58,19 @@ export class AnswerRepository extends BaseRepository<IAnswerModel> implements IA
     return this.updateById(answerId, { likes: answer.likes });
   }
 
-  async findAnswersByQuestionWithPopulate(questionId: EntityId): Promise<IAnswerModel[]> {
+  async findAnswersByQuestionWithPopulate(
+    questionId: EntityId
+  ): Promise<IAnswerModel[]> {
     return this.findByQuestion(questionId);
   }
 
-  async findByQuestionAndId(answerId: EntityId, questionId: EntityId): Promise<IAnswerModel | null> {
+  async findByQuestionAndId(
+    answerId: EntityId,
+    questionId: EntityId
+  ): Promise<IAnswerModel | null> {
     const all = await this.dataSource.findAll();
-    return all.find(a => a._id === answerId && a.question === questionId) || null;
+    return (
+      all.find(a => a._id === answerId && a.question === questionId) || null
+    );
   }
-} 
+}

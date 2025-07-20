@@ -1,4 +1,7 @@
-import { isTokenIncluded, getAccessTokenFromHeader } from '../../../helpers/authorization/tokenHelpers';
+import {
+  isTokenIncluded,
+  getAccessTokenFromHeader,
+} from '../../../helpers/authorization/tokenHelpers';
 
 describe('tokenHelpers Unit Tests', () => {
   describe('isTokenIncluded', () => {
@@ -30,4 +33,4 @@ describe('tokenHelpers Unit Tests', () => {
       expect(getAccessTokenFromHeader(req as any)).toBeUndefined();
     });
   });
-}); 
+});

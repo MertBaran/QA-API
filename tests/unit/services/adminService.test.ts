@@ -1,9 +1,9 @@
-import "reflect-metadata";
-import { AdminManager } from "../../../services/managers/AdminManager";
-import { UserRepository } from "../../../repositories/UserRepository";
-import { FakeUserDataSource } from "../../mocks/datasource/FakeUserDataSource";
+import 'reflect-metadata';
+import { AdminManager } from '../../../services/managers/AdminManager';
+import { UserRepository } from '../../../repositories/UserRepository';
+import { FakeUserDataSource } from '../../mocks/datasource/FakeUserDataSource';
 
-describe("AdminService Unit Tests", () => {
+describe('AdminService Unit Tests', () => {
   let adminService: AdminManager;
   let userRepository: UserRepository;
   let fakeUserDataSource: FakeUserDataSource;
@@ -14,36 +14,36 @@ describe("AdminService Unit Tests", () => {
     adminService = new AdminManager(userRepository);
   });
 
-  it("should create and get all users", async () => {
+  it('should create and get all users', async () => {
     await fakeUserDataSource.create({
-      name: "User1",
-      email: "u1@a.com",
-      password: "x",
-      role: "user",
-      profile_image: "",
+      name: 'User1',
+      email: 'u1@a.com',
+      password: 'x',
+      role: 'user',
+      profile_image: '',
       blocked: false,
     });
     await fakeUserDataSource.create({
-      name: "User2",
-      email: "u2@a.com",
-      password: "x",
-      role: "user",
-      profile_image: "",
+      name: 'User2',
+      email: 'u2@a.com',
+      password: 'x',
+      role: 'user',
+      profile_image: '',
       blocked: false,
     });
     const users = await adminService.getAllUsers();
     expect(users.length).toBe(2);
-    expect(users.map((u: any) => u.name)).toContain("User1");
-    expect(users.map((u: any) => u.name)).toContain("User2");
+    expect(users.map((u: any) => u.name)).toContain('User1');
+    expect(users.map((u: any) => u.name)).toContain('User2');
   });
 
-  it("should get single user", async () => {
+  it('should get single user', async () => {
     const user = await fakeUserDataSource.create({
-      name: "User3",
-      email: "u3@a.com",
-      password: "x",
-      role: "user",
-      profile_image: "",
+      name: 'User3',
+      email: 'u3@a.com',
+      password: 'x',
+      role: 'user',
+      profile_image: '',
       blocked: false,
     });
     const found = await adminService.getSingleUser(user._id);
@@ -51,13 +51,13 @@ describe("AdminService Unit Tests", () => {
     expect(found?._id).toBe(user._id);
   });
 
-  it("should block and unblock user", async () => {
+  it('should block and unblock user', async () => {
     const user = await fakeUserDataSource.create({
-      name: "User4",
-      email: "u4@a.com",
-      password: "x",
-      role: "user",
-      profile_image: "",
+      name: 'User4',
+      email: 'u4@a.com',
+      password: 'x',
+      role: 'user',
+      profile_image: '',
       blocked: false,
     });
     const blocked = await adminService.blockUser(user._id);
@@ -66,13 +66,13 @@ describe("AdminService Unit Tests", () => {
     expect(unblocked?.blocked).toBe(false);
   });
 
-  it("should delete user", async () => {
+  it('should delete user', async () => {
     const user = await fakeUserDataSource.create({
-      name: "User5",
-      email: "u5@a.com",
-      password: "x",
-      role: "user",
-      profile_image: "",
+      name: 'User5',
+      email: 'u5@a.com',
+      password: 'x',
+      role: 'user',
+      profile_image: '',
       blocked: false,
     });
 
@@ -84,10 +84,10 @@ describe("AdminService Unit Tests", () => {
     expect(found).toBeNull();
   });
 
-  it("should throw error when deleting non-existent user", async () => {
+  it('should throw error when deleting non-existent user', async () => {
     // deleteUser throws CustomError for non-existent users
-    await expect(adminService.deleteUser("nonexistentid")).rejects.toThrow(
-      "User not found"
+    await expect(adminService.deleteUser('nonexistentid')).rejects.toThrow(
+      'User not found'
     );
   });
 });

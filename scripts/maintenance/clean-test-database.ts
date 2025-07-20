@@ -8,21 +8,26 @@ import { QuestionRepository } from '../../repositories/QuestionRepository';
 import { AnswerRepository } from '../../repositories/AnswerRepository';
 import * as path from 'path';
 
-dotenv.config({ path: path.resolve(__dirname, '../../config/env/config.env.test') });
+dotenv.config({
+  path: path.resolve(__dirname, '../../config/env/config.env.test'),
+});
 
-const TEST_MONGO_URI = process.env["MONGO_URI"];
+const TEST_MONGO_URI = process.env['MONGO_URI'];
 
 if (!TEST_MONGO_URI || !/test/i.test(TEST_MONGO_URI)) {
-  console.error('ERROR: This script will only run if the database URI contains "test". Aborting.');
+  console.error(
+    'ERROR: This script will only run if the database URI contains "test". Aborting.'
+  );
   process.exit(1);
 }
 
 async function cleanTestDatabase() {
   try {
     await mongoose.connect(TEST_MONGO_URI as string);
-    console.log('Test MongoDB\'ye bağlandı (question-answer-test)');
+    console.log("Test MongoDB'ye bağlandı (question-answer-test)");
     const userRepo = container.resolve<UserRepository>('UserRepository');
-    const questionRepo = container.resolve<QuestionRepository>('QuestionRepository');
+    const questionRepo =
+      container.resolve<QuestionRepository>('QuestionRepository');
     const answerRepo = container.resolve<AnswerRepository>('AnswerRepository');
     const userCount = await userRepo.countAll();
     const questionCount = await questionRepo.countAll();
@@ -57,4 +62,4 @@ async function cleanTestDatabase() {
 
 if (require.main === module) {
   cleanTestDatabase();
-} 
+}

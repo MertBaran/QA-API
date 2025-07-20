@@ -1,29 +1,14 @@
-import dotenv from "dotenv";
-import path from "path";
+import 'reflect-metadata';
+import express, { Request, Response, Application } from 'express';
+import cors from 'cors';
+import path from 'path';
 
-let envFile = "config.env";
-if (process.env["NODE_ENV"] === "production") {
-  envFile = "config.env.prod";
-} else if (process.env["NODE_ENV"] === "docker") {
-  envFile = "config.env.docker";
-} else if (process.env["NODE_ENV"] === "test") {
-  envFile = "config.env.test";
-} else {
-  // Default to development config
-  envFile = "config.env";
-}
-
-// Fix path for both source and compiled versions
-const configPath = path.resolve(__dirname, `../config/env/${envFile}`);
-dotenv.config({ path: configPath });
-
-import "reflect-metadata";
-import express, { Request, Response, Application } from "express";
-import cors from "cors";
-import routers from "./routers";
-import customErrorHandler from "./middlewares/errors/customErrorHandler";
-import "./services/container";
-import { container } from "tsyringe";
+// Import container and bootstrap service
+import { container, config } from './services/container';
+import { BootstrapService } from './services/BootstrapService';
+import { HealthCheckService } from './services/HealthCheckService';
+import routers from './routers';
+import customErrorHandler from './middlewares/errors/customErrorHandler';
 
 const app: Application = express();
 
@@ -38,34 +23,64 @@ app.use(
 // Body Middleware
 app.use(express.json());
 
-const PORT: number = parseInt(process.env["PORT"] || "3000");
+// Health check endpoint
+app.get('/health', async (req: Request, res: Response) => {
+  try {
+    const _healthCheckService =
+      container.resolve<HealthCheckService>('HealthCheckService');
+    const health = await _healthCheckService.checkHealth();
+    res.json(health);
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Health check failed',
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+  }
+});
 
-app.get("/", (req: Request, res: Response) => {
-  res.send("Hello World");
+app.get('/', (req: Request, res: Response) => {
+  res.send('Hello World');
 });
 
 // Use Routers Middleware
-app.use("/api", routers);
+app.use('/api', routers);
 
 // Custom Error Handler - MUST BE LAST
 app.use(customErrorHandler);
 
 // Static Files
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Database Connection
 async function startServer() {
-  // Connect to database (MongoDB connection success message will be shown)
-  const databaseAdapter = container.resolve<any>("DatabaseAdapter");
-  await databaseAdapter.connect();
+  try {
+    const _bootstrapService =
+      container.resolve<BootstrapService>('BootstrapService');
+    const _healthCheckService =
+      container.resolve<HealthCheckService>('HealthCheckService');
 
-  // Only start the server if this is the main module (not imported for testing)
-  if (require.main === module) {
-    app.listen(PORT, () => {
-      console.log(
-        `🚀 Server is running on port ${PORT} : ${process.env["NODE_ENV"]}`
-      );
-    });
+    console.log(`🔧 Starting server: ${config.NODE_ENV} environment`);
+
+    // Connect to database
+    const databaseAdapter = container.resolve<any>('IDatabaseAdapter');
+    await databaseAdapter.connect();
+
+    // Cache provider is initialized automatically on first use
+    const _cacheProvider = container.resolve<any>('ICacheProvider');
+    console.log('🔗 Cache provider initialized');
+
+    // Only start the server if this is the main module (not imported for testing)
+    if (require.main === module) {
+      app.listen(config.PORT, () => {
+        console.log(
+          `🚀 Server is running on port ${config.PORT} in ${config.NODE_ENV} environment`
+        );
+      });
+    }
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
   }
 }
 

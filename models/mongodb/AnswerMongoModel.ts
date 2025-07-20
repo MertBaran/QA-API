@@ -1,5 +1,5 @@
-import mongoose, { Document, Schema } from "mongoose";
-import QuestionMongo from "./QuestionMongoModel";
+import mongoose, { Document, Schema } from 'mongoose';
+import QuestionMongo from './QuestionMongoModel';
 
 export interface IAnswerMongo extends Document {
   _id: mongoose.Types.ObjectId;
@@ -13,33 +13,33 @@ export interface IAnswerMongo extends Document {
 const AnswerSchema = new Schema<IAnswerMongo>({
   content: {
     type: String,
-    required: [true, "Please provide a content"],
-    minlength: [10, "Please provide a content at least 10 characters"]
+    required: [true, 'Please provide a content'],
+    minlength: [10, 'Please provide a content at least 10 characters'],
   },
   createdAt: {
     type: Date,
-    default: Date.now
+    default: Date.now,
   },
   user: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true
+    ref: 'User',
+    required: true,
   },
   question: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Question",
-    required: true
+    ref: 'Question',
+    required: true,
   },
   likes: [
     {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User"
-    }
-  ]
+      ref: 'User',
+    },
+  ],
 });
 
-AnswerSchema.pre("save", async function(this: IAnswerMongo, next) {
-  if (!this.isModified("user")) return next();
+AnswerSchema.pre('save', async function (this: IAnswerMongo, next) {
+  if (!this.isModified('user')) return next();
   try {
     const question = await QuestionMongo.findById(this.question);
     if (question) {
@@ -52,20 +52,24 @@ AnswerSchema.pre("save", async function(this: IAnswerMongo, next) {
   }
 });
 
-AnswerSchema.pre("deleteOne", { document: true, query: false }, async function(this: IAnswerMongo, next) {
-  try {
-    const question = await QuestionMongo.findById(this.question);
-    if (question) {
-      question.answers = question.answers.filter(
-        (answerId) => answerId.toString() !== this._id.toString()
-      );
-      await question.save();
+AnswerSchema.pre(
+  'deleteOne',
+  { document: true, query: false },
+  async function (this: IAnswerMongo, next) {
+    try {
+      const question = await QuestionMongo.findById(this.question);
+      if (question) {
+        question.answers = question.answers.filter(
+          answerId => answerId.toString() !== this._id.toString()
+        );
+        await question.save();
+      }
+      next();
+    } catch (err) {
+      return next(err as any);
     }
-    next();
-  } catch (err) {
-    return next(err as any);
   }
-});
+);
 
-const AnswerMongo = mongoose.model<IAnswerMongo>("Answer", AnswerSchema);
-export default AnswerMongo; 
+const AnswerMongo = mongoose.model<IAnswerMongo>('Answer', AnswerSchema);
+export default AnswerMongo;

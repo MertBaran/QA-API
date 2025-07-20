@@ -1,11 +1,11 @@
-import { ICacheProvider } from "../../../infrastructure/cache/ICacheProvider";
+import { ICacheProvider } from '../../../infrastructure/cache/ICacheProvider';
 
 export class FakeCacheProvider implements ICacheProvider {
   public store = new Map<string, any>(); // Made public for test access
 
   async get<T>(key: string): Promise<T | null> {
     const value = this.store.has(key) ? this.store.get(key) : null;
-    console.debug(`FakeCache GET: ${key} => ${value ? "HIT" : "MISS"}`);
+    console.debug(`FakeCache GET: ${key} => ${value ? 'HIT' : 'MISS'}`);
     return value;
   }
 
@@ -23,7 +23,7 @@ export class FakeCacheProvider implements ICacheProvider {
   // Additional methods for testing
   async clear(): Promise<void> {
     this.store.clear();
-    console.debug("FakeCache CLEAR: All keys deleted");
+    console.debug('FakeCache CLEAR: All keys deleted');
   }
 
   getKeys(): string[] {

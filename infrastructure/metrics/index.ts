@@ -1,2 +1,2 @@
 import { PrometheusProvider } from './PrometheusProvider';
-export default PrometheusProvider; 
+export default PrometheusProvider;

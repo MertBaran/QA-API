@@ -1,4 +1,7 @@
-import { validateUserInput, comparePassword } from '../../../helpers/input/inputHelpers';
+import {
+  validateUserInput,
+  comparePassword,
+} from '../../../helpers/input/inputHelpers';
 import bcrypt from 'bcryptjs';
 
 describe('inputHelpers Unit Tests', () => {
@@ -29,4 +32,4 @@ describe('inputHelpers Unit Tests', () => {
       expect(result).toBe(false);
     });
   });
-}); 
+});

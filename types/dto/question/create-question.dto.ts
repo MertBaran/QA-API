@@ -5,4 +5,4 @@ export const CreateQuestionSchema = z.object({
   content: z.string().min(20),
 });
 
-export type CreateQuestionDTO = z.infer<typeof CreateQuestionSchema>; 
+export type CreateQuestionDTO = z.infer<typeof CreateQuestionSchema>;

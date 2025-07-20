@@ -1,13 +1,18 @@
-import { injectable, inject } from "tsyringe";
-import { IQuestionModel } from "../models/interfaces/IQuestionModel";
-import { EntityId } from "../types/database";
-import { BaseRepository } from "./base/BaseRepository";
-import { IQuestionRepository } from "./interfaces/IQuestionRepository";
-import { IDataSource } from "./interfaces/IDataSource";
+import { injectable, inject } from 'tsyringe';
+import { IQuestionModel } from '../models/interfaces/IQuestionModel';
+import { EntityId } from '../types/database';
+import { BaseRepository } from './base/BaseRepository';
+import { IQuestionRepository } from './interfaces/IQuestionRepository';
+import { IDataSource } from './interfaces/IDataSource';
 
 @injectable()
-export class QuestionRepository extends BaseRepository<IQuestionModel> implements IQuestionRepository {
-  constructor(@inject("QuestionDataSource") dataSource: IDataSource<IQuestionModel>) {
+export class QuestionRepository
+  extends BaseRepository<IQuestionModel>
+  implements IQuestionRepository
+{
+  constructor(
+    @inject('IQuestionDataSource') dataSource: IDataSource<IQuestionModel>
+  ) {
     super(dataSource);
   }
 
@@ -30,7 +35,10 @@ export class QuestionRepository extends BaseRepository<IQuestionModel> implement
     return all.find(q => q.slug === slug) || null;
   }
 
-  async likeQuestion(questionId: EntityId, userId: EntityId): Promise<IQuestionModel | null> {
+  async likeQuestion(
+    questionId: EntityId,
+    userId: EntityId
+  ): Promise<IQuestionModel | null> {
     const question = await this.findById(questionId);
     if (!question) return null;
     if (question.likes.includes(userId)) {
@@ -41,7 +49,10 @@ export class QuestionRepository extends BaseRepository<IQuestionModel> implement
     return this.updateById(questionId, { likes: question.likes });
   }
 
-  async unlikeQuestion(questionId: EntityId, userId: EntityId): Promise<IQuestionModel | null> {
+  async unlikeQuestion(
+    questionId: EntityId,
+    userId: EntityId
+  ): Promise<IQuestionModel | null> {
     const question = await this.findById(questionId);
     if (!question) return null;
     if (!question.likes.includes(userId)) {
@@ -56,4 +67,4 @@ export class QuestionRepository extends BaseRepository<IQuestionModel> implement
     const all = await this.dataSource.findAll();
     return all.filter(q => q.title.toLowerCase().includes(title.toLowerCase()));
   }
-} 
+}

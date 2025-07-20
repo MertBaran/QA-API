@@ -1,5 +1,5 @@
-import { IUserModel } from "../../models/interfaces/IUserModel";
-import { EntityId } from "../../types/database";
+import { IUserModel } from '../../models/interfaces/IUserModel';
+import { EntityId } from '../../types/database';
 
 export interface IAuthService {
   registerUser(userData: {
@@ -7,7 +7,7 @@ export interface IAuthService {
     lastName: string;
     email: string;
     password: string;
-    role?: "user" | "admin";
+    role?: 'user' | 'admin';
   }): Promise<IUserModel>;
   loginUser(email: string, password: string): Promise<IUserModel>;
   googleLogin(token: string): Promise<IUserModel>;

@@ -2,14 +2,19 @@ import { Request, Response, NextFunction } from 'express';
 import { container } from 'tsyringe';
 import { IAuditProvider } from '../../infrastructure/audit/IAuditProvider';
 
-export function auditMiddleware(action: string, options?: { tags?: string[], targetExtractor?: (req: Request) => any }) {
+export function auditMiddleware(
+  action: string,
+  options?: { tags?: string[]; targetExtractor?: (req: Request) => any }
+) {
   return async (req: Request, res: Response, next: NextFunction) => {
     const start = Date.now();
     res.on('finish', async () => {
       try {
         const audit = container.resolve<IAuditProvider>('AuditProvider');
         const user = (req as any).user || {};
-        const target = options?.targetExtractor ? options.targetExtractor(req) : undefined;
+        const target = options?.targetExtractor
+          ? options.targetExtractor(req)
+          : undefined;
         const responseTime = Date.now() - start;
         const isSuccess = res.statusCode < 400;
         await audit.log({
@@ -17,7 +22,7 @@ export function auditMiddleware(action: string, options?: { tags?: string[], tar
           actor: {
             id: user.id,
             email: user.email,
-            role: user.role
+            role: user.role,
           },
           target,
           ip: req.ip,
@@ -41,18 +46,19 @@ export function auditMiddleware(action: string, options?: { tags?: string[], tar
             responseTime,
             headers: {
               'user-agent': req.headers['user-agent'],
-              'referer': req.headers['referer'],
-              'origin': req.headers['origin'],
-              'host': req.headers['host'],
-              'x-request-id': req.headers['x-request-id']
+              referer: req.headers['referer'],
+              origin: req.headers['origin'],
+              host: req.headers['host'],
+              'x-request-id': req.headers['x-request-id'],
             },
-            isSuccess
-          }
+            isSuccess,
+          },
         });
-      } catch (e) {
-        // Audit log hatalarını sessizce yut
+      } catch (_e) {
+        // Log error but don't fail the request
+        console.error('Audit logging failed:', _e);
       }
     });
     next();
   };
-} 
+}

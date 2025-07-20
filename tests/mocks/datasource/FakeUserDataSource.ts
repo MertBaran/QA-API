@@ -1,7 +1,7 @@
-import { IDataSource } from "../../../repositories/interfaces/IDataSource";
-import { IUserModel } from "../../../models/interfaces/IUserModel";
-import { EntityId } from "../../../types/database";
-import bcrypt from "bcryptjs";
+import { IDataSource } from '../../../repositories/interfaces/IDataSource';
+import { IUserModel } from '../../../models/interfaces/IUserModel';
+import { EntityId } from '../../../types/database';
+import bcrypt from 'bcryptjs';
 
 export class FakeUserDataSource implements IDataSource<IUserModel> {
   private store: Map<string, IUserModel> = new Map();
@@ -11,7 +11,7 @@ export class FakeUserDataSource implements IDataSource<IUserModel> {
       Math.random().toString(36).substr(2, 9)) as EntityId;
 
     // Hash password like Mongoose pre-save hook
-    let password = data.password || "";
+    let password = data.password || '';
     if (password) {
       const salt = await bcrypt.genSalt(10);
       password = await bcrypt.hash(password, salt);
@@ -19,11 +19,11 @@ export class FakeUserDataSource implements IDataSource<IUserModel> {
 
     const user: IUserModel = {
       _id,
-      name: data.name || "",
-      email: data.email || "",
-      role: data.role || "user",
+      name: data.name || '',
+      email: data.email || '',
+      role: data.role || 'user',
       password, // Use hashed password
-      profile_image: data.profile_image || "default.jpg",
+      profile_image: data.profile_image || 'default.jpg',
       blocked: data.blocked ?? false,
       // Don't spread data here to avoid overriding hashed password
       title: data.title,
@@ -77,6 +77,6 @@ export class FakeUserDataSource implements IDataSource<IUserModel> {
   // Add this method to support findByEmailWithPassword like UserMongooseDataSource
   async findByEmailWithPassword(email: string): Promise<IUserModel | null> {
     const users = Array.from(this.store.values());
-    return users.find((user) => user.email === email) || null;
+    return users.find(user => user.email === email) || null;
   }
 }

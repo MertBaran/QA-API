@@ -1,6 +1,6 @@
-import type { ICacheProvider } from "../infrastructure/cache/ICacheProvider";
+import type { ICacheProvider } from '../infrastructure/cache/ICacheProvider';
 
-export type Locale = "en" | "tr" | "de";
+export type Locale = 'en' | 'tr' | 'de';
 
 export interface L10n {
   en: string;
@@ -8,22 +8,22 @@ export interface L10n {
   de: string; // artık zorunlu
 }
 
-export const supportedLocales: Locale[] = ["en", "tr", "de"];
-export const fallbackLocale: Locale = "en";
+export const supportedLocales: Locale[] = ['en', 'tr', 'de'];
+export const fallbackLocale: Locale = 'en';
 
 export const normalizeLocale = (raw?: string): Locale => {
   if (!raw) return fallbackLocale;
 
   // Handle complex Accept-Language headers like "tr-TR,tr;q=0.9,en;q=0.8"
   const languages = raw
-    .split(",")
-    .map((lang) => {
+    .split(',')
+    .map(lang => {
       // Extract language code (before ;q= or -)
-      const parts = lang.split(";");
+      const parts = lang.split(';');
       const langPart = parts[0];
       const code = langPart
-        ? langPart.split("-")[0]?.trim().toLowerCase() || ""
-        : "";
+        ? langPart.split('-')[0]?.trim().toLowerCase() || ''
+        : '';
 
       // Extract quality value (q=)
       const qMatch = lang.match(/;q=([0-9.]+)/);
@@ -64,7 +64,7 @@ export const setI18nCacheProvider = (provider: ICacheProvider): void => {
 const generateCacheKey = (msg: L10n, locale: Locale): string => {
   // Use hash instead of full JSON to reduce key size
   const msgHash = Buffer.from(JSON.stringify(msg))
-    .toString("base64")
+    .toString('base64')
     .slice(0, 16);
   return `i18n:${msgHash}:${locale}`;
 };
@@ -109,7 +109,7 @@ export const i18n = async (
     return translation;
   } catch (error) {
     // If cache fails, fallback to direct translation
-    console.warn("i18n cache error:", error);
+    console.warn('i18n cache error:', error);
     return msg[locale] || msg[fallbackLocale];
   }
 };
@@ -155,7 +155,7 @@ export const warmupI18nCache = async (
       }
     }
   } catch (error) {
-    console.warn("i18n cache warmup error:", error);
+    console.warn('i18n cache warmup error:', error);
   }
 };
 

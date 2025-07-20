@@ -6,4 +6,4 @@ export interface IRepository<T> {
   findAll(): Promise<T[]>;
   updateById(id: EntityId, data: Partial<T>): Promise<T | null>;
   deleteById(id: EntityId): Promise<T | null>;
-} 
+}

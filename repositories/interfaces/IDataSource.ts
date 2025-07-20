@@ -6,4 +6,4 @@ export interface IDataSource<T> {
   deleteById(id: string): Promise<T | null>;
   countAll(): Promise<number>;
   deleteAll(): Promise<number>;
-} 
+}

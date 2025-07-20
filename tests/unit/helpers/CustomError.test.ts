@@ -8,4 +8,4 @@ describe('CustomError Unit Tests', () => {
     expect(err.message).toBe('Test error');
     expect(err.statusCode).toBe(404);
   });
-}); 
+});

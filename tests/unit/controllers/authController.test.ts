@@ -1,26 +1,26 @@
-import "reflect-metadata";
-import { container } from "tsyringe";
-import { setI18nCacheProvider, clearI18nCache } from "../../../types/i18n";
-import { FakeCacheProvider } from "../../mocks/cache/FakeCacheProvider";
+import 'reflect-metadata';
+
+import { setI18nCacheProvider, clearI18nCache } from '../../../types/i18n';
+import { FakeCacheProvider } from '../../mocks/cache/FakeCacheProvider';
 
 // Mock sendJwtToClient helper BEFORE importing the modules that use it
-jest.mock("../../../helpers/authorization/tokenHelpers", () => ({
+jest.mock('../../../helpers/authorization/tokenHelpers', () => ({
   sendJwtToClient: jest.fn(),
 }));
 
-import { AuthController } from "../../../controllers/authController";
-import { AuthManager } from "../../../services/managers/AuthManager";
-import { ILoggerProvider } from "../../../infrastructure/logging/ILoggerProvider";
-import { IAuditProvider } from "../../../infrastructure/audit/IAuditProvider";
-import { sendJwtToClient } from "../../../helpers/authorization/tokenHelpers";
+import { AuthController } from '../../../controllers/authController';
+import { AuthManager } from '../../../services/managers/AuthManager';
+import { ILoggerProvider } from '../../../infrastructure/logging/ILoggerProvider';
+import { IAuditProvider } from '../../../infrastructure/audit/IAuditProvider';
+import { sendJwtToClient } from '../../../helpers/authorization/tokenHelpers';
 
 const mockSendJwtToClient = sendJwtToClient as jest.MockedFunction<
   typeof sendJwtToClient
 >;
-const mockGenerateJWTFromUser = jest.fn(() => "jwt-token");
+const mockGenerateJWTFromUser = jest.fn(() => 'jwt-token');
 (AuthManager as any).generateJWTFromUser = mockGenerateJWTFromUser;
 
-describe("AuthController", () => {
+describe('AuthController', () => {
   let controller: AuthController;
   let authService: jest.Mocked<AuthManager>;
   let logger: jest.Mocked<ILoggerProvider>;
@@ -60,11 +60,11 @@ describe("AuthController", () => {
 
     req = {
       body: {},
-      user: { id: "u1", name: "Test" },
-      savedProfileImage: "img.png",
-      ip: "127.0.0.1",
+      user: { id: 'u1', name: 'Test' },
+      savedProfileImage: 'img.png',
+      ip: '127.0.0.1',
       headers: {},
-      locale: "en",
+      locale: 'en',
     };
 
     res = {
@@ -78,263 +78,263 @@ describe("AuthController", () => {
     mockGenerateJWTFromUser.mockClear();
   });
 
-  describe("register", () => {
-    it("should register user and send JWT with correct language", async () => {
+  describe('register', () => {
+    it('should register user and send JWT with correct language', async () => {
       authService.registerUser.mockResolvedValue({
-        _id: "u1",
-        name: "Test User",
-        email: "test@example.com",
-        role: "user",
-        password: "",
-        profile_image: "",
+        _id: 'u1',
+        name: 'Test User',
+        email: 'test@example.com',
+        role: 'user',
+        password: '',
+        profile_image: '',
         blocked: false,
       });
 
       req.body = {
-        firstName: "Test",
-        lastName: "User",
-        email: "test@example.com",
-        password: "password",
-        role: "user",
+        firstName: 'Test',
+        lastName: 'User',
+        email: 'test@example.com',
+        password: 'password',
+        role: 'user',
       };
-      req.headers["accept-language"] = "tr";
+      req.headers['accept-language'] = 'tr';
 
       await controller.register(req, res, next);
 
       expect(authService.registerUser).toHaveBeenCalledWith({
-        firstName: "Test",
-        lastName: "User",
-        email: "test@example.com",
-        password: "password",
-        role: "user",
+        firstName: 'Test',
+        lastName: 'User',
+        email: 'test@example.com',
+        password: 'password',
+        role: 'user',
       });
 
       expect(mockGenerateJWTFromUser).toHaveBeenCalledWith({
-        id: "u1",
-        name: "Test User",
-        lang: "tr",
+        id: 'u1',
+        name: 'Test User',
+        lang: 'tr',
       });
 
       expect(mockSendJwtToClient).toHaveBeenCalled();
     });
 
-    it("should handle German language in registration", async () => {
+    it('should handle German language in registration', async () => {
       authService.registerUser.mockResolvedValue({
-        _id: "u1",
-        name: "Test User",
-        email: "test@example.com",
-        role: "user",
-        password: "",
-        profile_image: "",
+        _id: 'u1',
+        name: 'Test User',
+        email: 'test@example.com',
+        role: 'user',
+        password: '',
+        profile_image: '',
         blocked: false,
       });
 
       req.body = {
-        firstName: "Test",
-        lastName: "User",
-        email: "test@example.com",
-        password: "password",
-        role: "user",
+        firstName: 'Test',
+        lastName: 'User',
+        email: 'test@example.com',
+        password: 'password',
+        role: 'user',
       };
-      req.headers["accept-language"] = "de";
+      req.headers['accept-language'] = 'de';
 
       await controller.register(req, res, next);
 
       expect(mockGenerateJWTFromUser).toHaveBeenCalledWith({
-        id: "u1",
-        name: "Test User",
-        lang: "de",
+        id: 'u1',
+        name: 'Test User',
+        lang: 'de',
       });
     });
   });
 
-  describe("login", () => {
-    it("should login user and log audit with correct language", async () => {
+  describe('login', () => {
+    it('should login user and log audit with correct language', async () => {
       authService.loginUser.mockResolvedValue({
-        _id: "u1",
-        name: "Test User",
-        email: "test@example.com",
-        role: "user",
-        password: "",
-        profile_image: "",
+        _id: 'u1',
+        name: 'Test User',
+        email: 'test@example.com',
+        role: 'user',
+        password: '',
+        profile_image: '',
         blocked: false,
       });
 
-      req.body = { email: "test@example.com", password: "password" };
-      req.headers["accept-language"] = "tr";
+      req.body = { email: 'test@example.com', password: 'password' };
+      req.headers['accept-language'] = 'tr';
 
       await controller.login(req, res, next);
 
       expect(authService.loginUser).toHaveBeenCalledWith(
-        "test@example.com",
-        "password"
+        'test@example.com',
+        'password'
       );
 
       expect(mockGenerateJWTFromUser).toHaveBeenCalledWith({
-        id: "u1",
-        name: "Test User",
-        lang: "tr",
+        id: 'u1',
+        name: 'Test User',
+        lang: 'tr',
       });
 
-      expect(logger.info).toHaveBeenCalledWith("User logged in", {
-        userId: "u1",
-        email: "test@example.com",
-        ip: "127.0.0.1",
-        context: "AuthController",
+      expect(logger.info).toHaveBeenCalledWith('User logged in', {
+        userId: 'u1',
+        email: 'test@example.com',
+        ip: '127.0.0.1',
+        context: 'AuthController',
       });
 
       expect(audit.log).toHaveBeenCalledWith({
-        action: "USER_LOGIN",
-        actor: { id: "u1", email: "test@example.com", role: "user" },
-        ip: "127.0.0.1",
-        context: "AuthController",
-        details: { userId: "u1", email: "test@example.com" },
+        action: 'USER_LOGIN',
+        actor: { id: 'u1', email: 'test@example.com', role: 'user' },
+        ip: '127.0.0.1',
+        context: 'AuthController',
+        details: { userId: 'u1', email: 'test@example.com' },
       });
     });
   });
 
-  describe("logout", () => {
-    it("should logout with English message", async () => {
-      req.locale = "en";
+  describe('logout', () => {
+    it('should logout with English message', async () => {
+      req.locale = 'en';
 
       await controller.logout(req, res, next);
 
       expect(res.cookie).toHaveBeenCalledWith(
-        "access_token",
-        "none",
+        'access_token',
+        'none',
         expect.any(Object)
       );
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
         success: true,
-        message: "Logout success",
+        message: 'Logout success',
       });
     });
 
-    it("should logout with Turkish message", async () => {
-      req.locale = "tr";
+    it('should logout with Turkish message', async () => {
+      req.locale = 'tr';
 
       await controller.logout(req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
         success: true,
-        message: "Çıkış başarılı",
+        message: 'Çıkış başarılı',
       });
     });
 
-    it("should logout with German message", async () => {
-      req.locale = "de";
+    it('should logout with German message', async () => {
+      req.locale = 'de';
 
       await controller.logout(req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
         success: true,
-        message: "Abmeldung erfolgreich",
+        message: 'Abmeldung erfolgreich',
       });
     });
 
-    it("should default to English when locale is undefined", async () => {
+    it('should default to English when locale is undefined', async () => {
       req.locale = undefined;
 
       await controller.logout(req, res, next);
 
       expect(res.json).toHaveBeenCalledWith({
         success: true,
-        message: "Logout success",
+        message: 'Logout success',
       });
     });
   });
 
-  describe("forgotPassword", () => {
-    it("should send forgot password response with Turkish message", async () => {
+  describe('forgotPassword', () => {
+    it('should send forgot password response with Turkish message', async () => {
       authService.forgotPassword.mockResolvedValue();
-      req.body = { email: "test@example.com" };
-      req.locale = "tr";
+      req.body = { email: 'test@example.com' };
+      req.locale = 'tr';
 
       await controller.forgotpassword(req, res, next);
 
       expect(authService.forgotPassword).toHaveBeenCalledWith(
-        "test@example.com"
+        'test@example.com'
       );
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
         success: true,
-        message: "Şifre sıfırlama bağlantısı e-posta adresinize gönderildi",
+        message: 'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi',
       });
     });
 
-    it("should send forgot password response with German message", async () => {
+    it('should send forgot password response with German message', async () => {
       authService.forgotPassword.mockResolvedValue();
-      req.body = { email: "test@example.com" };
-      req.locale = "de";
+      req.body = { email: 'test@example.com' };
+      req.locale = 'de';
 
       await controller.forgotpassword(req, res, next);
 
       expect(res.json).toHaveBeenCalledWith({
         success: true,
-        message: "Passwort-Reset-Link an E-Mail gesendet",
+        message: 'Passwort-Reset-Link an E-Mail gesendet',
       });
     });
   });
 
-  describe("resetPassword", () => {
-    it("should reset password with success message in Turkish", async () => {
+  describe('resetPassword', () => {
+    it('should reset password with success message in Turkish', async () => {
       authService.resetPassword.mockResolvedValue();
-      req.body = { token: "reset-token", newPassword: "newpassword" };
-      req.locale = "tr";
+      req.body = { token: 'reset-token', newPassword: 'newpassword' };
+      req.locale = 'tr';
 
       await controller.resetPassword(req, res, next);
 
       expect(authService.resetPassword).toHaveBeenCalledWith(
-        "reset-token",
-        "newpassword"
+        'reset-token',
+        'newpassword'
       );
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
         success: true,
-        message: "Şifre başarıyla sıfırlandı",
+        message: 'Şifre başarıyla sıfırlandı',
       });
     });
 
-    it("should reset password with success message in German", async () => {
+    it('should reset password with success message in German', async () => {
       authService.resetPassword.mockResolvedValue();
-      req.body = { token: "reset-token", newPassword: "newpassword" };
-      req.locale = "de";
+      req.body = { token: 'reset-token', newPassword: 'newpassword' };
+      req.locale = 'de';
 
       await controller.resetPassword(req, res, next);
 
       expect(res.json).toHaveBeenCalledWith({
         success: true,
-        message: "Passwort erfolgreich zurückgesetzt",
+        message: 'Passwort erfolgreich zurückgesetzt',
       });
     });
   });
 
-  describe("getUser", () => {
-    it("should return user data", async () => {
+  describe('getUser', () => {
+    it('should return user data', async () => {
       await controller.getUser(req, res, next);
 
       expect(res.json).toHaveBeenCalledWith({
         success: true,
         data: {
-          id: "u1",
-          name: "Test",
+          id: 'u1',
+          name: 'Test',
         },
       });
     });
   });
 
-  describe("imageUpload", () => {
-    it("should upload image successfully", async () => {
+  describe('imageUpload', () => {
+    it('should upload image successfully', async () => {
       const updatedUser = {
-        _id: "u1",
-        name: "Test",
-        profile_image: "new-image.png",
-        email: "test@example.com",
-        role: "user" as const,
-        password: "",
+        _id: 'u1',
+        name: 'Test',
+        profile_image: 'new-image.png',
+        email: 'test@example.com',
+        role: 'user' as const,
+        password: '',
         blocked: false,
       };
 
@@ -343,40 +343,40 @@ describe("AuthController", () => {
       await controller.imageUpload(req, res, next);
 
       expect(authService.updateProfileImage).toHaveBeenCalledWith(
-        "u1",
-        "img.png"
+        'u1',
+        'img.png'
       );
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
         success: true,
-        message: "Image uploaded successfully",
+        message: 'Image uploaded successfully',
         data: updatedUser,
       });
     });
   });
 
-  describe("googleLogin", () => {
-    it("should handle Google login with language detection", async () => {
+  describe('googleLogin', () => {
+    it('should handle Google login with language detection', async () => {
       authService.googleLogin.mockResolvedValue({
-        _id: "u1",
-        name: "Google User",
-        email: "google@example.com",
-        role: "user",
-        password: "",
-        profile_image: "",
+        _id: 'u1',
+        name: 'Google User',
+        email: 'google@example.com',
+        role: 'user',
+        password: '',
+        profile_image: '',
         blocked: false,
       });
 
-      req.body = { token: "google-token" };
-      req.headers["accept-language"] = "de-DE,de;q=0.9,en;q=0.8";
+      req.body = { token: 'google-token' };
+      req.headers['accept-language'] = 'de-DE,de;q=0.9,en;q=0.8';
 
       await controller.googleLogin(req, res, next);
 
-      expect(authService.googleLogin).toHaveBeenCalledWith("google-token");
+      expect(authService.googleLogin).toHaveBeenCalledWith('google-token');
       expect(mockGenerateJWTFromUser).toHaveBeenCalledWith({
-        id: "u1",
-        name: "Google User",
-        lang: "de",
+        id: 'u1',
+        name: 'Google User',
+        lang: 'de',
       });
     });
   });

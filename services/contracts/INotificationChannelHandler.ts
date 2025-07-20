@@ -1,4 +1,4 @@
-import { NotificationPayload } from "./NotificationPayload";
+import { NotificationPayload } from './NotificationPayload';
 
 export interface INotificationChannelHandler {
   canHandle(channel: string): boolean;
@@ -9,4 +9,4 @@ export interface INotificationChannelHandler {
   // addRecipient?(): void;
   // removeRecipient?(): void;
   // logNotification?(): void;
-} 
+}

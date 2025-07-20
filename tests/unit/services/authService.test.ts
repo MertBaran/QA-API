@@ -1,10 +1,10 @@
-import "reflect-metadata";
-import { AuthManager } from "../../../services/managers/AuthManager";
-import { UserRepository } from "../../../repositories/UserRepository";
-import { FakeUserDataSource } from "../../mocks/datasource/FakeUserDataSource";
-import { FakeEmailService } from "../../mocks/email/FakeEmailService";
+import 'reflect-metadata';
+import { AuthManager } from '../../../services/managers/AuthManager';
+import { UserRepository } from '../../../repositories/UserRepository';
+import { FakeUserDataSource } from '../../mocks/datasource/FakeUserDataSource';
+import { FakeEmailService } from '../../mocks/email/FakeEmailService';
 
-describe("AuthService Unit Tests", () => {
+describe('AuthService Unit Tests', () => {
   let authService: AuthManager;
   let userRepository: UserRepository;
   let fakeUserDataSource: FakeUserDataSource;
@@ -17,69 +17,69 @@ describe("AuthService Unit Tests", () => {
     authService = new AuthManager(userRepository, fakeEmailService);
   });
 
-  it("should register a new user", async () => {
+  it('should register a new user', async () => {
     const user = await authService.registerUser({
-      firstName: "Test",
-      lastName: "User",
-      email: "test@auth.com",
-      password: "password",
-      role: "user",
+      firstName: 'Test',
+      lastName: 'User',
+      email: 'test@auth.com',
+      password: 'password',
+      role: 'user',
     });
     expect(user).toBeDefined();
-    expect(user.email).toBe("test@auth.com");
-    expect(user.name).toBe("Test User");
+    expect(user.email).toBe('test@auth.com');
+    expect(user.name).toBe('Test User');
   });
 
-  it("should not register duplicate email", async () => {
+  it('should not register duplicate email', async () => {
     await authService.registerUser({
-      firstName: "Test",
-      lastName: "User",
-      email: "test@auth.com",
-      password: "password",
-      role: "user",
+      firstName: 'Test',
+      lastName: 'User',
+      email: 'test@auth.com',
+      password: 'password',
+      role: 'user',
     });
     await expect(
       authService.registerUser({
-        firstName: "Test",
-        lastName: "User",
-        email: "test@auth.com",
-        password: "password",
-        role: "user",
+        firstName: 'Test',
+        lastName: 'User',
+        email: 'test@auth.com',
+        password: 'password',
+        role: 'user',
       })
     ).rejects.toThrow();
   });
 
-  it("should login user with correct credentials", async () => {
+  it('should login user with correct credentials', async () => {
     const userData = {
-      firstName: "Test",
-      lastName: "User",
-      email: "test@auth.com",
-      password: "password",
-      role: "user" as const,
+      firstName: 'Test',
+      lastName: 'User',
+      email: 'test@auth.com',
+      password: 'password',
+      role: 'user' as const,
     };
 
-    const registeredUser = await authService.registerUser(userData);
-    const user = await authService.loginUser("test@auth.com", "password");
+    await authService.registerUser(userData);
+    const user = await authService.loginUser('test@auth.com', 'password');
     expect(user).toBeDefined();
-    expect(user.email).toBe("test@auth.com");
+    expect(user.email).toBe('test@auth.com');
   });
 
-  it("should not login with wrong password", async () => {
+  it('should not login with wrong password', async () => {
     await authService.registerUser({
-      firstName: "Test",
-      lastName: "User",
-      email: "test@auth.com",
-      password: "password",
-      role: "user",
+      firstName: 'Test',
+      lastName: 'User',
+      email: 'test@auth.com',
+      password: 'password',
+      role: 'user',
     });
     await expect(
-      authService.loginUser("test@auth.com", "wrongpass")
+      authService.loginUser('test@auth.com', 'wrongpass')
     ).rejects.toThrow();
   });
 
-  it("should throw error for non-existent user login", async () => {
+  it('should throw error for non-existent user login', async () => {
     await expect(
-      authService.loginUser("nouser@auth.com", "password")
+      authService.loginUser('nouser@auth.com', 'password')
     ).rejects.toThrow();
   });
 });

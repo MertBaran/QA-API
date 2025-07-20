@@ -13,11 +13,15 @@ export class FakeEmailService {
       accepted: [],
       rejected: [],
       pending: [],
-      response: 'fake'
+      response: 'fake',
     } as SentMessageInfo;
   }
 
-  async notify(payload: NotificationPayload): Promise<void> {
-    // Test için isterseniz sent arrayine ekleyebilirsiniz veya boş bırakabilirsiniz
+  async send(_payload: any): Promise<void> {
+    // Mock implementation
   }
-} 
+
+  async notify(_payload: NotificationPayload): Promise<void> {
+    // Mock implementation
+  }
+}

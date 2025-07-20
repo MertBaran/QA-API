@@ -1,6 +1,7 @@
 import { IDatabaseAdapter } from '../repositories/adapters/IDatabaseAdapter';
-import { MongoDBAdapter } from '../repositories/adapters/MongoDBAdapter';
+
 import { PostgreSQLAdapter } from '../repositories/adapters/PostgreSQLAdapter';
+import { container } from 'tsyringe';
 
 export type DatabaseType = 'mongodb' | 'postgresql';
 
@@ -8,7 +9,7 @@ export class DatabaseFactory {
   static createDatabase(type: DatabaseType): IDatabaseAdapter {
     switch (type) {
       case 'mongodb':
-        return new MongoDBAdapter();
+        return container.resolve<IDatabaseAdapter>('DatabaseAdapter');
       case 'postgresql':
         return new PostgreSQLAdapter();
       default:
@@ -17,6 +18,6 @@ export class DatabaseFactory {
   }
 
   static getDefaultDatabase(): IDatabaseAdapter {
-    return new MongoDBAdapter();
+    return container.resolve<IDatabaseAdapter>('DatabaseAdapter');
   }
-} 
+}

@@ -1,9 +1,13 @@
-import "reflect-metadata";
+import 'reflect-metadata';
 import request from 'supertest';
 import mongoose from 'mongoose';
 import app from '../../APP';
-import "../setup";
-import { registerTestUser, loginTestUser, createTestQuestion } from '../utils/testUtils';
+import '../setup';
+import {
+  registerTestUser,
+  loginTestUser,
+  createTestQuestion,
+} from '../utils/testUtils';
 
 describe('Question API Tests', () => {
   let testUser: any;
@@ -24,14 +28,15 @@ describe('Question API Tests', () => {
 
   describe('GET /api/questions', () => {
     it('should get all questions', async () => {
-      const response = await request(app)
-        .get('/api/questions');
+      const response = await request(app).get('/api/questions');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(Array.isArray(response.body.data)).toBe(true);
       expect(response.body.data.length).toBeGreaterThan(0);
-      expect(response.body.data.map((q: any) => q.title)).toContain(testQuestion.title);
+      expect(response.body.data.map((q: any) => q.title)).toContain(
+        testQuestion.title
+      );
     });
   });
 
@@ -39,7 +44,8 @@ describe('Question API Tests', () => {
     it('should create new question', async () => {
       const questionData = {
         title: `New Test Question Title That Is Long Enough ${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        content: 'This is a new test question content that is long enough to meet the minimum requirement of 20 characters.'
+        content:
+          'This is a new test question content that is long enough to meet the minimum requirement of 20 characters.',
       };
 
       const response = await request(app)
@@ -54,7 +60,12 @@ describe('Question API Tests', () => {
       // user alanı string mi obje mi kontrol et
       expect(response.body.data.user).toBeDefined();
       expect(testUser._id).toBeDefined();
-      const userId = response.body.data.user && typeof response.body.data.user === 'object' && response.body.data.user._id ? response.body.data.user._id : response.body.data.user;
+      const userId =
+        response.body.data.user &&
+        typeof response.body.data.user === 'object' &&
+        response.body.data.user._id
+          ? response.body.data.user._id
+          : response.body.data.user;
       expect(userId).toBeDefined();
       expect(userId.toString()).toBe(testUser._id.toString());
     });
@@ -62,7 +73,7 @@ describe('Question API Tests', () => {
     it('should require authentication', async () => {
       const questionData = {
         title: 'New Test Question',
-        content: 'This is a new test question content.'
+        content: 'This is a new test question content.',
       };
 
       const response = await request(app)
@@ -77,7 +88,8 @@ describe('Question API Tests', () => {
         .post('/api/questions/ask')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
-          content: 'This is a test question content that is long enough to meet the minimum requirement of 20 characters.'
+          content:
+            'This is a test question content that is long enough to meet the minimum requirement of 20 characters.',
         });
 
       expect(response.status).toBe(400);
@@ -88,7 +100,7 @@ describe('Question API Tests', () => {
         .post('/api/questions/ask')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
-          title: 'Test Question Title That Is Long Enough'
+          title: 'Test Question Title That Is Long Enough',
         });
 
       expect(response.status).toBe(400);
@@ -97,8 +109,9 @@ describe('Question API Tests', () => {
 
   describe('GET /api/questions/:id', () => {
     it('should get single question', async () => {
-      const response = await request(app)
-        .get(`/api/questions/${testQuestion._id}`);
+      const response = await request(app).get(
+        `/api/questions/${testQuestion._id}`
+      );
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -110,8 +123,9 @@ describe('Question API Tests', () => {
     it('should return 404 for non-existent question', async () => {
       const fakeQuestionId = new mongoose.Types.ObjectId();
 
-      const response = await request(app)
-        .get(`/api/questions/${fakeQuestionId}`);
+      const response = await request(app).get(
+        `/api/questions/${fakeQuestionId}`
+      );
 
       expect(response.status).toBe(404);
     });
@@ -120,14 +134,15 @@ describe('Question API Tests', () => {
   describe('PUT /api/questions/:id/edit', () => {
     it('should edit question', async () => {
       const newTitle = `Updated Test Question Title That Is Long Enough ${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      const newContent = 'This is an updated test question content that is long enough to meet the minimum requirement of 20 characters.';
+      const newContent =
+        'This is an updated test question content that is long enough to meet the minimum requirement of 20 characters.';
 
       const response = await request(app)
         .put(`/api/questions/${testQuestion._id}/edit`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           title: newTitle,
-          content: newContent
+          content: newContent,
         });
 
       expect(response.status).toBe(200);
@@ -141,7 +156,8 @@ describe('Question API Tests', () => {
         .put(`/api/questions/${testQuestion._id}/edit`)
         .send({
           title: 'Updated Title That Is Long Enough',
-          content: 'Updated content that is long enough to meet the minimum requirement of 20 characters.'
+          content:
+            'Updated content that is long enough to meet the minimum requirement of 20 characters.',
         });
 
       expect(response.status).toBe(401);
@@ -155,7 +171,8 @@ describe('Question API Tests', () => {
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           title: 'Updated Title That Is Long Enough',
-          content: 'Updated content that is long enough to meet the minimum requirement of 20 characters.'
+          content:
+            'Updated content that is long enough to meet the minimum requirement of 20 characters.',
         });
 
       expect(response.status).toBe(404);
@@ -176,7 +193,7 @@ describe('Question API Tests', () => {
         .post('/api/auth/login')
         .send({
           email: otherUser.body.data.email,
-          password: 'password123'
+          password: 'password123',
         });
 
       const otherAuthToken = otherLoginResponse.body.access_token;
@@ -186,7 +203,8 @@ describe('Question API Tests', () => {
         .set('Authorization', `Bearer ${otherAuthToken}`)
         .send({
           title: 'Updated Title That Is Long Enough',
-          content: 'Updated content that is long enough to meet the minimum requirement of 20 characters.'
+          content:
+            'Updated content that is long enough to meet the minimum requirement of 20 characters.',
         });
 
       expect(response.status).toBe(403);
@@ -201,17 +219,21 @@ describe('Question API Tests', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toBe('Question delete operation successfull');
+      expect(response.body.message).toBe(
+        'Question delete operation successfull'
+      );
 
       // Verify question is deleted via API
-      const deletedQuestionResponse = await request(app)
-        .get(`/api/questions/${testQuestion._id}`);
+      const deletedQuestionResponse = await request(app).get(
+        `/api/questions/${testQuestion._id}`
+      );
       expect(deletedQuestionResponse.status).toBe(404);
     });
 
     it('should require authentication', async () => {
-      const response = await request(app)
-        .delete(`/api/questions/${testQuestion._id}/delete`);
+      const response = await request(app).delete(
+        `/api/questions/${testQuestion._id}/delete`
+      );
 
       expect(response.status).toBe(401);
     });
@@ -241,7 +263,7 @@ describe('Question API Tests', () => {
         .post('/api/auth/login')
         .send({
           email: otherUser.body.data.email,
-          password: 'password123'
+          password: 'password123',
         });
 
       const otherAuthToken = otherLoginResponse.body.access_token;
@@ -265,14 +287,23 @@ describe('Question API Tests', () => {
       expect(response.body.data.likes).toBeDefined();
       if (Array.isArray(response.body.data.likes)) {
         response.body.data.likes.forEach((id: any) => expect(id).toBeDefined());
-        const likeIds = response.body.data.likes.filter(Boolean).map((id: any) => id && id._id ? id._id.toString() : id && id.toString ? id.toString() : id);
+        const likeIds = response.body.data.likes
+          .filter(Boolean)
+          .map((id: any) =>
+            id && id._id
+              ? id._id.toString()
+              : id && id.toString
+                ? id.toString()
+                : id
+          );
         expect(likeIds).toContain(testUser._id.toString());
       }
     });
 
     it('should require authentication', async () => {
-      const response = await request(app)
-        .get(`/api/questions/${testQuestion._id}/like`);
+      const response = await request(app).get(
+        `/api/questions/${testQuestion._id}/like`
+      );
 
       expect(response.status).toBe(401);
     });
@@ -320,8 +351,18 @@ describe('Question API Tests', () => {
         expect(response.body.success).toBe(true);
         expect(response.body.data.likes).toBeDefined();
         if (Array.isArray(response.body.data.likes)) {
-          response.body.data.likes.forEach((id: any) => expect(id).toBeDefined());
-          const likeIds = response.body.data.likes.filter(Boolean).map((id: any) => id && id._id ? id._id.toString() : id && id.toString ? id.toString() : id);
+          response.body.data.likes.forEach((id: any) =>
+            expect(id).toBeDefined()
+          );
+          const likeIds = response.body.data.likes
+            .filter(Boolean)
+            .map((id: any) =>
+              id && id._id
+                ? id._id.toString()
+                : id && id.toString
+                  ? id.toString()
+                  : id
+            );
           expect(likeIds).not.toContain(testUser._id.toString());
         }
       } else {
@@ -330,8 +371,9 @@ describe('Question API Tests', () => {
     });
 
     it('should require authentication', async () => {
-      const response = await request(app)
-        .get(`/api/questions/${testQuestion._id}/undo_like`);
+      const response = await request(app).get(
+        `/api/questions/${testQuestion._id}/undo_like`
+      );
 
       expect(response.status).toBe(401);
     });

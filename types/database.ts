@@ -41,7 +41,8 @@ export class PostgreSQLIdAdapter implements IDatabaseIdAdapter {
 
   isValidId(id: EntityId): boolean {
     // UUID validation
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     return uuidRegex.test(id);
   }
 
@@ -86,4 +87,4 @@ export class DatabaseIdFactory {
   static fromString(id: string): EntityId {
     return DatabaseIdFactory.getAdapter().fromString(id);
   }
-} 
+}

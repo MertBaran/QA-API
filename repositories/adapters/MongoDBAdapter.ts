@@ -2,24 +2,48 @@ import mongoose from 'mongoose';
 import { IDatabaseAdapter } from './IDatabaseAdapter';
 import { MongoDBIdAdapter } from '../../types/database';
 import CustomError from '../../helpers/error/CustomError';
+import { injectable, inject } from 'tsyringe';
+import { DatabaseConnectionConfig } from '../../services/contracts/IConfigurationService';
 
+@injectable()
 export class MongoDBAdapter implements IDatabaseAdapter {
   private isConnectedFlag = false;
   private idAdapter: MongoDBIdAdapter;
+  private connectionConfig: DatabaseConnectionConfig;
 
-  constructor() {
+  constructor(
+    @inject('IDatabaseConnectionConfig')
+    connectionConfig: DatabaseConnectionConfig
+  ) {
     this.idAdapter = new MongoDBIdAdapter();
+    this.connectionConfig = connectionConfig;
+  }
+
+  private extractDatabaseName(mongoUri: string): string {
+    try {
+      if (mongoUri.includes('mongodb+srv://')) {
+        return mongoUri.split('/')[3]?.split('?')[0] || 'unknown';
+      } else {
+        return mongoUri.split('/').pop()?.split('?')[0] || 'unknown';
+      }
+    } catch (_error) {
+      return 'unknown';
+    }
   }
 
   async connect(): Promise<void> {
     try {
-      const mongoUri = process.env["MONGO_URI"] || 'mongodb://localhost:27017/qa-platform';
+      // Get MongoDB URI from injected connection config
+      const mongoUri = this.connectionConfig.connectionString;
+
       await mongoose.connect(mongoUri);
       this.isConnectedFlag = true;
-      console.log('MongoDB connected successfully');
-    } catch (error) {
-      console.error('MongoDB connection error:', error);
-      throw new CustomError('Database error in MongoDBAdapter.connect', 500);
+
+      // MongoDB adapter handles its own logging with its own business logic
+      const dbName = this.extractDatabaseName(mongoUri);
+      console.log(`✅ MongoDB connected successfully to database: ${dbName}`);
+    } catch (_error) {
+      console.log('MongoDB connection failed');
     }
   }
 
@@ -28,8 +52,8 @@ export class MongoDBAdapter implements IDatabaseAdapter {
       await mongoose.disconnect();
       this.isConnectedFlag = false;
       console.log('MongoDB disconnected successfully');
-    } catch (error) {
-      console.error('MongoDB disconnection error:', error);
+    } catch (_error) {
+      console.error('MongoDB disconnection error:', _error);
       throw new CustomError('Database error in MongoDBAdapter.disconnect', 500);
     }
   }
@@ -41,4 +65,4 @@ export class MongoDBAdapter implements IDatabaseAdapter {
   getIdAdapter(): MongoDBIdAdapter {
     return this.idAdapter;
   }
-} 
+}

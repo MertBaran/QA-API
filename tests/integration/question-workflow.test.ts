@@ -1,13 +1,12 @@
-import "reflect-metadata";
+import 'reflect-metadata';
 import request from 'supertest';
 import mongoose from 'mongoose';
 import app from '../../APP';
 import { container } from 'tsyringe';
-import { UserRepository } from '../../repositories/UserRepository';
-import { QuestionRepository } from '../../repositories/QuestionRepository';
-import "../setup";
 
-const userRepository = container.resolve(UserRepository);
+import { QuestionRepository } from '../../repositories/QuestionRepository';
+import '../setup';
+
 const questionRepository = container.resolve(QuestionRepository);
 
 describe('Question Workflow Integration Tests', () => {
@@ -19,40 +18,32 @@ describe('Question Workflow Integration Tests', () => {
   beforeEach(async () => {
     // Create two test users via API
     const email1 = `john+${Date.now()}_${Math.random().toString(36).substr(2, 9)}@example.com`;
-    await request(app)
-      .post('/api/auth/register')
-      .send({
-        firstName: 'John',
-        lastName: 'Doe',
-        email: email1,
-        password: 'password123',
-        role: 'user'
-      });
-    const loginResponse1 = await request(app)
-      .post('/api/auth/login')
-      .send({
-        email: email1,
-        password: 'password123'
-      });
+    await request(app).post('/api/auth/register').send({
+      firstName: 'John',
+      lastName: 'Doe',
+      email: email1,
+      password: 'password123',
+      role: 'user',
+    });
+    const loginResponse1 = await request(app).post('/api/auth/login').send({
+      email: email1,
+      password: 'password123',
+    });
     user1 = loginResponse1.body.data;
     user1Token = loginResponse1.body.access_token;
 
     const email2 = `jane+${Date.now()}_${Math.random().toString(36).substr(2, 9)}@example.com`;
-    await request(app)
-      .post('/api/auth/register')
-      .send({
-        firstName: 'Jane',
-        lastName: 'Smith',
-        email: email2,
-        password: 'password123',
-        role: 'user'
-      });
-    const loginResponse2 = await request(app)
-      .post('/api/auth/login')
-      .send({
-        email: email2,
-        password: 'password123'
-      });
+    await request(app).post('/api/auth/register').send({
+      firstName: 'Jane',
+      lastName: 'Smith',
+      email: email2,
+      password: 'password123',
+      role: 'user',
+    });
+    const loginResponse2 = await request(app).post('/api/auth/login').send({
+      email: email2,
+      password: 'password123',
+    });
     user2 = loginResponse2.body.data;
     user2Token = loginResponse2.body.access_token;
   });
@@ -66,7 +57,8 @@ describe('Question Workflow Integration Tests', () => {
       // 1. Create a question
       const questionData = {
         title: `Question Lifecycle Test ${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        content: 'This is a test question for lifecycle testing that is long enough to meet the minimum requirement of 20 characters.'
+        content:
+          'This is a test question for lifecycle testing that is long enough to meet the minimum requirement of 20 characters.',
       };
 
       const createResponse = await request(app)
@@ -77,24 +69,28 @@ describe('Question Workflow Integration Tests', () => {
       expect(createResponse.status).toBe(200);
       expect(createResponse.body.success).toBe(true);
       expect(createResponse.body.data.title).toBe(questionData.title);
-      expect(createResponse.body.data.user.toString()).toBe(user1._id.toString());
+      expect(createResponse.body.data.user.toString()).toBe(
+        user1._id.toString()
+      );
 
       const questionId = createResponse.body.data._id;
 
       // 2. Read the question
-      const readResponse = await request(app)
-        .get(`/api/questions/${questionId}`);
+      const readResponse = await request(app).get(
+        `/api/questions/${questionId}`
+      );
 
       expect(readResponse.status).toBe(200);
       expect(readResponse.body.data._id).toBe(questionId);
       expect(readResponse.body.data.title).toBe(questionData.title);
 
       // 3. Get all questions and verify it's included
-      const getAllResponse = await request(app)
-        .get('/api/questions');
+      const getAllResponse = await request(app).get('/api/questions');
 
       expect(getAllResponse.status).toBe(200);
-      expect(getAllResponse.body.data.map((q: any) => q._id)).toContain(questionId);
+      expect(getAllResponse.body.data.map((q: any) => q._id)).toContain(
+        questionId
+      );
 
       // 4. Like the question
       const likeResponse = await request(app)
@@ -115,7 +111,8 @@ describe('Question Workflow Integration Tests', () => {
       // 6. Update the question
       const updateData = {
         title: `Updated Question Lifecycle Test ${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        content: 'This is an updated test question for lifecycle testing that is long enough to meet the minimum requirement of 20 characters.'
+        content:
+          'This is an updated test question for lifecycle testing that is long enough to meet the minimum requirement of 20 characters.',
       };
 
       const updateResponse = await request(app)
@@ -130,8 +127,12 @@ describe('Question Workflow Integration Tests', () => {
       // 7. Verify likes are preserved after update
       const updatedQuestion = await questionRepository.findById(questionId);
       if (!updatedQuestion) throw new Error('updatedQuestion is null');
-      expect(updatedQuestion.likes.map((id: any) => id.toString())).toContain(user1._id.toString());
-      expect(updatedQuestion.likes.map((id: any) => id.toString())).toContain(user2._id.toString());
+      expect(updatedQuestion.likes.map((id: any) => id.toString())).toContain(
+        user1._id.toString()
+      );
+      expect(updatedQuestion.likes.map((id: any) => id.toString())).toContain(
+        user2._id.toString()
+      );
 
       // 8. User2 tries to edit user1's question (should fail)
       const unauthorizedEditResponse = await request(app)
@@ -139,7 +140,7 @@ describe('Question Workflow Integration Tests', () => {
         .set('Authorization', `Bearer ${user2Token}`)
         .send({
           title: 'Unauthorized Edit',
-          content: 'This should not work.'
+          content: 'This should not work.',
         });
 
       expect(unauthorizedEditResponse.status).toBe(403);
@@ -151,11 +152,14 @@ describe('Question Workflow Integration Tests', () => {
 
       expect(deleteResponse.status).toBe(200);
       expect(deleteResponse.body.success).toBe(true);
-      expect(deleteResponse.body.message).toBe('Question delete operation successfull');
+      expect(deleteResponse.body.message).toBe(
+        'Question delete operation successfull'
+      );
 
       // 10. Verify question is deleted
-      const verifyDeleteResponse = await request(app)
-        .get(`/api/questions/${questionId}`);
+      const verifyDeleteResponse = await request(app).get(
+        `/api/questions/${questionId}`
+      );
 
       expect(verifyDeleteResponse.status).toBe(404);
     });
@@ -166,7 +170,8 @@ describe('Question Workflow Integration Tests', () => {
       // Create a question
       const questionData = {
         title: `Like Test Question ${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        content: 'This is a test question for like testing that is long enough to meet the minimum requirement of 20 characters.'
+        content:
+          'This is a test question for like testing that is long enough to meet the minimum requirement of 20 characters.',
       };
 
       const createResponse = await request(app)
@@ -190,7 +195,9 @@ describe('Question Workflow Integration Tests', () => {
         .set('Authorization', `Bearer ${user1Token}`);
 
       expect(duplicateLikeResponse.status).toBe(400);
-      expect(duplicateLikeResponse.body.message).toBe('You already like this question');
+      expect(duplicateLikeResponse.body.message).toBe(
+        'You already like this question'
+      );
 
       // 3. User2 likes the question
       const user2LikeResponse = await request(app)
@@ -206,7 +213,9 @@ describe('Question Workflow Integration Tests', () => {
         .set('Authorization', `Bearer ${user1Token}`);
 
       expect(unlikeResponse.status).toBe(200);
-      expect(unlikeResponse.body.data.likes).not.toContain(user1._id.toString());
+      expect(unlikeResponse.body.data.likes).not.toContain(
+        user1._id.toString()
+      );
       expect(unlikeResponse.body.data.likes).toContain(user2._id.toString());
 
       // 5. User1 tries to unlike again (should fail)
@@ -215,7 +224,9 @@ describe('Question Workflow Integration Tests', () => {
         .set('Authorization', `Bearer ${user1Token}`);
 
       expect(duplicateUnlikeResponse.status).toBe(400);
-      expect(duplicateUnlikeResponse.body.message).toBe('You have not liked this question');
+      expect(duplicateUnlikeResponse.body.message).toBe(
+        'You have not liked this question'
+      );
 
       // 6. User2 unlikes the question
       const user2UnlikeResponse = await request(app)
@@ -234,7 +245,7 @@ describe('Question Workflow Integration Tests', () => {
         .post('/api/questions/ask')
         .send({
           title: 'Test Question',
-          content: 'Test content'
+          content: 'Test content',
         });
 
       expect(unauthorizedResponse.status).toBe(401);
@@ -245,7 +256,7 @@ describe('Question Workflow Integration Tests', () => {
         .set('Authorization', `Bearer ${user1Token}`)
         .send({
           title: 'Short', // Too short
-          content: 'Short' // Too short
+          content: 'Short', // Too short
         });
 
       expect(invalidDataResponse.status).toBe(400);
@@ -255,7 +266,7 @@ describe('Question Workflow Integration Tests', () => {
         .post('/api/questions/ask')
         .set('Authorization', `Bearer ${user1Token}`)
         .send({
-          title: 'Test Question'
+          title: 'Test Question',
           // Missing content
         });
 
@@ -266,8 +277,9 @@ describe('Question Workflow Integration Tests', () => {
       const fakeQuestionId = new mongoose.Types.ObjectId();
 
       // Try to get non-existent question
-      const getResponse = await request(app)
-        .get(`/api/questions/${fakeQuestionId}`);
+      const getResponse = await request(app).get(
+        `/api/questions/${fakeQuestionId}`
+      );
 
       expect(getResponse.status).toBe(404);
 
@@ -277,7 +289,7 @@ describe('Question Workflow Integration Tests', () => {
         .set('Authorization', `Bearer ${user1Token}`)
         .send({
           title: 'Updated Title',
-          content: 'Updated content'
+          content: 'Updated content',
         });
 
       expect(editResponse.status).toBe(404);
@@ -290,4 +302,4 @@ describe('Question Workflow Integration Tests', () => {
       expect(deleteResponse.status).toBe(404);
     });
   });
-}); 
+});

@@ -1,20 +1,20 @@
-import { Request, Response, NextFunction } from "express";
-import asyncErrorWrapper from "express-async-handler";
-import { sendJwtToClient } from "../helpers/authorization/tokenHelpers";
-import { injectable, inject } from "tsyringe";
-import { IAuthService } from "../services/contracts/IAuthService";
-import { AuthConstants } from "./constants/ControllerMessages";
-import { AuthManager } from "../services/managers/AuthManager";
-import { ILoggerProvider } from "../infrastructure/logging/ILoggerProvider";
-import { IAuditProvider } from "../infrastructure/audit/IAuditProvider";
-import type { RegisterDTO } from "../types/dto/auth/register.dto";
-import type { LoginDTO } from "../types/dto/auth/login.dto";
-import type { ForgotPasswordDTO } from "../types/dto/auth/forgot-password.dto";
-import type { ResetPasswordDTO } from "../types/dto/auth/reset-password.dto";
-import type { AuthTokenResponseDTO } from "../types/dto/auth/auth-token.response.dto";
-import type { SuccessResponseDTO } from "../types/dto/common/success-response.dto";
-import type { IUserModel } from "../models/interfaces/IUserModel";
-import { normalizeLocale, i18n } from "../types/i18n";
+import { Request, Response, NextFunction } from 'express';
+import asyncErrorWrapper from 'express-async-handler';
+import { sendJwtToClient } from '../helpers/authorization/tokenHelpers';
+import { injectable, inject } from 'tsyringe';
+import { IAuthService } from '../services/contracts/IAuthService';
+import { AuthConstants } from './constants/ControllerMessages';
+import { AuthManager } from '../services/managers/AuthManager';
+import { ILoggerProvider } from '../infrastructure/logging/ILoggerProvider';
+import { IAuditProvider } from '../infrastructure/audit/IAuditProvider';
+import type { RegisterDTO } from '../types/dto/auth/register.dto';
+import type { LoginDTO } from '../types/dto/auth/login.dto';
+import type { ForgotPasswordDTO } from '../types/dto/auth/forgot-password.dto';
+import type { ResetPasswordDTO } from '../types/dto/auth/reset-password.dto';
+import type { AuthTokenResponseDTO } from '../types/dto/auth/auth-token.response.dto';
+import type { SuccessResponseDTO } from '../types/dto/common/success-response.dto';
+import type { IUserModel } from '../models/interfaces/IUserModel';
+import { normalizeLocale, i18n } from '../types/i18n';
 
 interface AuthenticatedRequest extends Request {
   user?: {
@@ -27,9 +27,9 @@ interface AuthenticatedRequest extends Request {
 @injectable()
 export class AuthController {
   constructor(
-    @inject("AuthService") private authService: IAuthService,
-    @inject("LoggerProvider") private logger: ILoggerProvider,
-    @inject("AuditProvider") private audit: IAuditProvider
+    @inject('IAuthService') private authService: IAuthService,
+    @inject('ILoggerProvider') private logger: ILoggerProvider,
+    @inject('IAuditProvider') private audit: IAuditProvider
   ) {}
 
   googleLogin = asyncErrorWrapper(
@@ -42,7 +42,7 @@ export class AuthController {
       console.log(token);
       const user = await this.authService.googleLogin(token);
       const locale = normalizeLocale(
-        req.headers["accept-language"] as string | undefined
+        req.headers['accept-language'] as string | undefined
       );
       const jwt = AuthManager.generateJWTFromUser({
         id: user._id,
@@ -68,7 +68,7 @@ export class AuthController {
         role,
       });
       const locale = normalizeLocale(
-        req.headers["accept-language"] as string | undefined
+        req.headers['accept-language'] as string | undefined
       );
       const jwt = AuthManager.generateJWTFromUser({
         id: user._id,
@@ -88,24 +88,24 @@ export class AuthController {
       const { email, password } = req.body;
       const user = await this.authService.loginUser(email, password);
       const locale = normalizeLocale(
-        req.headers["accept-language"] as string | undefined
+        req.headers['accept-language'] as string | undefined
       );
       const jwt = AuthManager.generateJWTFromUser({
         id: user._id,
         name: user.name,
         lang: locale,
       });
-      this.logger.info("User logged in", {
+      this.logger.info('User logged in', {
         userId: user._id,
         email: user.email,
         ip: req.ip,
-        context: "AuthController",
+        context: 'AuthController',
       });
       await this.audit.log({
-        action: "USER_LOGIN",
+        action: 'USER_LOGIN',
         actor: { id: user._id, email: user.email, role: user.role },
         ip: req.ip,
-        context: "AuthController",
+        context: 'AuthController',
         details: { userId: user._id, email: user.email },
       });
       sendJwtToClient(jwt, user, res);
@@ -119,12 +119,12 @@ export class AuthController {
       _next: NextFunction
     ): Promise<void> => {
       const { NODE_ENV } = process.env;
-      res.cookie("access_token", "none", {
+      res.cookie('access_token', 'none', {
         httpOnly: true,
         expires: new Date(Date.now()),
-        secure: NODE_ENV === "development" ? false : true,
+        secure: NODE_ENV === 'development' ? false : true,
       });
-      const locale = req.locale ?? "en";
+      const locale = req.locale ?? 'en';
       const message = await i18n(AuthConstants.LogoutSuccess, locale);
       res.status(200).json({
         success: true,
@@ -161,7 +161,7 @@ export class AuthController {
       );
       res.status(200).json({
         success: true,
-        message: "Image uploaded successfully",
+        message: 'Image uploaded successfully',
         data: user,
       });
     }
@@ -176,7 +176,7 @@ export class AuthController {
       const { email } = req.body;
       // Use Accept-Language header since this is a public route (no JWT)
       const userLocale = normalizeLocale(
-        req.headers["accept-language"] as string | undefined
+        req.headers['accept-language'] as string | undefined
       );
       await this.authService.forgotPassword(email, userLocale);
       const message = await i18n(
@@ -200,7 +200,7 @@ export class AuthController {
       await this.authService.resetPassword(token, newPassword);
       const message = await i18n(
         AuthConstants.PasswordResetSuccess,
-        req.locale ?? "en"
+        req.locale ?? 'en'
       );
       res.status(200).json({
         success: true,

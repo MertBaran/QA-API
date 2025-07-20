@@ -10,7 +10,7 @@ import { AnswerRepository } from '../../repositories/AnswerRepository';
 const envPath = path.resolve(__dirname, '../../config/env/config.env.test');
 require('dotenv').config({ path: envPath });
 
-const TEST_MONGO_URI = process.env["MONGO_URI"];
+const TEST_MONGO_URI = process.env['MONGO_URI'];
 
 if (!TEST_MONGO_URI) {
   console.error('MONGO_URI is not defined in environment variables');
@@ -20,9 +20,10 @@ if (!TEST_MONGO_URI) {
 async function checkTestDatabase() {
   try {
     await mongoose.connect(TEST_MONGO_URI as string);
-    console.log('Test MongoDB\'ye bağlandı (question-answer-test)');
+    console.log("Test MongoDB'ye bağlandı (question-answer-test)");
     const userRepo = container.resolve<UserRepository>('UserRepository');
-    const questionRepo = container.resolve<QuestionRepository>('QuestionRepository');
+    const questionRepo =
+      container.resolve<QuestionRepository>('QuestionRepository');
     const answerRepo = container.resolve<AnswerRepository>('AnswerRepository');
     const userCount = await userRepo.countAll();
     const questionCount = await questionRepo.countAll();
@@ -33,8 +34,10 @@ async function checkTestDatabase() {
     console.log(`- Cevaplar: ${answerCount}`);
     // Test kullanıcılarını kontrol et
     const allUsers = await userRepo.findAll();
-    const testUsers = allUsers.filter((user: any) =>
-      /spike\d+@example\.com/.test(user.email) || /test\d+@example\.com/.test(user.email)
+    const testUsers = allUsers.filter(
+      (user: any) =>
+        /spike\d+@example\.com/.test(user.email) ||
+        /test\d+@example\.com/.test(user.email)
     );
     console.log(`\nTest Kullanıcıları:`);
     console.log(`- Bulunan test kullanıcısı: ${testUsers.length}`);
@@ -55,4 +58,4 @@ async function checkTestDatabase() {
 
 if (require.main === module) {
   checkTestDatabase();
-} 
+}

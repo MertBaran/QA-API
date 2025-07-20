@@ -5,7 +5,7 @@ export class MongoAuditProvider implements IAuditProvider {
   async log(entry: AuditLogEntry): Promise<void> {
     await AuditLogMongo.create({
       ...entry,
-      timestamp: entry.timestamp || new Date()
+      timestamp: entry.timestamp || new Date(),
     });
   }
-} 
+}

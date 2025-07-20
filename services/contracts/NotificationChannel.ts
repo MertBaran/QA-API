@@ -1,4 +1,4 @@
-import { NotificationPayload } from "./NotificationPayload";
+import { NotificationPayload } from './NotificationPayload';
 
 export abstract class NotificationChannel {
   abstract readonly type: string;
@@ -8,4 +8,4 @@ export abstract class NotificationChannel {
   isType(type: string): boolean {
     return this.type === type;
   }
-} 
+}

@@ -1,15 +1,18 @@
 import 'reflect-metadata';
-import { NotificationService } from '../../../services/notification/NotificationService';
+import { NotificationManager } from '../../../services/managers/NotificationManager';
 import { FakeNotificationProvider } from '../../mocks/notification/FakeNotificationProvider';
-import { INotificationProvider, NotificationPayload } from '../../../services/notification/INotificationProvider';
+import { INotificationProvider } from '../../../services/notification/INotificationProvider';
+import { NotificationPayload } from '../../../services/contracts/NotificationPayload';
 
-describe('NotificationService Unit Tests', () => {
-  let notificationService: NotificationService;
+describe('NotificationManager Unit Tests', () => {
+  let notificationManager: NotificationManager;
   let fakeNotificationProvider: INotificationProvider;
 
   beforeEach(() => {
     fakeNotificationProvider = new FakeNotificationProvider();
-    notificationService = new NotificationService(fakeNotificationProvider);
+    notificationManager = new NotificationManager(
+      fakeNotificationProvider as any
+    );
   });
 
   it('should send email notification', async () => {
@@ -17,19 +20,21 @@ describe('NotificationService Unit Tests', () => {
       to: 'test@example.com',
       subject: 'Test',
       message: 'Hello',
-      channel: 'email'
+      channel: 'email',
     };
-    await expect(notificationService.send(payload)).resolves.toBeUndefined();
+    await expect(notificationManager.notify(payload)).resolves.toBeUndefined();
     expect((fakeNotificationProvider as any).sent.length).toBe(1);
-    expect((fakeNotificationProvider as any).sent[0].to).toBe('test@example.com');
+    expect((fakeNotificationProvider as any).sent[0].to).toBe(
+      'test@example.com'
+    );
   });
 
   it('should throw for unsupported channel', async () => {
     const payload: NotificationPayload = {
       to: 'test@example.com',
       message: 'Hello',
-      channel: 'sms'
+      channel: 'sms',
     };
-    await expect(notificationService.send(payload)).rejects.toThrow();
+    await expect(notificationManager.notify(payload)).rejects.toThrow();
   });
-}); 
+});

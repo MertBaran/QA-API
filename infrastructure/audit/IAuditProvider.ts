@@ -37,4 +37,4 @@ export interface AuditLogEntry {
 
 export interface IAuditProvider {
   log(entry: AuditLogEntry): Promise<void>;
-} 
+}

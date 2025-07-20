@@ -1,74 +1,108 @@
-import { Model } from "mongoose";
-import { IEntityModel } from "../interfaces/IEntityModel";
+import { Model } from 'mongoose';
+import { IEntityModel } from '../interfaces/IEntityModel';
 import CustomError from '../../helpers/error/CustomError';
 
 export class MongooseModelAdapter<T> implements IEntityModel<T> {
-  constructor(private readonly model: Model<T>) {}
+  constructor(private model: Model<T>) {}
 
-  create(data: Partial<T>) {
+  async create(data: Partial<T>): Promise<any> {
     try {
-      return this.model.create(data);
-    } catch (err) {
-      throw new CustomError('Database error in MongooseModelAdapter.create', 500);
+      return await this.model.create(data);
+    } catch (_err) {
+      throw new CustomError(
+        'Database error in MongooseModelAdapter.create',
+        500
+      );
     }
   }
-  findById(id: string) {
+
+  async findById(id: string): Promise<any> {
     try {
-      return this.model.findById(id);
-    } catch (err) {
-      throw new CustomError('Database error in MongooseModelAdapter.findById', 500);
+      return await this.model.findById(id);
+    } catch (_err) {
+      throw new CustomError(
+        'Database error in MongooseModelAdapter.findById',
+        500
+      );
     }
   }
-  find(query?: any) {
+
+  async find(query?: any): Promise<any[]> {
     try {
-      return this.model.find(query);
-    } catch (err) {
+      return await this.model.find(query);
+    } catch (_err) {
       throw new CustomError('Database error in MongooseModelAdapter.find', 500);
     }
   }
-  findByIdAndUpdate(id: string, data: Partial<T>, options?: any) {
+
+  async findByIdAndUpdate(
+    id: string,
+    data: Partial<T>,
+    options?: any
+  ): Promise<any> {
     try {
-      return this.model.findByIdAndUpdate(id, data, options);
-    } catch (err) {
-      throw new CustomError('Database error in MongooseModelAdapter.findByIdAndUpdate', 500);
+      return await this.model.findByIdAndUpdate(id, data, options);
+    } catch (_err) {
+      throw new CustomError(
+        'Database error in MongooseModelAdapter.findByIdAndUpdate',
+        500
+      );
     }
   }
-  findByIdAndDelete(id: string) {
+
+  async findByIdAndDelete(id: string): Promise<any> {
     try {
-      return this.model.findByIdAndDelete(id);
-    } catch (err) {
-      throw new CustomError('Database error in MongooseModelAdapter.findByIdAndDelete', 500);
+      return await this.model.findByIdAndDelete(id);
+    } catch (_err) {
+      throw new CustomError(
+        'Database error in MongooseModelAdapter.findByIdAndDelete',
+        500
+      );
     }
   }
-  countDocuments() {
+
+  async countDocuments(): Promise<number> {
     try {
-      return this.model.countDocuments();
-    } catch (err) {
-      throw new CustomError('Database error in MongooseModelAdapter.countDocuments', 500);
+      return await this.model.countDocuments();
+    } catch (_err) {
+      throw new CustomError(
+        'Database error in MongooseModelAdapter.countDocuments',
+        500
+      );
     }
   }
-  deleteMany(filter?: any) {
+
+  async deleteMany(filter?: any): Promise<any> {
     try {
-      return this.model.deleteMany(filter);
-    } catch (err) {
-      throw new CustomError('Database error in MongooseModelAdapter.deleteMany', 500);
+      return await this.model.deleteMany(filter);
+    } catch (_err) {
+      throw new CustomError(
+        'Database error in MongooseModelAdapter.deleteMany',
+        500
+      );
     }
   }
-  findOne(query: any) {
+
+  async findOne(query: any): Promise<any> {
     try {
-      return this.model.findOne(query);
-    } catch (err) {
-      throw new CustomError('Database error in MongooseModelAdapter.findOne', 500);
+      return await this.model.findOne(query);
+    } catch (_err) {
+      throw new CustomError(
+        'Database error in MongooseModelAdapter.findOne',
+        500
+      );
     }
   }
-  select(fields: string) {
-    // Mongoose Model'de select doğrudan yok, query objesinde var
-    // Burada sadece örnek olması için, gerçek kullanımda query döndürülmeli
-    return this.model as any;
-  }
-  populate(path: string, select?: string) {
+
+  populate(_fields: string): any {
     // Mongoose Model'de populate doğrudan yok, query objesinde var
     // Burada sadece örnek olması için, gerçek kullanımda query döndürülmeli
     return this.model as any;
   }
-} 
+
+  select(_fields: string): any {
+    // Mongoose Model'de select doğrudan yok, query objesinde var
+    // Burada sadece örnek olması için, gerçek kullanımda query döndürülmeli
+    return this.model as any;
+  }
+}

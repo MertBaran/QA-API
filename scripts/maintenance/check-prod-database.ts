@@ -7,9 +7,11 @@ import { UserRepository } from '../../repositories/UserRepository';
 import { QuestionRepository } from '../../repositories/QuestionRepository';
 import { AnswerRepository } from '../../repositories/AnswerRepository';
 
-require('dotenv').config({ path: path.resolve(__dirname, '../../config/env/config.env') });
+require('dotenv').config({
+  path: path.resolve(__dirname, '../../config/env/config.env'),
+});
 
-const PROD_MONGO_URI = process.env["MONGO_URI"];
+const PROD_MONGO_URI = process.env['MONGO_URI'];
 
 if (!PROD_MONGO_URI) {
   console.error('MONGO_URI is not defined in environment variables');
@@ -19,9 +21,10 @@ if (!PROD_MONGO_URI) {
 async function checkProdDatabase() {
   try {
     await mongoose.connect(PROD_MONGO_URI as string);
-    console.log('Prod MongoDB\'ye bağlandı (question-answer)');
+    console.log("Prod MongoDB'ye bağlandı (question-answer)");
     const userRepo = container.resolve<UserRepository>('UserRepository');
-    const questionRepo = container.resolve<QuestionRepository>('QuestionRepository');
+    const questionRepo =
+      container.resolve<QuestionRepository>('QuestionRepository');
     const answerRepo = container.resolve<AnswerRepository>('AnswerRepository');
     const userCount = await userRepo.countAll();
     const questionCount = await questionRepo.countAll();
@@ -40,4 +43,4 @@ async function checkProdDatabase() {
 
 if (require.main === module) {
   checkProdDatabase();
-} 
+}

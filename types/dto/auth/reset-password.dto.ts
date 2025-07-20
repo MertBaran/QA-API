@@ -5,4 +5,4 @@ export const ResetPasswordSchema = z.object({
   newPassword: z.string().min(6),
 });
 
-export type ResetPasswordDTO = z.infer<typeof ResetPasswordSchema>; 
+export type ResetPasswordDTO = z.infer<typeof ResetPasswordSchema>;

@@ -4,4 +4,4 @@ export interface SuccessResponseDTO<T = EmptyObject> {
   success: true;
   message?: string;
   data?: T;
-} 
+}

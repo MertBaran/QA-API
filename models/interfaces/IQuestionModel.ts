@@ -9,4 +9,4 @@ export interface IQuestionModel {
   user: EntityId;
   likes: EntityId[];
   answers: EntityId[];
-} 
+}

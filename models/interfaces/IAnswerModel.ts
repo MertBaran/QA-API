@@ -7,4 +7,4 @@ export interface IAnswerModel {
   question: EntityId;
   likes: EntityId[];
   createdAt?: Date;
-} 
+}

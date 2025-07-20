@@ -7,4 +7,4 @@ export interface MailOptions {
 
 export interface IEmailService {
   sendEmail(mailOptions: MailOptions): Promise<any>;
-} 
+}

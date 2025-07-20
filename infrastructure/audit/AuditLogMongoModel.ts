@@ -11,8 +11,11 @@ const AuditLogSchema = new Schema<IAuditLogMongo>({
   action: { type: String, required: true },
   details: { type: Schema.Types.Mixed, required: true },
   context: { type: String },
-  timestamp: { type: Date, default: Date.now }
+  timestamp: { type: Date, default: Date.now },
 });
 
-const AuditLogMongo = mongoose.model<IAuditLogMongo>('AuditLog', AuditLogSchema);
-export default AuditLogMongo; 
+const AuditLogMongo = mongoose.model<IAuditLogMongo>(
+  'AuditLog',
+  AuditLogSchema
+);
+export default AuditLogMongo;

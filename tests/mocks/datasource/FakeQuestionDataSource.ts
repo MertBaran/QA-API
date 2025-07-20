@@ -6,7 +6,8 @@ export class FakeQuestionDataSource implements IDataSource<IQuestionModel> {
   private store: Map<string, IQuestionModel> = new Map();
 
   async create(data: Partial<IQuestionModel>): Promise<IQuestionModel> {
-    const _id = (data._id || Math.random().toString(36).substr(2, 9)) as EntityId;
+    const _id = (data._id ||
+      Math.random().toString(36).substr(2, 9)) as EntityId;
     const question: IQuestionModel = {
       _id,
       title: data.title || '',
@@ -16,7 +17,7 @@ export class FakeQuestionDataSource implements IDataSource<IQuestionModel> {
       user: data.user as EntityId,
       likes: data.likes || [],
       answers: data.answers || [],
-      ...data
+      ...data,
     };
     this.store.set(_id, question);
     return question;
@@ -30,7 +31,10 @@ export class FakeQuestionDataSource implements IDataSource<IQuestionModel> {
     return Array.from(this.store.values());
   }
 
-  async updateById(id: string, data: Partial<IQuestionModel>): Promise<IQuestionModel | null> {
+  async updateById(
+    id: string,
+    data: Partial<IQuestionModel>
+  ): Promise<IQuestionModel | null> {
     const question = this.store.get(id);
     if (!question) return null;
     const updated = { ...question, ...data };
@@ -54,4 +58,4 @@ export class FakeQuestionDataSource implements IDataSource<IQuestionModel> {
     this.store.clear();
     return count;
   }
-} 
+}

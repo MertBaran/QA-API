@@ -4,4 +4,4 @@ export interface IBaseModel {
   _id?: EntityId;
   createdAt?: Date;
   updatedAt?: Date;
-} 
+}

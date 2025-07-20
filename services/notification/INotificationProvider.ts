@@ -9,4 +9,4 @@ export interface NotificationPayload {
 
 export interface INotificationProvider {
   sendNotification(payload: NotificationPayload): Promise<void>;
-} 
+}

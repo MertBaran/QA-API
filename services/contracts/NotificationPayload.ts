@@ -1,4 +1,4 @@
-export type NotificationChannel = "email" | "push" | "sms";
+export type NotificationChannel = 'email' | 'push' | 'sms';
 
 export interface NotificationPayload {
   channel: NotificationChannel;
@@ -7,4 +7,4 @@ export interface NotificationPayload {
   message: string;
   html?: string;
   data?: any;
-} 
+}

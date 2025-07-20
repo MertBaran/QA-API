@@ -1,29 +1,26 @@
-import { IUserModel } from "../../models/interfaces/IUserModel";
-import CustomError from "../../helpers/error/CustomError";
-import {
-  validateUserInput,
-  comparePassword,
-} from "../../helpers/input/inputHelpers";
-import { OAuth2Client } from "google-auth-library";
-import { injectable, inject } from "tsyringe";
-import { IUserRepository } from "../../repositories/interfaces/IUserRepository";
-import { EntityId } from "../../types/database";
-import jwt from "jsonwebtoken";
-import crypto from "crypto";
-import { IAuthService } from "../contracts/IAuthService";
-import { INotificationService } from "../contracts/INotificationService";
+import { IUserModel } from '../../models/interfaces/IUserModel';
+import CustomError from '../../helpers/error/CustomError';
+import { comparePassword } from '../../helpers/input/inputHelpers';
+import { OAuth2Client } from 'google-auth-library';
+import { injectable, inject } from 'tsyringe';
+import { IUserRepository } from '../../repositories/interfaces/IUserRepository';
+import { EntityId } from '../../types/database';
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import { IAuthService } from '../contracts/IAuthService';
+import { INotificationService } from '../contracts/INotificationService';
 import {
   AuthServiceMessages,
   EmailTemplates,
-} from "../constants/ServiceMessages";
+} from '../constants/ServiceMessages';
 
-const client = new OAuth2Client(process.env["GOOGLE_CLIENT_ID"]);
+const client = new OAuth2Client(process.env['GOOGLE_CLIENT_ID']);
 
 @injectable()
 export class AuthManager implements IAuthService {
   constructor(
-    @inject("UserRepository") private userRepository: IUserRepository,
-    @inject("NotificationService")
+    @inject('IUserRepository') private userRepository: IUserRepository,
+    @inject('INotificationService')
     private notificationService: INotificationService
   ) {}
 
@@ -32,7 +29,7 @@ export class AuthManager implements IAuthService {
     lastName: string;
     email: string;
     password: string;
-    role?: "user" | "admin";
+    role?: 'user' | 'admin';
   }): Promise<IUserModel> {
     const { firstName, lastName, email, password, role } = userData;
     try {
@@ -48,7 +45,7 @@ export class AuthManager implements IAuthService {
         role,
       });
       return user;
-    } catch (err) {
+    } catch (_err) {
       throw new CustomError(AuthServiceMessages.RegistrationDbError.en, 500);
     }
   }
@@ -64,10 +61,10 @@ export class AuthManager implements IAuthService {
         throw new CustomError(AuthServiceMessages.InvalidCredentials.en, 400);
       }
       return user;
-    } catch (err) {
+    } catch (_err) {
       // Re-throw CustomErrors as-is
-      if (err instanceof CustomError) {
-        throw err;
+      if (_err instanceof CustomError) {
+        throw _err;
       }
       // Only catch actual database errors
       throw new CustomError(AuthServiceMessages.LoginDbError.en, 500);
@@ -78,7 +75,7 @@ export class AuthManager implements IAuthService {
     try {
       const ticket = await client.verifyIdToken({
         idToken: token,
-        audience: process.env["GOOGLE_CLIENT_ID"],
+        audience: process.env['GOOGLE_CLIENT_ID'],
       });
       const payload = ticket.getPayload();
       if (!payload) {
@@ -97,12 +94,12 @@ export class AuthManager implements IAuthService {
         });
       }
       return user;
-    } catch (err) {
+    } catch (_err) {
       throw new CustomError(AuthServiceMessages.GoogleLoginFailed.en, 401);
     }
   }
 
-  async forgotPassword(email: string, locale: string = "en"): Promise<void> {
+  async forgotPassword(email: string, locale: string = 'en'): Promise<void> {
     try {
       const user = await this.userRepository.findByEmail(email);
       if (!user) {
@@ -113,14 +110,14 @@ export class AuthManager implements IAuthService {
         resetPasswordToken: token,
         resetPasswordExpire: expire,
       });
-      const clientUrl = process.env["CLIENT_URL"] || "https://localhost:3001";
+      const clientUrl = process.env['CLIENT_URL'] || 'https://localhost:3001';
       const resetPasswordUrl = `${clientUrl}/reset-password?token=${token}`;
 
       // Select template and subject based on locale
-      const supportedLocales = ["en", "tr", "de"] as const;
+      const supportedLocales = ['en', 'tr', 'de'] as const;
       const selectedLocale = supportedLocales.includes(locale as any)
-        ? (locale as "en" | "tr" | "de")
-        : "en";
+        ? (locale as 'en' | 'tr' | 'de')
+        : 'en';
 
       const emailTemplate =
         EmailTemplates.ResetPasswordTemplate[selectedLocale](resetPasswordUrl);
@@ -129,17 +126,17 @@ export class AuthManager implements IAuthService {
 
       try {
         await this.notificationService.notify({
-          channel: "email",
+          channel: 'email',
           to: email,
           subject: emailSubject,
-          message: "",
+          message: '',
           html: emailTemplate,
         });
-      } catch (error) {
+      } catch (_err) {
         await this.userRepository.clearResetToken(user._id);
         throw new CustomError(AuthServiceMessages.EmailSendError.en, 500);
       }
-    } catch (err) {
+    } catch (_err) {
       throw new CustomError(AuthServiceMessages.ForgotPasswordDbError.en, 500);
     }
   }
@@ -158,7 +155,7 @@ export class AuthManager implements IAuthService {
         resetPasswordToken: undefined,
         resetPasswordExpire: undefined,
       });
-    } catch (err) {
+    } catch (_err) {
       throw new CustomError(AuthServiceMessages.ResetPasswordDbError.en, 500);
     }
   }
@@ -175,7 +172,7 @@ export class AuthManager implements IAuthService {
         throw new CustomError(AuthServiceMessages.UserNotFound.en, 404);
       }
       return user;
-    } catch (err) {
+    } catch (_err) {
       throw new CustomError(
         AuthServiceMessages.ProfileImageUpdateDbError.en,
         500
@@ -190,7 +187,7 @@ export class AuthManager implements IAuthService {
         throw new CustomError(AuthServiceMessages.UserNotFound.en, 404);
       }
       return user;
-    } catch (err) {
+    } catch (_err) {
       throw new CustomError(AuthServiceMessages.GetUserDbError.en, 500);
     }
   }
@@ -198,25 +195,25 @@ export class AuthManager implements IAuthService {
   static generateJWTFromUser(user: {
     id: string;
     name: string;
-    lang: "en" | "tr" | "de";
+    lang: 'en' | 'tr' | 'de';
   }): string {
-    const secret = (process.env["JWT_SECRET_KEY"] ||
-      "default_secret") as jwt.Secret;
-    const expires: string | number = process.env["JWT_EXPIRE"] ?? "1d";
+    const secret = (process.env['JWT_SECRET_KEY'] ||
+      'default_secret') as jwt.Secret;
+    const expires: string | number = process.env['JWT_EXPIRE'] ?? '1d';
     return jwt.sign({ id: user.id, name: user.name, lang: user.lang }, secret, {
       expiresIn: expires,
     } as jwt.SignOptions);
   }
 
   static generateResetPasswordToken(): { token: string; expire: Date } {
-    const randomHexString = crypto.randomBytes(15).toString("hex");
+    const randomHexString = crypto.randomBytes(15).toString('hex');
     const { RESET_PASSWORD_EXPIRE } = process.env;
     const resetPasswordToken = crypto
-      .createHash("SHA256")
+      .createHash('SHA256')
       .update(randomHexString)
-      .digest("hex");
+      .digest('hex');
     const resetPasswordExpire = new Date(
-      Date.now() + parseInt(RESET_PASSWORD_EXPIRE || "3600") * 1000
+      Date.now() + parseInt(RESET_PASSWORD_EXPIRE || '3600') * 1000
     );
     return { token: resetPasswordToken, expire: resetPasswordExpire };
   }

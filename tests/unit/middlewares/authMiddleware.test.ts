@@ -47,10 +47,10 @@ describe('authMiddleware - getAccessToRoute', () => {
   });
 
   it('should call next with error if JWT_SECRET_KEY is missing', () => {
-    process.env["JWT_SECRET_KEY"] = '';
+    process.env['JWT_SECRET_KEY'] = '';
     req.headers.authorization = 'Bearer sometoken';
     getAccessToRoute(req, res, next);
     expect(next).toHaveBeenCalledWith(expect.any(CustomError));
     expect((next.mock.calls[0][0] as CustomError).statusCode).toBe(500);
   });
-}); 
+});

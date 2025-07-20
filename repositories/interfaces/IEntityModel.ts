@@ -9,4 +9,4 @@ export interface IEntityModel<T> {
   findOne(query: any): Promise<any>;
   select?(fields: string): any;
   populate?(path: string, select?: string): any;
-} 
+}
