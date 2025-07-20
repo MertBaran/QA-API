@@ -79,3 +79,61 @@ export const AuthConstants = {
     de: 'Passwort erfolgreich zurückgesetzt',
   },
 };
+
+export const NotificationConstants = {
+  NotificationSentSuccess: {
+    en: 'Notification sent successfully',
+    tr: 'Bildirim başarıyla gönderildi',
+    de: 'Benachrichtigung erfolgreich gesendet',
+  },
+  NotificationsSentSuccess: {
+    en: 'Notifications sent successfully',
+    tr: 'Bildirimler başarıyla gönderildi',
+    de: 'Benachrichtigungen erfolgreich gesendet',
+  },
+  NotificationSendError: {
+    en: 'Error occurred while sending notification',
+    tr: 'Bildirim gönderilirken hata oluştu',
+    de: 'Fehler beim Senden der Benachrichtigung',
+  },
+  NotificationsSendError: {
+    en: 'Error occurred while sending notifications',
+    tr: 'Bildirimler gönderilirken hata oluştu',
+    de: 'Fehler beim Senden der Benachrichtigungen',
+  },
+  PreferencesGetError: {
+    en: 'Error occurred while getting notification preferences',
+    tr: 'Bildirim tercihleri alınırken hata oluştu',
+    de: 'Fehler beim Abrufen der Benachrichtigungseinstellungen',
+  },
+  PreferencesUpdateError: {
+    en: 'Error occurred while updating notification preferences',
+    tr: 'Bildirim tercihleri güncellenirken hata oluştu',
+    de: 'Fehler beim Aktualisieren der Benachrichtigungseinstellungen',
+  },
+  PreferencesUpdateSuccess: {
+    en: 'Notification preferences updated successfully',
+    tr: 'Bildirim tercihleri başarıyla güncellendi',
+    de: 'Benachrichtigungseinstellungen erfolgreich aktualisiert',
+  },
+  TestNotificationSentSuccess: {
+    en: 'Test notification sent successfully',
+    tr: 'Test bildirimi başarıyla gönderildi',
+    de: 'Testbenachrichtigung erfolgreich gesendet',
+  },
+  TestNotificationSendError: {
+    en: 'Error occurred while sending test notification',
+    tr: 'Test bildirimi gönderilirken hata oluştu',
+    de: 'Fehler beim Senden der Testbenachrichtigung',
+  },
+  UserIdRequired: {
+    en: 'User ID is required',
+    tr: 'User ID gerekli',
+    de: 'Benutzer-ID ist erforderlich',
+  },
+  UnknownError: {
+    en: 'Unknown error',
+    tr: 'Bilinmeyen hata',
+    de: 'Unbekannter Fehler',
+  },
+};

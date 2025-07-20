@@ -1,21 +1,22 @@
-import { injectable, inject } from 'tsyringe';
+import { injectable } from 'tsyringe';
 import {
   INotificationProvider,
   NotificationPayload,
 } from './INotificationProvider';
-import { IEmailService, MailOptions } from '../contracts/IEmailService';
+import { createSMTPTransporter } from '../../helpers/smtp/smtpConfig';
 
 @injectable()
 export class EmailNotificationProvider implements INotificationProvider {
-  constructor(@inject('IEmailService') private emailService: IEmailService) {}
-
   async sendNotification(payload: NotificationPayload): Promise<void> {
-    const mailOptions: MailOptions = {
+    const transporter = createSMTPTransporter();
+
+    const mailOptions = {
       from: process.env['SMTP_USER'] || '',
       to: payload.to,
       subject: payload.subject || 'Notification',
       html: payload.html || payload.message,
     };
-    await this.emailService.sendEmail(mailOptions);
+
+    await transporter.sendMail(mailOptions);
   }
 }

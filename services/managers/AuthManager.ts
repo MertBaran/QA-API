@@ -13,6 +13,7 @@ import {
   AuthServiceMessages,
   EmailTemplates,
 } from '../constants/ServiceMessages';
+import { getLanguageOrDefault } from '../../constants/supportedLanguages';
 
 const client = new OAuth2Client(process.env['GOOGLE_CLIENT_ID']);
 
@@ -114,10 +115,7 @@ export class AuthManager implements IAuthService {
       const resetPasswordUrl = `${clientUrl}/reset-password?token=${token}`;
 
       // Select template and subject based on locale
-      const supportedLocales = ['en', 'tr', 'de'] as const;
-      const selectedLocale = supportedLocales.includes(locale as any)
-        ? (locale as 'en' | 'tr' | 'de')
-        : 'en';
+      const selectedLocale = getLanguageOrDefault(locale);
 
       const emailTemplate =
         EmailTemplates.ResetPasswordTemplate[selectedLocale](resetPasswordUrl);
@@ -125,12 +123,12 @@ export class AuthManager implements IAuthService {
         AuthServiceMessages.ResetPasswordEmailSubject[selectedLocale];
 
       try {
-        await this.notificationService.notify({
-          channel: 'email',
-          to: email,
+        // Yeni multi-channel notification sistemi kullan
+        await this.notificationService.notifyUser(user._id.toString(), {
           subject: emailSubject,
-          message: '',
+          message: 'Şifre sıfırlama isteği',
           html: emailTemplate,
+          data: { resetUrl: resetPasswordUrl },
         });
       } catch (_err) {
         await this.userRepository.clearResetToken(user._id);
@@ -195,7 +193,7 @@ export class AuthManager implements IAuthService {
   static generateJWTFromUser(user: {
     id: string;
     name: string;
-    lang: 'en' | 'tr' | 'de';
+    lang: string;
   }): string {
     const secret = (process.env['JWT_SECRET_KEY'] ||
       'default_secret') as jwt.Secret;

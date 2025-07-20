@@ -2,19 +2,19 @@ import 'reflect-metadata';
 import { AuthManager } from '../../../services/managers/AuthManager';
 import { UserRepository } from '../../../repositories/UserRepository';
 import { FakeUserDataSource } from '../../mocks/datasource/FakeUserDataSource';
-import { FakeEmailService } from '../../mocks/email/FakeEmailService';
+import { FakeNotificationService } from '../../mocks/email/FakeNotificationService';
 
 describe('AuthService Unit Tests', () => {
   let authService: AuthManager;
   let userRepository: UserRepository;
   let fakeUserDataSource: FakeUserDataSource;
-  let fakeEmailService: FakeEmailService;
+  let fakeNotificationService: FakeNotificationService;
 
   beforeEach(() => {
     fakeUserDataSource = new FakeUserDataSource();
     userRepository = new UserRepository(fakeUserDataSource);
-    fakeEmailService = new FakeEmailService();
-    authService = new AuthManager(userRepository, fakeEmailService);
+    fakeNotificationService = new FakeNotificationService();
+    authService = new AuthManager(userRepository, fakeNotificationService);
   });
 
   it('should register a new user', async () => {

@@ -8,10 +8,15 @@ import { AuthManager } from './managers/AuthManager';
 import { QuestionManager } from './managers/QuestionManager';
 import { AnswerManager } from './managers/AnswerManager';
 import { AdminManager } from './managers/AdminManager';
-import { EmailManager } from './managers/EmailManager';
+
 import { NotificationManager } from './managers/NotificationManager';
+import { MultiChannelNotificationManager } from './managers/MultiChannelNotificationManager';
+import { NotificationChannelRegistry } from './managers/NotificationChannelRegistry';
 import { EmailNotificationHandler } from './managers/EmailNotificationHandler';
 import { EmailChannel } from './managers/EmailChannel';
+import { SMSChannel } from './managers/SMSChannel';
+import { PushChannel } from './managers/PushChannel';
+import { WebhookChannel } from './managers/WebhookChannel';
 import { EmailNotificationProvider } from './notification/EmailNotificationProvider';
 import { PinoLoggerProvider } from '../infrastructure/logging/PinoLoggerProvider';
 import { RedisCacheProvider } from '../infrastructure/cache/RedisCacheProvider';
@@ -32,6 +37,7 @@ import { UserController } from '../controllers/userController';
 import { AdminController } from '../controllers/adminController';
 import { QuestionController } from '../controllers/questionController';
 import { AnswerController } from '../controllers/answerController';
+import { NotificationController } from '../controllers/notificationController';
 
 // Register core services first
 container.registerSingleton('BootstrapService', BootstrapService);
@@ -64,15 +70,29 @@ container.registerSingleton('IAuthService', AuthManager);
 container.registerSingleton('IQuestionService', QuestionManager);
 container.registerSingleton('IAnswerService', AnswerManager);
 container.registerSingleton('IAdminService', AdminManager);
-container.registerSingleton('IEmailService', EmailManager);
-container.registerSingleton('INotificationService', NotificationManager);
 
 // Register notification services
+container.registerSingleton(
+  'INotificationChannelRegistry',
+  NotificationChannelRegistry
+);
+container.registerSingleton(
+  'INotificationService',
+  MultiChannelNotificationManager
+);
+
+// Register notification channels
+container.registerSingleton('IEmailChannel', EmailChannel);
+container.registerSingleton('ISMSChannel', SMSChannel);
+container.registerSingleton('IPushChannel', PushChannel);
+container.registerSingleton('IWebhookChannel', WebhookChannel);
+
+// Register legacy notification services (for backward compatibility)
+container.registerSingleton('LegacyNotificationManager', NotificationManager);
 container.registerSingleton(
   'IEmailNotificationHandler',
   EmailNotificationHandler
 );
-container.registerSingleton('IEmailChannel', EmailChannel);
 container.registerSingleton('INotificationProvider', EmailNotificationProvider);
 
 // Register legacy services (for backward compatibility)
@@ -106,5 +126,6 @@ container.registerSingleton('UserController', UserController);
 container.registerSingleton('AdminController', AdminController);
 container.registerSingleton('QuestionController', QuestionController);
 container.registerSingleton('AnswerController', AnswerController);
+container.registerSingleton('NotificationController', NotificationController);
 
 export { container, config };

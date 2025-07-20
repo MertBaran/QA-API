@@ -35,7 +35,12 @@
     "analyze": "ts-node performance/analyze-results.ts",
     "analyze:latest": "ts-node performance/analyze-results.ts latest",
     "analyze:list": "ts-node performance/analyze-results.ts list",
-    "analyze:compare": "ts-node performance/analyze-results.ts compare"
+    "analyze:compare": "ts-node performance/analyze-results.ts compare",
+    "smtp:setup": "node scripts/smtp/setup-smtp.js",
+    "smtp:setup:dev": "node scripts/smtp/setup-smtp.js dev",
+    "smtp:setup:test": "node scripts/smtp/setup-smtp.js test",
+    "smtp:setup:prod": "node scripts/smtp/setup-smtp.js prod",
+    "smtp:setup:docker": "node scripts/smtp/setup-smtp.js docker"
   },
   "keywords": [
     "express",

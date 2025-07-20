@@ -1,4 +1,12 @@
 import { EntityId } from '../../types/database';
+import { SupportedLanguage } from '../../constants/supportedLanguages';
+
+export interface NotificationPreferences {
+  email: boolean;
+  push: boolean;
+  sms: boolean;
+  webhook: boolean;
+}
 
 export interface IUserModel {
   _id: EntityId;
@@ -15,4 +23,10 @@ export interface IUserModel {
   resetPasswordToken?: string;
   resetPasswordExpire?: Date;
   createdAt?: Date;
+  // Notification için yeni alanlar
+  phoneNumber?: string;
+  webhookUrl?: string;
+  notificationPreferences?: NotificationPreferences;
+  // Dil tercihi
+  language?: SupportedLanguage;
 }

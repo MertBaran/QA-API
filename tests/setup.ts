@@ -15,7 +15,6 @@ import { container } from 'tsyringe';
 import { FakeLoggerProvider } from './mocks/logger/FakeLoggerProvider';
 import { FakeCacheProvider } from './mocks/cache/FakeCacheProvider';
 import { FakeAuditProvider } from './mocks/audit/FakeAuditProvider';
-import { FakeEmailService } from './mocks/email/FakeEmailService';
 import { FakeNotificationProvider } from './mocks/notification/FakeNotificationProvider';
 import { FakeUserDataSource } from './mocks/datasource/FakeUserDataSource';
 import { FakeQuestionDataSource } from './mocks/datasource/FakeQuestionDataSource';
@@ -36,8 +35,12 @@ beforeAll(async () => {
   container.register('LoggerProvider', { useClass: FakeLoggerProvider });
   container.register('AuditProvider', { useClass: FakeAuditProvider });
   container.register('CacheProvider', { useClass: FakeCacheProvider });
-  container.register('EmailService', { useClass: FakeEmailService });
-  container.register('EmailManager', { useClass: FakeEmailService });
+  container.register('INotificationService', {
+    useClass: FakeNotificationProvider,
+  });
+  container.register('INotificationProvider', {
+    useClass: FakeNotificationProvider,
+  });
   container.register('EmailNotificationProvider', {
     useClass: FakeNotificationProvider,
   });
@@ -79,14 +82,16 @@ beforeEach(async () => {
       await fakeCache.del('*'); // Clear all cache keys
     }
 
-    const fakeEmail = container.resolve<FakeEmailService>('EmailService');
-    if (fakeEmail && fakeEmail.sent) fakeEmail.sent.length = 0;
-
-    const fakeNotification = container.resolve<FakeNotificationProvider>(
-      'EmailNotificationProvider'
+    const fakeNotificationService = container.resolve<FakeNotificationProvider>(
+      'INotificationService'
     );
-    if (fakeNotification && fakeNotification.sent)
-      fakeNotification.sent.length = 0;
+    if (fakeNotificationService && fakeNotificationService.sent)
+      fakeNotificationService.sent.length = 0;
+
+    const fakeNotificationProvider =
+      container.resolve<FakeNotificationProvider>('EmailNotificationProvider');
+    if (fakeNotificationProvider && fakeNotificationProvider.sent)
+      fakeNotificationProvider.sent.length = 0;
 
     // Clear fake data sources
     const fakeUserDS = container.resolve<FakeUserDataSource>('UserDataSource');

@@ -3,11 +3,7 @@ node_modules/
 
 # Ortak config ve environment dosyaları
 .env
-config/env/config.env
-config/env/config.env.test
-config/env/config.env.docker
-config/env/config.env.prod
-config/env/config.env.dev
+config/env/
 
 # Log dosyaları
 logs/
@@ -58,6 +54,4 @@ performance/results/
 performance/reports/
 
 # Docker ve deployment secrets
-config/env/*.docker
-config/env/*.prod
 temp-secrets/ 

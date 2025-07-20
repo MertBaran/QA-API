@@ -3,6 +3,10 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { EntityId } from '../../types/database';
+import {
+  SUPPORTED_LANGUAGE_LIST,
+  DEFAULT_LANGUAGE,
+} from '../../constants/supportedLanguages';
 
 export interface IUserMongo extends Document {
   _id: EntityId;
@@ -19,6 +23,17 @@ export interface IUserMongo extends Document {
   blocked: boolean;
   resetPasswordToken?: string;
   resetPasswordExpire?: Date;
+  // Notification için yeni alanlar
+  phoneNumber?: string;
+  webhookUrl?: string;
+  notificationPreferences?: {
+    email: boolean;
+    push: boolean;
+    sms: boolean;
+    webhook: boolean;
+  };
+  // Dil tercihi
+  language?: string;
   generateJWTFromUser(): string;
   getResetPasswordTokenFromUser(): string;
 }
@@ -74,6 +89,36 @@ const userSchema = new Schema<IUserMongo>({
   },
   resetPasswordExpire: {
     type: Date,
+  },
+  // Notification için yeni alanlar
+  phoneNumber: {
+    type: String,
+  },
+  webhookUrl: {
+    type: String,
+  },
+  notificationPreferences: {
+    email: {
+      type: Boolean,
+      default: true,
+    },
+    push: {
+      type: Boolean,
+      default: true,
+    },
+    sms: {
+      type: Boolean,
+      default: false,
+    },
+    webhook: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  language: {
+    type: String,
+    enum: SUPPORTED_LANGUAGE_LIST,
+    default: DEFAULT_LANGUAGE,
   },
 });
 
