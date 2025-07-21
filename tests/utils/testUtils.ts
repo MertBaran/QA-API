@@ -54,7 +54,7 @@ export async function loginTestUser({
 }) {
   try {
     // Use AuthManager directly for tests
-    const authService = container.resolve<AuthManager>('AuthService');
+    const authService = container.resolve<AuthManager>('IAuthService');
     const user = await authService.loginUser(email, password);
 
     // Generate a simple test token
@@ -87,7 +87,7 @@ export async function createTestQuestion({
 
     // Use QuestionManager directly for tests
     const questionService =
-      container.resolve<QuestionManager>('QuestionService');
+      container.resolve<QuestionManager>('IQuestionService');
     const question = await questionService.createQuestion(
       {
         title,
@@ -121,7 +121,7 @@ export async function createTestAnswer({
     }
 
     // Use AnswerManager directly for tests
-    const answerService = container.resolve<AnswerManager>('AnswerService');
+    const answerService = container.resolve<AnswerManager>('IAnswerService');
     const answer = await answerService.createAnswer(
       { content },
       questionId,

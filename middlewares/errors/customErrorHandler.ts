@@ -30,7 +30,7 @@ function customErrorHandler(
 
   console.log(customError);
 
-  res.status(customError.status || 500).json({
+  res.status(customError.statusCode || 500).json({
     success: false,
     error: customError.message || 'Server Error',
   });

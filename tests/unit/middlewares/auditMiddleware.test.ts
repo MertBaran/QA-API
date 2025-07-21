@@ -32,7 +32,7 @@ describe('auditMiddleware', () => {
     };
     next = jest.fn();
     fakeAudit = new FakeAuditProvider();
-    container.registerInstance('AuditProvider', fakeAudit);
+    container.registerInstance('IAuditProvider', fakeAudit);
   });
 
   it('should call auditProvider.log on response finish', async () => {
