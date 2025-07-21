@@ -1,6 +1,8 @@
+import { injectable } from 'tsyringe';
 import pino, { Logger } from 'pino';
 import { ILoggerProvider } from './ILoggerProvider';
 
+@injectable()
 export class PinoLoggerProvider implements ILoggerProvider {
   private logger: Logger;
 

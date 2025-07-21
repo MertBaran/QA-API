@@ -2,6 +2,28 @@ import { Request, Response, NextFunction } from 'express';
 import { container } from 'tsyringe';
 import { IAuditProvider } from '../../infrastructure/audit/IAuditProvider';
 
+// Hassas bilgileri filtrele
+function sanitizeRequestBody(body: any, action: string): any {
+  if (!body) return body;
+
+  const sanitized = { ...body };
+
+  // Login ve register işlemlerinde hassas bilgileri kaldır
+  if (action === 'USER_LOGIN' || action === 'USER_CREATE') {
+    delete sanitized.password;
+    delete sanitized.email;
+  }
+
+  // Şifre sıfırlama işlemlerinde hassas bilgileri kaldır
+  if (action === 'PASSWORD_UPDATE') {
+    delete sanitized.password;
+    delete sanitized.newPassword;
+    delete sanitized.confirmPassword;
+  }
+
+  return sanitized;
+}
+
 export function auditMiddleware(
   action: string,
   options?: { tags?: string[]; targetExtractor?: (req: Request) => any }
@@ -10,20 +32,37 @@ export function auditMiddleware(
     const start = Date.now();
     res.on('finish', async () => {
       try {
-        const audit = container.resolve<IAuditProvider>('AuditProvider');
+        const audit = container.resolve<IAuditProvider>('IAuditProvider');
         const user = (req as any).user || {};
         const target = options?.targetExtractor
           ? options.targetExtractor(req)
           : undefined;
-        const responseTime = Date.now() - start;
         const isSuccess = res.statusCode < 400;
+        // Hassas bilgileri filtrele
+        const sanitizedBody = sanitizeRequestBody(req.body, action);
+
+        // Kullanıcı bilgisini al
+        let actor = user.id
+          ? {
+              id: user.id,
+              email: user.email,
+              role: user.role,
+            }
+          : undefined;
+
+        // Login işleminde response'dan kullanıcı bilgisini al
+        if (action === 'USER_LOGIN' && isSuccess && (res as any).locals?.user) {
+          const responseUser = (res as any).locals.user;
+          actor = {
+            id: responseUser.id,
+            email: responseUser.email,
+            role: responseUser.role,
+          };
+        }
+
         await audit.log({
           action,
-          actor: {
-            id: user.id,
-            email: user.email,
-            role: user.role,
-          },
+          actor,
           target,
           ip: req.ip,
           userAgent: req.headers['user-agent'],
@@ -38,19 +77,9 @@ export function auditMiddleware(
             url: req.originalUrl,
             params: req.params,
             query: req.query,
-            body: req.body,
+            body: sanitizedBody,
             referer: req.headers['referer'],
             origin: req.headers['origin'],
-            host: req.headers['host'],
-            status: res.statusCode,
-            responseTime,
-            headers: {
-              'user-agent': req.headers['user-agent'],
-              referer: req.headers['referer'],
-              origin: req.headers['origin'],
-              host: req.headers['host'],
-              'x-request-id': req.headers['x-request-id'],
-            },
             isSuccess,
           },
         });

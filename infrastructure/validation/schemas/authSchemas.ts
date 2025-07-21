@@ -21,3 +21,13 @@ export const resetPasswordSchema = z.object({
   token: z.string().min(10),
   newPassword: z.string().min(6),
 });
+
+export const editProfileSchema = z.object({
+  firstName: z.string().min(2).max(50).optional(),
+  lastName: z.string().min(2).max(50).optional(),
+  email: z.string().email({ message: 'Invalid email address' }).optional(),
+  website: z.string().url().optional(),
+  place: z.string().min(1).max(100).optional(),
+  title: z.string().min(1).max(100).optional(),
+  about: z.string().min(1).max(500).optional(),
+});

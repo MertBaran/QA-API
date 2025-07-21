@@ -2,16 +2,17 @@ import { Request, Response, NextFunction } from 'express';
 import CustomError from '../../helpers/error/CustomError';
 import asyncErrorWrapper from 'express-async-handler';
 import { container } from 'tsyringe';
-import { UserRepository } from '../../repositories/UserRepository';
-import { QuestionRepository } from '../../repositories/QuestionRepository';
-import { AnswerRepository } from '../../repositories/AnswerRepository';
+import { IUserRepository } from '../../repositories/interfaces/IUserRepository';
+import { IQuestionRepository } from '../../repositories/interfaces/IQuestionRepository';
+import { IAnswerRepository } from '../../repositories/interfaces/IAnswerRepository';
 import { DatabaseMiddlewareMessages } from '../constants/MiddlewareMessages';
 
 const checkUserExist = asyncErrorWrapper(
   async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
     if (!id) throw new Error('id is required');
-    const userRepository = container.resolve<UserRepository>('UserRepository');
+    const userRepository =
+      container.resolve<IUserRepository>('IUserRepository');
     const user = await userRepository.findById(id);
     if (!user) {
       return next(
@@ -26,8 +27,9 @@ const checkQuestionExist = asyncErrorWrapper(
   async (req: Request, res: Response, next: NextFunction) => {
     const question_id = req.params['id'] || req.params['question_id'];
     if (!question_id) throw new Error('question_id is required');
-    const questionRepository =
-      container.resolve<QuestionRepository>('QuestionRepository');
+    const questionRepository = container.resolve<IQuestionRepository>(
+      'IQuestionRepository'
+    );
     const question = await questionRepository.findById(question_id);
     if (!question) {
       return next(
@@ -45,7 +47,7 @@ const checkQuestionAndAnswerExist = asyncErrorWrapper(
     const answer_id = req.params['answer_id'];
     if (!answer_id) throw new Error('answer_id is required');
     const answerRepository =
-      container.resolve<AnswerRepository>('AnswerRepository');
+      container.resolve<IAnswerRepository>('IAnswerRepository');
     const answer = await answerRepository.findByQuestionAndId(
       answer_id,
       question_id
