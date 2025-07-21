@@ -9,10 +9,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { IAuthService } from '../contracts/IAuthService';
 import { INotificationService } from '../contracts/INotificationService';
-import {
-  AuthServiceMessages,
-  EmailTemplates,
-} from '../constants/ServiceMessages';
+import { AuthServiceMessages } from '../constants/ServiceMessages';
 import { getLanguageOrDefault } from '../../constants/supportedLanguages';
 
 const client = new OAuth2Client(process.env['GOOGLE_CLIENT_ID']);
@@ -47,6 +44,11 @@ export class AuthManager implements IAuthService {
       });
       return user;
     } catch (_err) {
+      // Re-throw CustomErrors as-is
+      if (_err instanceof CustomError) {
+        throw _err;
+      }
+      // Only catch actual database errors
       throw new CustomError(AuthServiceMessages.RegistrationDbError.en, 500);
     }
   }
@@ -114,22 +116,20 @@ export class AuthManager implements IAuthService {
       const clientUrl = process.env['CLIENT_URL'] || 'https://localhost:3001';
       const resetPasswordUrl = `${clientUrl}/reset-password?token=${token}`;
 
-      // Select template and subject based on locale
+      // Select locale
       const selectedLocale = getLanguageOrDefault(locale);
 
-      const emailTemplate =
-        EmailTemplates.ResetPasswordTemplate[selectedLocale](resetPasswordUrl);
-      const emailSubject =
-        AuthServiceMessages.ResetPasswordEmailSubject[selectedLocale];
-
       try {
-        // Yeni multi-channel notification sistemi kullan
-        await this.notificationService.notifyUser(user._id.toString(), {
-          subject: emailSubject,
-          message: 'Şifre sıfırlama isteği',
-          html: emailTemplate,
-          data: { resetUrl: resetPasswordUrl },
-        });
+        // Template sistemini kullan
+        await this.notificationService.notifyUserWithTemplate(
+          user._id.toString(),
+          'password-reset',
+          selectedLocale,
+          {
+            userName: user.name,
+            resetLink: resetPasswordUrl,
+          }
+        );
       } catch (_err) {
         await this.userRepository.clearResetToken(user._id);
         throw new CustomError(AuthServiceMessages.EmailSendError.en, 500);
@@ -175,6 +175,73 @@ export class AuthManager implements IAuthService {
         AuthServiceMessages.ProfileImageUpdateDbError.en,
         500
       );
+    }
+  }
+
+  async updateProfile(
+    userId: EntityId,
+    profileData: {
+      firstName?: string;
+      lastName?: string;
+      email?: string;
+      website?: string;
+      place?: string;
+      title?: string;
+      about?: string;
+    }
+  ): Promise<IUserModel> {
+    try {
+      // Email değişikliği varsa, email'in benzersiz olduğunu kontrol et
+      if (profileData.email) {
+        const existingUser = await this.userRepository.findByEmail(
+          profileData.email
+        );
+        if (existingUser && existingUser._id !== userId) {
+          throw new CustomError(AuthServiceMessages.EmailExists.en, 400);
+        }
+      }
+
+      // İsim ve soyisim değişikliği varsa, name alanını güncelle
+      let updateData: any = { ...profileData };
+
+      if (profileData.firstName || profileData.lastName) {
+        const currentUser = await this.userRepository.findById(userId);
+        if (!currentUser) {
+          throw new CustomError(AuthServiceMessages.UserNotFound.en, 404);
+        }
+
+        // Mevcut ismi parçala
+        const nameParts = currentUser.name.split(' ');
+        const currentFirstName = nameParts[0] || '';
+        const currentLastName = nameParts.slice(1).join(' ') || ''; // Birden fazla soyisim olabilir
+
+        // Yeni değerleri al, yoksa mevcut değerleri kullan
+        const newFirstName =
+          profileData.firstName !== undefined
+            ? profileData.firstName
+            : currentFirstName;
+        const newLastName =
+          profileData.lastName !== undefined
+            ? profileData.lastName
+            : currentLastName;
+
+        updateData.name = `${newFirstName} ${newLastName}`.trim();
+
+        // firstName ve lastName alanlarını kaldır çünkü veritabanında name alanı var
+        delete updateData.firstName;
+        delete updateData.lastName;
+      }
+
+      const user = await this.userRepository.updateById(userId, updateData);
+      if (!user) {
+        throw new CustomError(AuthServiceMessages.UserNotFound.en, 404);
+      }
+      return user;
+    } catch (_err) {
+      if (_err instanceof CustomError) {
+        throw _err;
+      }
+      throw new CustomError(AuthServiceMessages.UpdateProfileError.en, 500);
     }
   }
 

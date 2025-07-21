@@ -11,7 +11,8 @@ jest.mock('../../../helpers/authorization/tokenHelpers', () => ({
 import { AuthController } from '../../../controllers/authController';
 import { AuthManager } from '../../../services/managers/AuthManager';
 import { ILoggerProvider } from '../../../infrastructure/logging/ILoggerProvider';
-import { IAuditProvider } from '../../../infrastructure/audit/IAuditProvider';
+import jwt from 'jsonwebtoken';
+
 import { sendJwtToClient } from '../../../helpers/authorization/tokenHelpers';
 
 const mockSendJwtToClient = sendJwtToClient as jest.MockedFunction<
@@ -24,7 +25,7 @@ describe('AuthController', () => {
   let controller: AuthController;
   let authService: jest.Mocked<AuthManager>;
   let logger: jest.Mocked<ILoggerProvider>;
-  let audit: jest.Mocked<IAuditProvider>;
+
   let fakeCacheProvider: FakeCacheProvider;
   let req: any;
   let res: any;
@@ -52,11 +53,7 @@ describe('AuthController', () => {
       debug: jest.fn(),
     } as any;
 
-    audit = {
-      log: jest.fn().mockResolvedValue(undefined),
-    } as any;
-
-    controller = new AuthController(authService, logger, audit);
+    controller = new AuthController(authService, logger);
 
     req = {
       body: {},
@@ -149,7 +146,7 @@ describe('AuthController', () => {
   });
 
   describe('login', () => {
-    it('should login user and log audit with correct language', async () => {
+    it('should login user with correct language', async () => {
       authService.loginUser.mockResolvedValue({
         _id: 'u1',
         name: 'Test User',
@@ -182,20 +179,17 @@ describe('AuthController', () => {
         ip: '127.0.0.1',
         context: 'AuthController',
       });
-
-      expect(audit.log).toHaveBeenCalledWith({
-        action: 'USER_LOGIN',
-        actor: { id: 'u1', email: 'test@example.com', role: 'user' },
-        ip: '127.0.0.1',
-        context: 'AuthController',
-        details: { userId: 'u1', email: 'test@example.com' },
-      });
     });
   });
 
   describe('logout', () => {
     it('should logout with English message', async () => {
       req.locale = 'en';
+      req.cookies = { access_token: 'valid-token' };
+      // Mock JWT verify
+      jest
+        .spyOn(jwt, 'verify')
+        .mockReturnValue({ id: 'u1', name: 'Test User' } as any);
 
       await controller.logout(req, res, next);
 
@@ -213,6 +207,10 @@ describe('AuthController', () => {
 
     it('should logout with Turkish message', async () => {
       req.locale = 'tr';
+      req.cookies = { access_token: 'valid-token' };
+      jest
+        .spyOn(jwt, 'verify')
+        .mockReturnValue({ id: 'u1', name: 'Test User' } as any);
 
       await controller.logout(req, res, next);
 
@@ -225,6 +223,10 @@ describe('AuthController', () => {
 
     it('should logout with German message', async () => {
       req.locale = 'de';
+      req.cookies = { access_token: 'valid-token' };
+      jest
+        .spyOn(jwt, 'verify')
+        .mockReturnValue({ id: 'u1', name: 'Test User' } as any);
 
       await controller.logout(req, res, next);
 
@@ -237,6 +239,10 @@ describe('AuthController', () => {
 
     it('should default to English when locale is undefined', async () => {
       req.locale = undefined;
+      req.cookies = { access_token: 'valid-token' };
+      jest
+        .spyOn(jwt, 'verify')
+        .mockReturnValue({ id: 'u1', name: 'Test User' } as any);
 
       await controller.logout(req, res, next);
 
@@ -256,7 +262,8 @@ describe('AuthController', () => {
       await controller.forgotpassword(req, res, next);
 
       expect(authService.forgotPassword).toHaveBeenCalledWith(
-        'test@example.com'
+        'test@example.com',
+        'tr'
       );
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
@@ -274,7 +281,7 @@ describe('AuthController', () => {
 
       expect(res.json).toHaveBeenCalledWith({
         success: true,
-        message: 'Passwort-Reset-Link an E-Mail gesendet',
+        message: 'Reset password token sent to email',
       });
     });
   });

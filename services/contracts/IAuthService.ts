@@ -8,6 +8,7 @@ export interface IAuthService {
     email: string;
     password: string;
     role?: 'user' | 'admin';
+    language?: string;
   }): Promise<IUserModel>;
   loginUser(email: string, password: string): Promise<IUserModel>;
   googleLogin(token: string): Promise<IUserModel>;
@@ -16,6 +17,18 @@ export interface IAuthService {
   updateProfileImage(
     userId: EntityId,
     profileImage: string
+  ): Promise<IUserModel>;
+  updateProfile(
+    userId: EntityId,
+    profileData: {
+      firstName?: string;
+      lastName?: string;
+      email?: string;
+      website?: string;
+      place?: string;
+      title?: string;
+      about?: string;
+    }
   ): Promise<IUserModel>;
   getUserById(userId: EntityId): Promise<IUserModel>;
 }

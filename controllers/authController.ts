@@ -2,21 +2,23 @@ import { Request, Response, NextFunction } from 'express';
 import asyncErrorWrapper from 'express-async-handler';
 import { sendJwtToClient } from '../helpers/authorization/tokenHelpers';
 import { injectable, inject } from 'tsyringe';
+import jwt from 'jsonwebtoken';
 import { IAuthService } from '../services/contracts/IAuthService';
 import { AuthConstants } from './constants/ControllerMessages';
 import { AuthManager } from '../services/managers/AuthManager';
 import { ILoggerProvider } from '../infrastructure/logging/ILoggerProvider';
-import { IAuditProvider } from '../infrastructure/audit/IAuditProvider';
 import type { RegisterDTO } from '../types/dto/auth/register.dto';
 import type { LoginDTO } from '../types/dto/auth/login.dto';
 import type { ForgotPasswordDTO } from '../types/dto/auth/forgot-password.dto';
 import type { ResetPasswordDTO } from '../types/dto/auth/reset-password.dto';
+import type { EditProfileDTO } from '../types/dto/auth/edit-profile.dto';
 import type { AuthTokenResponseDTO } from '../types/dto/auth/auth-token.response.dto';
 import type { SuccessResponseDTO } from '../types/dto/common/success-response.dto';
+import type { LogoutResponseDTO } from '../types/dto/auth/logout-response.dto';
 import type { IUserModel } from '../models/interfaces/IUserModel';
 import { normalizeLocale, i18n } from '../types/i18n';
 
-interface AuthenticatedRequest extends Request {
+interface AuthenticatedRequest<T = any> extends Request<{}, any, T> {
   user?: {
     id: string;
     name: string;
@@ -28,8 +30,7 @@ interface AuthenticatedRequest extends Request {
 export class AuthController {
   constructor(
     @inject('IAuthService') private authService: IAuthService,
-    @inject('ILoggerProvider') private logger: ILoggerProvider,
-    @inject('IAuditProvider') private audit: IAuditProvider
+    @inject('ILoggerProvider') private logger: ILoggerProvider
   ) {}
 
   googleLogin = asyncErrorWrapper(
@@ -95,19 +96,17 @@ export class AuthController {
         name: user.name,
         lang: locale,
       });
-      this.logger.info('User logged in', {
-        userId: user._id,
-        email: user.email,
-        ip: req.ip,
-        context: 'AuthController',
-      });
-      await this.audit.log({
-        action: 'USER_LOGIN',
-        actor: { id: user._id, email: user.email, role: user.role },
-        ip: req.ip,
-        context: 'AuthController',
-        details: { userId: user._id, email: user.email },
-      });
+
+      // Audit middleware için kullanıcı bilgisini response'a ekle
+      (res as any).locals = {
+        ...(res as any).locals,
+        user: {
+          id: user._id,
+          email: user.email,
+          role: user.role,
+        },
+      };
+
       sendJwtToClient(jwt, user, res);
     }
   );
@@ -115,27 +114,86 @@ export class AuthController {
   logout = asyncErrorWrapper(
     async (
       req: Request,
-      res: Response<SuccessResponseDTO>,
+      res: Response<LogoutResponseDTO>,
       _next: NextFunction
     ): Promise<void> => {
-      const { NODE_ENV } = process.env;
-      res.cookie('access_token', 'none', {
-        httpOnly: true,
-        expires: new Date(Date.now()),
-        secure: NODE_ENV === 'development' ? false : true,
-      });
-      const locale = req.locale ?? 'en';
-      const message = await i18n(AuthConstants.LogoutSuccess, locale);
-      res.status(200).json({
-        success: true,
-        message,
-      });
+      try {
+        // Cookie'den veya Authorization header'dan token'ı al
+        let token = req.cookies?.access_token;
+
+        if (!token || token === 'none') {
+          // Authorization header'dan Bearer token'ı al
+          const authHeader = req.headers.authorization;
+          if (authHeader && authHeader.startsWith('Bearer ')) {
+            token = authHeader.substring(7); // "Bearer " kısmını çıkar
+          }
+        }
+
+        if (!token || token === 'none') {
+          const locale = req.locale ?? 'en';
+          const message = await i18n(AuthConstants.NotLoggedIn, locale);
+          res.status(401).json({
+            success: false,
+            message,
+          });
+          return;
+        }
+
+        // Token'ı doğrula ve kullanıcı bilgisini al
+        let userInfo;
+        try {
+          const { JWT_SECRET_KEY } = process.env;
+          const secret = JWT_SECRET_KEY || 'default_secret';
+          const decoded = jwt.verify(token, secret) as any;
+          userInfo = {
+            id: decoded.id,
+            name: decoded.name,
+          };
+        } catch (jwtError) {
+          const locale = req.locale ?? 'en';
+          const message = await i18n(AuthConstants.NotLoggedIn, locale);
+          res.status(401).json({
+            success: false,
+            message,
+          });
+          return;
+        }
+
+        const { NODE_ENV } = process.env;
+
+        // Cookie'yi temizle
+        res.cookie('access_token', 'none', {
+          httpOnly: true,
+          expires: new Date(Date.now()),
+          secure: NODE_ENV === 'development' ? false : true,
+        });
+
+        // Audit log için kullanıcı bilgisini response'a ekle
+        (res as any).locals = {
+          ...(res as any).locals,
+          user: userInfo,
+        };
+
+        const locale = req.locale ?? 'en';
+        const message = await i18n(AuthConstants.LogoutSuccess, locale);
+        res.status(200).json({
+          success: true,
+          message,
+        });
+      } catch (error) {
+        const locale = req.locale ?? 'en';
+        const message = await i18n(AuthConstants.LogoutError, locale);
+        res.status(500).json({
+          success: false,
+          message,
+        });
+      }
     }
   );
 
   getUser = asyncErrorWrapper(
     async (
-      req: AuthenticatedRequest,
+      req: AuthenticatedRequest<any>,
       res: Response<SuccessResponseDTO<{ id: string; name: string }>>,
       _next: NextFunction
     ): Promise<void> => {
@@ -151,7 +209,7 @@ export class AuthController {
 
   imageUpload = asyncErrorWrapper(
     async (
-      req: AuthenticatedRequest,
+      req: AuthenticatedRequest<any>,
       res: Response<SuccessResponseDTO<IUserModel>>,
       _next: NextFunction
     ): Promise<void> => {
@@ -162,6 +220,32 @@ export class AuthController {
       res.status(200).json({
         success: true,
         message: 'Image uploaded successfully',
+        data: user,
+      });
+    }
+  );
+
+  editProfile = asyncErrorWrapper(
+    async (
+      req: AuthenticatedRequest<EditProfileDTO>,
+      res: Response<SuccessResponseDTO<IUserModel>>,
+      _next: NextFunction
+    ): Promise<void> => {
+      const { firstName, lastName, email, website, place, title, about } =
+        req.body;
+
+      const user = await this.authService.updateProfile(req.user!.id, {
+        firstName,
+        lastName,
+        email,
+        website,
+        place,
+        title,
+        about,
+      });
+      res.status(200).json({
+        success: true,
+        message: 'Profile updated successfully',
         data: user,
       });
     }
