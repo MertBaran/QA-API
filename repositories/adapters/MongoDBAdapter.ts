@@ -41,7 +41,7 @@ export class MongoDBAdapter implements IDatabaseAdapter {
 
       // MongoDB adapter handles its own logging with its own business logic
       const dbName = this.extractDatabaseName(mongoUri);
-      console.log(`✅ MongoDB connected successfully to database: ${dbName}`);
+      console.log(`🔗 MongoDB connected successfully to database: ${dbName}`);
     } catch (_error) {
       console.log('MongoDB connection failed');
     }

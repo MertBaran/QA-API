@@ -34,6 +34,20 @@ export const SMTPConfigSchema = z.object({
   SMTP_APP_PASS: z.string().optional(),
 });
 
+export const RabbitMQConfigSchema = z.object({
+  RABBITMQ_HOST: z.string().default('localhost'),
+  RABBITMQ_PORT: z.string().default('5672'),
+  RABBITMQ_USER: z.string().default('guest'),
+  RABBITMQ_PASS: z.string().default('guest'),
+  RABBITMQ_VHOST: z.string().default('/'),
+});
+
+export const NotificationConfigSchema = z.object({
+  NOTIFICATION_TECHNOLOGY: z
+    .enum(['queue', 'direct', 'hybrid'])
+    .default('direct'),
+});
+
 export const AppConfigSchema = z.object({
   PORT: z.string().default('3000'),
   NODE_ENV: z.enum(['production', 'development', 'test', 'docker']),
@@ -48,7 +62,9 @@ export const AppConfigSchema = z.object({
 export const ConfigurationSchema = AppConfigSchema.merge(DatabaseConfigSchema)
   .merge(CacheConfigSchema)
   .merge(JWTConfigSchema)
-  .merge(SMTPConfigSchema);
+  .merge(SMTPConfigSchema)
+  .merge(RabbitMQConfigSchema)
+  .merge(NotificationConfigSchema);
 
 export type Configuration = z.infer<typeof ConfigurationSchema>;
 

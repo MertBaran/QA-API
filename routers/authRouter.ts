@@ -12,6 +12,7 @@ import {
   loginSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
+  editProfileSchema,
 } from '../infrastructure/validation/schemas/authSchemas';
 
 const authController = di.resolve(AuthController);
@@ -42,6 +43,13 @@ router.put(
   authController.resetPassword
 );
 router.get('/profile', getAccessToRoute, authController.getUser);
+router.put(
+  '/edit',
+  getAccessToRoute,
+  validator.validateBody(editProfileSchema),
+  auditMiddleware('PROFILE_UPDATE'),
+  authController.editProfile
+);
 router.post(
   '/upload',
   [getAccessToRoute, profileImageUpload.single('profile_image')],

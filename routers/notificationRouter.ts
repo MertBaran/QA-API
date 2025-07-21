@@ -45,4 +45,32 @@ router.post(
   notificationController.sendTestNotification.bind(notificationController)
 );
 
+// Debug endpoint - notification'ları kontrol et
+router.get(
+  '/debug/:userId',
+  getAccessToRoute,
+  notificationController.debugNotifications.bind(notificationController)
+);
+
+// Queue durumunu kontrol etme
+router.get(
+  '/queue/status',
+  getAccessToRoute,
+  notificationController.getQueueStatus.bind(notificationController)
+);
+
+// Kullanıcının bildirimlerini getirme
+router.get(
+  '/user/:userId',
+  getAccessToRoute,
+  notificationController.getUserNotifications.bind(notificationController)
+);
+
+// Bildirim istatistiklerini getirme
+router.get(
+  '/stats',
+  getAccessToRoute,
+  notificationController.getNotificationStats.bind(notificationController)
+);
+
 export default router;

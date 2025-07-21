@@ -24,6 +24,7 @@ import { MongoDBAdapter } from '../repositories/adapters/MongoDBAdapter';
 import { UserRepository } from '../repositories/UserRepository';
 import { QuestionRepository } from '../repositories/QuestionRepository';
 import { AnswerRepository } from '../repositories/AnswerRepository';
+import { NotificationRepository } from '../repositories/NotificationRepository';
 import { UserMongooseDataSource } from '../repositories/mongodb/UserMongooseDataSource';
 import { QuestionMongooseDataSource } from '../repositories/mongodb/QuestionMongooseDataSource';
 import { AnswerMongooseDataSource } from '../repositories/mongodb/AnswerMongooseDataSource';
@@ -32,19 +33,29 @@ import { ZodValidationProvider } from '../infrastructure/validation/ZodValidatio
 import UserMongo from '../models/mongodb/UserMongoModel';
 import QuestionMongo from '../models/mongodb/QuestionMongoModel';
 import AnswerMongo from '../models/mongodb/AnswerMongoModel';
+import NotificationMongo from '../models/mongodb/NotificationMongoModel';
+import NotificationTemplateMongo from '../models/mongodb/NotificationTemplateMongoModel';
 import { AuthController } from '../controllers/authController';
 import { UserController } from '../controllers/userController';
 import { AdminController } from '../controllers/adminController';
 import { QuestionController } from '../controllers/questionController';
 import { AnswerController } from '../controllers/answerController';
 import { NotificationController } from '../controllers/notificationController';
+import { RabbitMQProvider } from './providers/RabbitMQProvider';
+import { SmartNotificationManager } from './managers/SmartNotificationManager';
+import { SmartNotificationStrategy } from './strategies/SmartNotificationStrategy';
+import { SystemMetricsCollector } from './metrics/SystemMetricsCollector';
 
 // Register core services first
 container.registerSingleton('BootstrapService', BootstrapService);
 
-// Now resolve and bootstrap
-const bootstrapService = container.resolve(BootstrapService);
-const config = bootstrapService.bootstrap();
+// Bootstrap function
+export async function initializeContainer() {
+  const bootstrapService = container.resolve(BootstrapService);
+  const config = await bootstrapService.bootstrap();
+
+  return config;
+}
 
 // Register core services
 container.registerSingleton('HealthCheckService', HealthCheckService);
@@ -54,6 +65,11 @@ container.registerSingleton('ILoggerProvider', PinoLoggerProvider);
 container.registerSingleton('ICacheProvider', RedisCacheProvider);
 container.registerSingleton('IDatabaseAdapter', MongoDBAdapter);
 container.registerSingleton('IAuditProvider', MongoAuditProvider);
+container.registerSingleton('AuditProvider', MongoAuditProvider);
+container.registerSingleton('IEnvironmentProvider', EnvironmentProvider);
+
+// Register queue providers
+container.registerSingleton('IQueueProvider', RabbitMQProvider);
 
 // Register data sources
 container.registerSingleton('IUserDataSource', UserMongooseDataSource);
@@ -64,6 +80,7 @@ container.registerSingleton('IAnswerDataSource', AnswerMongooseDataSource);
 container.registerSingleton('IUserRepository', UserRepository);
 container.registerSingleton('IQuestionRepository', QuestionRepository);
 container.registerSingleton('IAnswerRepository', AnswerRepository);
+container.registerSingleton('INotificationRepository', NotificationRepository);
 
 // Register managers as services
 container.registerSingleton('IAuthService', AuthManager);
@@ -71,15 +88,27 @@ container.registerSingleton('IQuestionService', QuestionManager);
 container.registerSingleton('IAnswerService', AnswerManager);
 container.registerSingleton('IAdminService', AdminManager);
 
+// Register controllers
+container.registerSingleton('AuthController', AuthController);
+container.registerSingleton('UserController', UserController);
+container.registerSingleton('AdminController', AdminController);
+container.registerSingleton('QuestionController', QuestionController);
+container.registerSingleton('AnswerController', AnswerController);
+container.registerSingleton('NotificationController', NotificationController);
+
 // Register notification services
 container.registerSingleton(
   'INotificationChannelRegistry',
   NotificationChannelRegistry
 );
-container.registerSingleton(
-  'INotificationService',
-  MultiChannelNotificationManager
-);
+
+// Register smart notification system
+container.registerSingleton('INotificationStrategy', SmartNotificationStrategy);
+container.registerSingleton('SystemMetricsCollector', SystemMetricsCollector);
+
+// Register notification managers based on technology
+// Default olarak smart kullan, bootstrap sonrası güncellenecek
+container.registerSingleton('INotificationService', SmartNotificationManager);
 
 // Register notification channels
 container.registerSingleton('IEmailChannel', EmailChannel);
@@ -103,18 +132,22 @@ container.registerSingleton('ConfigurationManager', ConfigurationManager);
 container.register('IUserModel', { useValue: UserMongo });
 container.register('IQuestionModel', { useValue: QuestionMongo });
 container.register('IAnswerModel', { useValue: AnswerMongo });
+container.register('INotificationModel', { useValue: NotificationMongo });
+container.register('INotificationTemplateModel', {
+  useValue: NotificationTemplateMongo,
+});
 
 // Register typed configuration
-container.register('AppConfig', { useValue: config });
+container.register('AppConfig', { useValue: null }); // Will be set after bootstrap
 container.register('IDatabaseConnectionConfig', {
-  useValue: { connectionString: config.MONGO_URI },
+  useValue: { connectionString: '' }, // Will be set after bootstrap
 });
 container.register('ICacheConnectionConfig', {
   useValue: {
-    host: config.REDIS_HOST,
-    port: config.REDIS_PORT,
-    url: config.REDIS_URL,
-  },
+    host: '',
+    port: 0,
+    url: '',
+  }, // Will be set after bootstrap
 });
 
 // Register validation provider
@@ -128,4 +161,4 @@ container.registerSingleton('QuestionController', QuestionController);
 container.registerSingleton('AnswerController', AnswerController);
 container.registerSingleton('NotificationController', NotificationController);
 
-export { container, config };
+export { container };

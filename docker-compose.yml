@@ -1,10 +1,23 @@
-version: "3.8"
+version: '3.8'
 services:
   redis:
     image: redis:7
     container_name: qa-redis
     ports:
-      - "6379:6379"
+      - '6379:6379'
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: qa-rabbitmq
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin123
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
     restart: unless-stopped
 
   # Opsiyonel: Backend'i de compose ile başlatmak için aşağıyı açabilirsin
@@ -14,10 +27,16 @@ services:
     env_file:
       - ./config/env/config.env
     ports:
-      - "5000:5000"
+      - '5000:5000'
     depends_on:
       - redis
+      - rabbitmq
     # environment:
     #   - REDIS_HOST=redis
     #   - REDIS_PORT=6379
+    #   - RABBITMQ_HOST=rabbitmq
+    #   - RABBITMQ_PORT=5672
     command: npm start
+
+volumes:
+  rabbitmq_data:

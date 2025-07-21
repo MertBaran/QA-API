@@ -4,7 +4,7 @@ import cors from 'cors';
 import path from 'path';
 
 // Import container and bootstrap service
-import { container, config } from './services/container';
+import { container, initializeContainer } from './services/container';
 import { BootstrapService } from './services/BootstrapService';
 import { HealthCheckService } from './services/HealthCheckService';
 import routers from './routers';
@@ -55,12 +55,31 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Database Connection
 async function startServer() {
   try {
+    // Initialize container and get config
+    const config = await initializeContainer();
+
     const _bootstrapService =
       container.resolve<BootstrapService>('BootstrapService');
     const _healthCheckService =
       container.resolve<HealthCheckService>('HealthCheckService');
 
-    console.log(`🔧 Starting server: ${config.NODE_ENV} environment`);
+    // Set database connection config
+    const databaseConfig = {
+      connectionString: config.MONGO_URI,
+    };
+    container.register('IDatabaseConnectionConfig', {
+      useValue: databaseConfig,
+    });
+
+    // Set cache connection config
+    const cacheConfig = {
+      host: config.REDIS_HOST,
+      port: config.REDIS_PORT,
+      url: config.REDIS_URL,
+    };
+    container.register('ICacheConnectionConfig', {
+      useValue: cacheConfig,
+    });
 
     // Connect to database
     const databaseAdapter = container.resolve<any>('IDatabaseAdapter');
@@ -68,7 +87,7 @@ async function startServer() {
 
     // Cache provider is initialized automatically on first use
     const _cacheProvider = container.resolve<any>('ICacheProvider');
-    console.log('🔗 Cache provider initialized');
+    //console.log('🔗 Cache provider initialized');
 
     // Only start the server if this is the main module (not imported for testing)
     if (require.main === module) {

@@ -31,6 +31,10 @@ export class UserMongooseDataSource implements IDataSource<IUserModel> {
       resetPasswordToken: mongoDoc.resetPasswordToken,
       resetPasswordExpire: mongoDoc.resetPasswordExpire,
       createdAt: mongoDoc.createdAt,
+      language: mongoDoc.language,
+      phoneNumber: mongoDoc.phoneNumber,
+      webhookUrl: mongoDoc.webhookUrl,
+      notificationPreferences: mongoDoc.notificationPreferences,
     };
   }
 

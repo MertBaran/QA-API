@@ -14,16 +14,22 @@ export class EnvironmentProvider implements IEnvironmentProvider {
   }
 
   private detectEnvironment(): string {
-    // Get environment from command line argument or NODE_ENV
-    const envArg = process.argv[2]; // npm start dev/test/prod
+    // Get environment from NODE_ENV first, then command line argument
     let nodeEnv = process.env['NODE_ENV'];
+    const envArg = process.argv[2]; // npm start dev/test/prod
 
-    console.log(
-      `🔍 Environment detection - Command line arg: ${envArg}, NODE_ENV: ${nodeEnv}`
-    );
-
-    // If command line argument is provided, use it to set NODE_ENV
-    if (envArg) {
+    // If NODE_ENV is set (by cross-env), use it
+    if (nodeEnv) {
+      if (nodeEnv === 'dev' || nodeEnv === 'development') {
+        nodeEnv = 'development';
+      } else if (nodeEnv === 'test') {
+        nodeEnv = 'test';
+      } else if (nodeEnv === 'prod' || nodeEnv === 'production') {
+        nodeEnv = 'production';
+      }
+    }
+    // If command line argument is provided, override NODE_ENV
+    else if (envArg) {
       if (envArg === 'dev' || envArg === 'development') {
         nodeEnv = 'development';
       } else if (envArg === 'test') {
@@ -31,15 +37,15 @@ export class EnvironmentProvider implements IEnvironmentProvider {
       } else if (envArg === 'prod' || envArg === 'production') {
         nodeEnv = 'production';
       }
-      // Set NODE_ENV for other parts of the application
-      process.env['NODE_ENV'] = nodeEnv;
-    } else {
-      // No argument means production (npm start without arguments)
-      nodeEnv = 'production';
-      process.env['NODE_ENV'] = 'production';
+    }
+    // Default to development if nothing is set
+    else {
+      nodeEnv = 'development';
     }
 
-    console.log(`🎯 Final environment: ${nodeEnv}`);
+    // Set NODE_ENV for other parts of the application
+    process.env['NODE_ENV'] = nodeEnv;
+
     return nodeEnv || 'development';
   }
 
@@ -69,21 +75,12 @@ export class EnvironmentProvider implements IEnvironmentProvider {
       return;
     }
 
-    // Read file content for debugging
-    const fileContent = fs.readFileSync(configPath, 'utf8');
-    console.log(
-      `📄 Config file content preview: ${fileContent.substring(0, 200)}...`
-    );
-
     const result = dotenv.config({ path: configPath });
 
     if (result.error) {
       console.error(`❌ Error loading config file: ${result.error.message}`);
     } else {
       console.log(`✅ Successfully loaded config file: ${envFile}`);
-      console.log(`🔧 MONGO_URI: ${process.env['MONGO_URI']}`);
-      console.log(`🔧 REDIS_URL: ${process.env['REDIS_URL']}`);
-      console.log(`🔧 REDIS_HOST: ${process.env['REDIS_HOST']}`);
     }
   }
 

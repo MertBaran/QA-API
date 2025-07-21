@@ -1,4 +1,4 @@
-import { injectable } from 'tsyringe';
+import { injectable, inject } from 'tsyringe';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
@@ -11,6 +11,11 @@ import {
   maskSensitiveData,
   parseNumericConfig,
 } from './contracts/ConfigurationSchema';
+import { IQueueProvider } from './contracts/IQueueProvider';
+import { QueueBasedNotificationManager } from './managers/QueueBasedNotificationManager';
+import { MultiChannelNotificationManager } from './managers/MultiChannelNotificationManager';
+import { ILoggerProvider } from '../infrastructure/logging/ILoggerProvider';
+import { container } from 'tsyringe';
 
 // Extended configuration with parsed numeric values
 export interface ParsedConfiguration
@@ -24,6 +29,7 @@ export interface ParsedConfiguration
   SMTP_PORT: number;
   RESET_PASSWORD_EXPIRE: number;
   NODE_ENV: EnvironmentType;
+  NOTIFICATION_TECHNOLOGY: 'queue' | 'direct' | 'hybrid';
 }
 
 // Mask sensitive data for parsed configuration
@@ -35,6 +41,7 @@ const maskParsedConfig = (config: ParsedConfiguration) => {
     JWT_COOKIE: config.JWT_COOKIE.toString(),
     SMTP_PORT: config.SMTP_PORT.toString(),
     RESET_PASSWORD_EXPIRE: config.RESET_PASSWORD_EXPIRE.toString(),
+    NOTIFICATION_TECHNOLOGY: config.NOTIFICATION_TECHNOLOGY,
   };
 
   return maskSensitiveData(stringConfig);
@@ -44,18 +51,17 @@ const maskParsedConfig = (config: ParsedConfiguration) => {
 export class BootstrapService {
   private config: ParsedConfiguration | null = null;
 
-  public bootstrap(): ParsedConfiguration {
+  public async bootstrap(): Promise<ParsedConfiguration> {
     if (this.config) {
       return this.config;
     }
 
     // 1. Detect environment
     const environment = this.detectEnvironment();
-    console.log(`🔍 Bootstrap: Detected environment: ${environment}`);
+    //console.log(`🔍 Bootstrap: Detected environment: ${environment}`);
 
     // 2. Load configuration file
     const configPath = this.getConfigPath(environment);
-    console.log(`📂 Bootstrap: Loading config from: ${configPath}`);
 
     if (!fs.existsSync(configPath)) {
       throw new Error(`Configuration file not found: ${configPath}`);
@@ -81,6 +87,9 @@ export class BootstrapService {
     } else {
       console.log(`🔧 Bootstrap: Redis: localhost:${this.config.REDIS_PORT}`);
     }
+
+    // 6. Initialize queue-based services if needed
+    await this.initializeQueueServices();
 
     return this.config;
   }
@@ -173,5 +182,73 @@ export class BootstrapService {
 
   public isDocker(): boolean {
     return this.getEnvironment() === 'docker';
+  }
+
+  private async initializeQueueServices(): Promise<void> {
+    try {
+      const queueProvider = container.resolve<IQueueProvider>('IQueueProvider');
+      const logger = container.resolve<ILoggerProvider>('ILoggerProvider');
+
+      // Notification technology kontrol et
+      const notificationTechnology =
+        this.config?.NOTIFICATION_TECHNOLOGY || 'direct';
+
+      if (notificationTechnology === 'queue') {
+        // RabbitMQ bağlantısını ve notification sistemini başlat
+        await queueProvider.connect();
+
+        const notificationManager = new QueueBasedNotificationManager(
+          queueProvider,
+          container.resolve('IUserRepository'),
+          logger
+        );
+
+        await notificationManager.initialize();
+        await notificationManager.startConsumer();
+
+        // Container'da notification service'i güncelle
+        container.registerSingleton(
+          'INotificationService',
+          QueueBasedNotificationManager
+        );
+
+        logger.info('🚀 Queue-based notification system ready', {
+          rabbitmq: 'connected',
+          queues: ['notifications', 'notifications.dlq'],
+          exchanges: ['notification.exchange', 'notification.dlx'],
+          consumer: 'started',
+        });
+      } else if (notificationTechnology === 'hybrid') {
+        // RabbitMQ bağlantısını başlat (smart manager için gerekli)
+        await queueProvider.connect();
+
+        // Smart notification manager zaten container'da register edilmiş
+        logger.info('🧠 Smart notification system ready', {
+          strategy: 'hybrid',
+          features: [
+            'auto-strategy-selection',
+            'load-balancing',
+            'priority-based-routing',
+          ],
+          rabbitmq: 'connected',
+        });
+      } else {
+        // Direct notification sistemi için MultiChannelNotificationManager kullan
+        container.registerSingleton(
+          'INotificationService',
+          MultiChannelNotificationManager
+        );
+
+        logger.info('⚡ Direct notification system active', {
+          channels: ['email', 'sms', 'push', 'webhook'],
+        });
+      }
+    } catch (error) {
+      const logger = container.resolve<ILoggerProvider>('ILoggerProvider');
+      logger.error('Failed to initialize queue services', {
+        error: (error as Error).message,
+      });
+      // Queue başlatılamazsa uygulama çalışmaya devam eder
+    }
   }
 }

@@ -50,6 +50,7 @@
   "license": "MIT",
   "dependencies": {
     "@react-oauth/google": "^0.12.2",
+    "amqplib": "^0.10.3",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "cross-env": "^7.0.3",
@@ -72,6 +73,7 @@
     "zod": "^4.0.5"
   },
   "devDependencies": {
+    "@types/amqplib": "^0.10.4",
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
