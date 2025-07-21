@@ -24,8 +24,28 @@ export class MultiChannelNotificationManager implements INotificationService {
   }
 
   private initializeChannels(): void {
-    // Bu metod container'dan kanalları alıp registry'ye kaydeder
-    // Container'dan kanalları resolve etmek için lazy loading kullanabiliriz
+    // Container'dan kanalları alıp registry'ye kaydet
+    try {
+      const { container } = require('tsyringe');
+
+      // Email channel
+      const emailChannel = container.resolve('IEmailChannel');
+      this.channelRegistry.registerChannel(emailChannel);
+
+      // SMS channel
+      const smsChannel = container.resolve('ISMSChannel');
+      this.channelRegistry.registerChannel(smsChannel);
+
+      // Push channel
+      const pushChannel = container.resolve('IPushChannel');
+      this.channelRegistry.registerChannel(pushChannel);
+
+      // Webhook channel
+      const webhookChannel = container.resolve('IWebhookChannel');
+      this.channelRegistry.registerChannel(webhookChannel);
+    } catch (error) {
+      console.error('❌ Failed to initialize channels:', error);
+    }
   }
 
   async notify(payload: NotificationPayload): Promise<void> {
@@ -159,5 +179,43 @@ export class MultiChannelNotificationManager implements INotificationService {
     }
 
     await this.userRepository.updateById(userId as EntityId, updateData);
+  }
+
+  // Direct notification sistemi için queue status yok
+  async getQueueStatus(): Promise<{
+    messageCount: number;
+    consumerCount: number;
+    deadLetterCount: number;
+  }> {
+    throw new Error('Queue status not available in direct notification system');
+  }
+
+  // Database operations - Not implemented for direct manager
+  async getUserNotifications(
+    userId: string,
+    limit: number = 50,
+    offset: number = 0
+  ): Promise<any[]> {
+    throw new Error(
+      'getUserNotifications not implemented for MultiChannelNotificationManager'
+    );
+  }
+
+  async getNotificationStats(userId?: string): Promise<any> {
+    throw new Error(
+      'getNotificationStats not implemented for MultiChannelNotificationManager'
+    );
+  }
+
+  async notifyUserWithTemplate(
+    userId: string,
+    templateName: string,
+    locale: string,
+    variables: Record<string, any>
+  ): Promise<void> {
+    // Multi-channel manager template'i desteklemiyor, SmartNotificationManager kullanılmalı
+    throw new Error(
+      'Template notifications are not supported in MultiChannelNotificationManager. Use SmartNotificationManager instead.'
+    );
   }
 }

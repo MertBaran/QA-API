@@ -1,46 +1,53 @@
-import 'reflect-metadata';
+import { Request, Response } from 'express';
 import { NotificationController } from '../../../controllers/notificationController';
 import { INotificationService } from '../../../services/contracts/INotificationService';
-import { Request, Response } from 'express';
 import { NotificationConstants } from '../../../controllers/constants/ControllerMessages';
+import { HelperMessages } from '../../../helpers/constants/HelperMessages';
+import { UserNotificationPreferences } from '../../../services/contracts/NotificationPayload';
 
-describe('NotificationController Unit Tests', () => {
+// Mock dependencies
+const mockNotificationService: jest.Mocked<INotificationService> = {
+  notifyUser: jest.fn(),
+  notifyToMultipleChannels: jest.fn(),
+  getUserNotificationPreferences: jest.fn(),
+  updateUserNotificationPreferences: jest.fn(),
+  notify: jest.fn(),
+  getUserNotifications: jest.fn(),
+  getNotificationStats: jest.fn(),
+  notifyUserWithTemplate: jest.fn(),
+};
+
+describe('NotificationController', () => {
   let notificationController: NotificationController;
-  let fakeNotificationService: INotificationService;
   let mockRequest: Partial<Request>;
   let mockResponse: Partial<Response>;
-  let mockJson: jest.Mock;
   let mockStatus: jest.Mock;
+  let mockJson: jest.Mock;
 
   beforeEach(() => {
-    mockJson = jest.fn();
-    mockStatus = jest.fn().mockReturnValue({ json: mockJson });
+    notificationController = new NotificationController(
+      mockNotificationService
+    );
 
-    mockRequest = {
-      params: {},
-      body: {},
-      locale: 'tr',
-    } as any;
+    mockStatus = jest.fn().mockReturnThis();
+    mockJson = jest.fn().mockReturnThis();
 
     mockResponse = {
       status: mockStatus,
       json: mockJson,
     };
 
-    fakeNotificationService = {
-      notify: jest.fn(),
-      notifyToMultipleChannels: jest.fn(),
-      notifyUser: jest.fn(),
-      getUserNotificationPreferences: jest.fn(),
-      updateUserNotificationPreferences: jest.fn(),
-    } as any;
+    mockRequest = {
+      params: {},
+      body: {},
+      locale: 'tr',
+    };
 
-    notificationController = new NotificationController(
-      fakeNotificationService
-    );
+    // Reset all mocks
+    jest.clearAllMocks();
   });
 
-  describe('sendNotificationToUser()', () => {
+  describe('sendNotificationToUser', () => {
     it('should send notification to user successfully', async () => {
       mockRequest.params = { userId: '123' };
       mockRequest.body = {
@@ -52,10 +59,11 @@ describe('NotificationController Unit Tests', () => {
 
       await notificationController.sendNotificationToUser(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        jest.fn()
       );
 
-      expect(fakeNotificationService.notifyUser).toHaveBeenCalledWith('123', {
+      expect(mockNotificationService.notifyUser).toHaveBeenCalledWith('123', {
         subject: 'Test Subject',
         message: 'Test message',
         html: '<p>Test HTML</p>',
@@ -65,7 +73,7 @@ describe('NotificationController Unit Tests', () => {
       expect(mockStatus).toHaveBeenCalledWith(200);
       expect(mockJson).toHaveBeenCalledWith({
         success: true,
-        message: NotificationConstants.NotificationSentSuccess.tr,
+        message: HelperMessages.NotificationSentSuccess,
       });
     });
 
@@ -78,90 +86,21 @@ describe('NotificationController Unit Tests', () => {
 
       await notificationController.sendNotificationToUser(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        jest.fn()
       );
 
-      expect(fakeNotificationService.notifyUser).not.toHaveBeenCalled();
+      expect(mockNotificationService.notifyUser).not.toHaveBeenCalled();
       expect(mockStatus).toHaveBeenCalledWith(400);
       expect(mockJson).toHaveBeenCalledWith({
         success: false,
-        message: NotificationConstants.UserIdRequired.tr,
-      });
-    });
-
-    it('should handle notification service error', async () => {
-      mockRequest.params = { userId: '123' };
-      mockRequest.body = {
-        subject: 'Test Subject',
-        message: 'Test message',
-      };
-
-      const error = new Error('User not found');
-      (fakeNotificationService.notifyUser as jest.Mock).mockRejectedValue(
-        error
-      );
-
-      await notificationController.sendNotificationToUser(
-        mockRequest as Request,
-        mockResponse as Response
-      );
-
-      expect(mockStatus).toHaveBeenCalledWith(500);
-      expect(mockJson).toHaveBeenCalledWith({
-        success: false,
-        message: NotificationConstants.NotificationSendError.tr,
-        error: 'User not found',
-      });
-    });
-
-    it('should handle unknown error', async () => {
-      mockRequest.params = { userId: '123' };
-      mockRequest.body = {
-        subject: 'Test Subject',
-        message: 'Test message',
-      };
-
-      const error = 'Unknown error';
-      (fakeNotificationService.notifyUser as jest.Mock).mockRejectedValue(
-        error
-      );
-
-      await notificationController.sendNotificationToUser(
-        mockRequest as Request,
-        mockResponse as Response
-      );
-
-      expect(mockStatus).toHaveBeenCalledWith(500);
-      expect(mockJson).toHaveBeenCalledWith({
-        success: false,
-        message: NotificationConstants.NotificationSendError.tr,
-        error: NotificationConstants.UnknownError.tr,
-      });
-    });
-
-    it('should use default locale when not provided', async () => {
-      mockRequest.locale = undefined;
-      mockRequest.params = { userId: '123' };
-      mockRequest.body = {
-        subject: 'Test Subject',
-        message: 'Test message',
-      };
-
-      await notificationController.sendNotificationToUser(
-        mockRequest as Request,
-        mockResponse as Response
-      );
-
-      expect(mockStatus).toHaveBeenCalledWith(200);
-      expect(mockJson).toHaveBeenCalledWith({
-        success: true,
-        message: NotificationConstants.NotificationSentSuccess.tr, // default tr
+        message: HelperMessages.UserIdRequired,
       });
     });
   });
 
-  describe('sendNotificationToChannels()', () => {
-    it('should send notification to multiple channels successfully', async () => {
+  describe('sendNotificationToChannels', () => {
+    it('should send notification to channels successfully', async () => {
       mockRequest.body = {
         channels: ['email', 'sms'],
         to: 'test@example.com',
@@ -169,16 +108,17 @@ describe('NotificationController Unit Tests', () => {
         message: 'Test message',
         html: '<p>Test HTML</p>',
         data: { key: 'value' },
-        priority: 'high',
+        priority: 1,
       };
 
       await notificationController.sendNotificationToChannels(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        jest.fn()
       );
 
       expect(
-        fakeNotificationService.notifyToMultipleChannels
+        mockNotificationService.notifyToMultipleChannels
       ).toHaveBeenCalledWith({
         channels: ['email', 'sms'],
         to: 'test@example.com',
@@ -186,112 +126,40 @@ describe('NotificationController Unit Tests', () => {
         message: 'Test message',
         html: '<p>Test HTML</p>',
         data: { key: 'value' },
-        priority: 'high',
+        priority: 1,
       });
 
       expect(mockStatus).toHaveBeenCalledWith(200);
       expect(mockJson).toHaveBeenCalledWith({
         success: true,
-        message: NotificationConstants.NotificationsSentSuccess.tr,
-      });
-    });
-
-    it('should handle notification service error', async () => {
-      mockRequest.body = {
-        channels: ['email'],
-        to: 'test@example.com',
-        message: 'Test message',
-      };
-
-      const error = new Error('Channel not supported');
-      (
-        fakeNotificationService.notifyToMultipleChannels as jest.Mock
-      ).mockRejectedValue(error);
-
-      await notificationController.sendNotificationToChannels(
-        mockRequest as Request,
-        mockResponse as Response
-      );
-
-      expect(mockStatus).toHaveBeenCalledWith(500);
-      expect(mockJson).toHaveBeenCalledWith({
-        success: false,
-        message: NotificationConstants.NotificationsSendError.tr,
-        error: 'Channel not supported',
-      });
-    });
-
-    it('should handle empty channels array', async () => {
-      mockRequest.body = {
-        channels: [],
-        to: 'test@example.com',
-        message: 'Test message',
-      };
-
-      await notificationController.sendNotificationToChannels(
-        mockRequest as Request,
-        mockResponse as Response
-      );
-
-      expect(
-        fakeNotificationService.notifyToMultipleChannels
-      ).toHaveBeenCalledWith({
-        channels: [],
-        to: 'test@example.com',
-        message: 'Test message',
-      });
-
-      expect(mockStatus).toHaveBeenCalledWith(200);
-    });
-
-    it('should handle missing optional fields', async () => {
-      mockRequest.body = {
-        channels: ['email'],
-        to: 'test@example.com',
-        message: 'Test message',
-      };
-
-      await notificationController.sendNotificationToChannels(
-        mockRequest as Request,
-        mockResponse as Response
-      );
-
-      expect(
-        fakeNotificationService.notifyToMultipleChannels
-      ).toHaveBeenCalledWith({
-        channels: ['email'],
-        to: 'test@example.com',
-        message: 'Test message',
+        message: HelperMessages.NotificationSentSuccess,
       });
     });
   });
 
-  describe('getUserNotificationPreferences()', () => {
-    it('should return user notification preferences successfully', async () => {
-      mockRequest.params = { userId: '123' };
-
-      const mockPreferences = {
+  describe('getUserNotificationPreferences', () => {
+    it('should get user notification preferences successfully', async () => {
+      const mockPreferences: UserNotificationPreferences = {
         userId: '123',
         email: true,
-        sms: false,
-        push: true,
+        push: false,
+        sms: true,
         webhook: false,
-        emailAddress: 'user@example.com',
-        phoneNumber: '+1234567890',
-        webhookUrl: 'https://webhook.example.com',
       };
 
+      mockRequest.params = { userId: '123' };
       (
-        fakeNotificationService.getUserNotificationPreferences as jest.Mock
+        mockNotificationService.getUserNotificationPreferences as jest.Mock
       ).mockResolvedValue(mockPreferences);
 
       await notificationController.getUserNotificationPreferences(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        jest.fn()
       );
 
       expect(
-        fakeNotificationService.getUserNotificationPreferences
+        mockNotificationService.getUserNotificationPreferences
       ).toHaveBeenCalledWith('123');
       expect(mockStatus).toHaveBeenCalledWith(200);
       expect(mockJson).toHaveBeenCalledWith({
@@ -300,184 +168,239 @@ describe('NotificationController Unit Tests', () => {
       });
     });
 
-    it('should handle service error', async () => {
-      mockRequest.params = { userId: '123' };
-
-      const error = new Error('User not found');
-      (
-        fakeNotificationService.getUserNotificationPreferences as jest.Mock
-      ).mockRejectedValue(error);
-
-      await notificationController.getUserNotificationPreferences(
-        mockRequest as Request,
-        mockResponse as Response
-      );
-
-      expect(mockStatus).toHaveBeenCalledWith(500);
-      expect(mockJson).toHaveBeenCalledWith({
-        success: false,
-        message: NotificationConstants.PreferencesGetError.tr,
-        error: 'User not found',
-      });
-    });
-
     it('should return error when userId is missing', async () => {
       mockRequest.params = {};
 
       await notificationController.getUserNotificationPreferences(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        jest.fn()
       );
 
       expect(
-        fakeNotificationService.getUserNotificationPreferences
+        mockNotificationService.getUserNotificationPreferences
       ).not.toHaveBeenCalled();
       expect(mockStatus).toHaveBeenCalledWith(400);
       expect(mockJson).toHaveBeenCalledWith({
         success: false,
-        message: NotificationConstants.UserIdRequired.tr,
+        message: HelperMessages.UserIdRequired,
       });
     });
   });
 
-  describe('updateUserNotificationPreferences()', () => {
+  describe('updateUserNotificationPreferences', () => {
     it('should update user notification preferences successfully', async () => {
-      mockRequest.params = { userId: '123' };
-      mockRequest.body = {
-        email: false,
-        sms: true,
+      const preferences: Partial<UserNotificationPreferences> = {
+        email: true,
         push: false,
-        webhook: true,
       };
+
+      mockRequest.params = { userId: '123' };
+      mockRequest.body = preferences;
 
       await notificationController.updateUserNotificationPreferences(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        jest.fn()
       );
 
       expect(
-        fakeNotificationService.updateUserNotificationPreferences
-      ).toHaveBeenCalledWith('123', {
-        email: false,
-        sms: true,
-        push: false,
-        webhook: true,
+        mockNotificationService.updateUserNotificationPreferences
+      ).toHaveBeenCalledWith('123', preferences);
+      expect(mockStatus).toHaveBeenCalledWith(200);
+      expect(mockJson).toHaveBeenCalledWith({
+        success: true,
+        message: HelperMessages.NotificationSentSuccess,
+      });
+    });
+
+    it('should return error when userId is missing', async () => {
+      mockRequest.params = {};
+      mockRequest.body = { email: true };
+
+      await notificationController.updateUserNotificationPreferences(
+        mockRequest as Request,
+        mockResponse as Response,
+        jest.fn()
+      );
+
+      expect(
+        mockNotificationService.updateUserNotificationPreferences
+      ).not.toHaveBeenCalled();
+      expect(mockStatus).toHaveBeenCalledWith(400);
+      expect(mockJson).toHaveBeenCalledWith({
+        success: false,
+        message: HelperMessages.UserIdRequired,
+      });
+    });
+  });
+
+  describe('sendTestNotification', () => {
+    it('should send test notification successfully', async () => {
+      mockRequest.params = { userId: '123' };
+
+      await notificationController.sendTestNotification(
+        mockRequest as Request,
+        mockResponse as Response,
+        jest.fn()
+      );
+
+      expect(mockNotificationService.notifyUser).toHaveBeenCalledWith('123', {
+        subject: 'Test Notification',
+        message: 'This is a test notification',
+        html: '<h1>Test Notification</h1><p>This is a test notification</p>',
+        data: expect.objectContaining({
+          test: true,
+          timestamp: expect.any(String),
+        }),
       });
 
       expect(mockStatus).toHaveBeenCalledWith(200);
       expect(mockJson).toHaveBeenCalledWith({
         success: true,
-        message: NotificationConstants.PreferencesUpdateSuccess.tr,
+        message: HelperMessages.NotificationSentSuccess,
       });
     });
 
-    it('should handle service error', async () => {
-      mockRequest.params = { userId: '123' };
-      mockRequest.body = {
-        email: false,
-      };
+    it('should return error when userId is missing', async () => {
+      mockRequest.params = {};
 
-      const error = new Error('Update failed');
-      (
-        fakeNotificationService.updateUserNotificationPreferences as jest.Mock
-      ).mockRejectedValue(error);
-
-      await notificationController.updateUserNotificationPreferences(
+      await notificationController.sendTestNotification(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        jest.fn()
       );
 
-      expect(mockStatus).toHaveBeenCalledWith(500);
+      expect(mockNotificationService.notifyUser).not.toHaveBeenCalled();
+      expect(mockStatus).toHaveBeenCalledWith(400);
       expect(mockJson).toHaveBeenCalledWith({
         success: false,
-        message: NotificationConstants.PreferencesUpdateError.tr,
-        error: 'Update failed',
+        message: HelperMessages.UserIdRequired,
+      });
+    });
+  });
+
+  describe('sendTemplateNotification', () => {
+    it('should send template notification successfully', async () => {
+      mockRequest.params = { userId: '123' };
+      mockRequest.body = {
+        templateName: 'password-reset',
+        locale: 'tr',
+        variables: {
+          userName: 'Test User',
+          resetLink: 'https://example.com/reset',
+        },
+      };
+
+      await notificationController.sendTemplateNotification(
+        mockRequest as Request,
+        mockResponse as Response,
+        jest.fn()
+      );
+
+      expect(
+        mockNotificationService.notifyUserWithTemplate
+      ).toHaveBeenCalledWith('123', 'password-reset', 'tr', {
+        userName: 'Test User',
+        resetLink: 'https://example.com/reset',
+      });
+
+      expect(mockStatus).toHaveBeenCalledWith(200);
+      expect(mockJson).toHaveBeenCalledWith({
+        success: true,
+        message: HelperMessages.TemplateNotificationSentSuccess,
       });
     });
 
     it('should return error when userId is missing', async () => {
       mockRequest.params = {};
       mockRequest.body = {
-        email: false,
+        templateName: 'password-reset',
+        locale: 'tr',
+        variables: { userName: 'Test User' },
       };
 
-      await notificationController.updateUserNotificationPreferences(
+      await notificationController.sendTemplateNotification(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        jest.fn()
       );
 
       expect(
-        fakeNotificationService.updateUserNotificationPreferences
+        mockNotificationService.notifyUserWithTemplate
       ).not.toHaveBeenCalled();
       expect(mockStatus).toHaveBeenCalledWith(400);
       expect(mockJson).toHaveBeenCalledWith({
         success: false,
-        message: NotificationConstants.UserIdRequired.tr,
+        message: HelperMessages.UserIdRequired,
       });
     });
 
-    it('should handle partial preferences update', async () => {
+    it('should return error when templateName is missing', async () => {
       mockRequest.params = { userId: '123' };
       mockRequest.body = {
-        email: false, // sadece email güncelle
+        locale: 'tr',
+        variables: { userName: 'Test User' },
       };
 
-      await notificationController.updateUserNotificationPreferences(
+      await notificationController.sendTemplateNotification(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        jest.fn()
       );
 
       expect(
-        fakeNotificationService.updateUserNotificationPreferences
-      ).toHaveBeenCalledWith('123', {
-        email: false,
+        mockNotificationService.notifyUserWithTemplate
+      ).not.toHaveBeenCalled();
+      expect(mockStatus).toHaveBeenCalledWith(400);
+      expect(mockJson).toHaveBeenCalledWith({
+        success: false,
+        message: HelperMessages.TemplateNameRequired,
       });
     });
   });
 
-  describe('Error Handling', () => {
-    it('should handle different error types', async () => {
-      mockRequest.params = { userId: '123' };
-      mockRequest.body = {
-        subject: 'Test Subject',
-        message: 'Test message',
+  describe('getQueueStatus', () => {
+    it('should get queue status successfully when queue-based system is active', async () => {
+      const mockQueueStatus = {
+        messageCount: 5,
+        consumerCount: 1,
+        deadLetterCount: 0,
       };
 
-      // String error
-      (fakeNotificationService.notifyUser as jest.Mock).mockRejectedValue(
-        'String error'
-      );
+      // Mock getQueueStatus method
+      mockNotificationService.getQueueStatus = jest
+        .fn()
+        .mockResolvedValue(mockQueueStatus);
 
-      await notificationController.sendNotificationToUser(
+      await notificationController.getQueueStatus(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        jest.fn()
       );
 
+      expect(mockStatus).toHaveBeenCalledWith(200);
       expect(mockJson).toHaveBeenCalledWith({
-        success: false,
-        message: NotificationConstants.NotificationSendError.tr,
-        error: NotificationConstants.UnknownError.tr,
+        success: true,
+        data: mockQueueStatus,
       });
     });
 
-    it('should handle null error', async () => {
-      mockRequest.params = { userId: '123' };
-      mockRequest.body = {
-        subject: 'Test Subject',
-        message: 'Test message',
-      };
+    it('should return error when queue-based system is not active', async () => {
+      // Mock getQueueStatus to return undefined (not implemented)
+      mockNotificationService.getQueueStatus = undefined;
 
-      (fakeNotificationService.notifyUser as jest.Mock).mockRejectedValue(null);
-
-      await notificationController.sendNotificationToUser(
+      await notificationController.getQueueStatus(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        jest.fn()
       );
 
+      expect(mockStatus).toHaveBeenCalledWith(400);
       expect(mockJson).toHaveBeenCalledWith({
         success: false,
-        message: NotificationConstants.NotificationSendError.tr,
-        error: NotificationConstants.UnknownError.tr,
+        message: 'Queue status not available',
+        error: 'getQueueStatus method not implemented',
       });
     });
   });

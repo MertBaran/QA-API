@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
+import asyncErrorWrapper from 'express-async-handler';
 import { injectable, inject } from 'tsyringe';
 import { INotificationService } from '../services/contracts/INotificationService';
 import {
   MultiChannelNotificationPayload,
   UserNotificationPreferences,
 } from '../services/contracts/NotificationPayload';
-import { NotificationConstants } from './constants/ControllerMessages';
-import { getLocalizedNotificationMessage } from '../helpers/i18n/messageHelper';
+import { HelperMessages } from '../helpers/constants/HelperMessages';
 import { SupportedLanguage } from '../constants/supportedLanguages';
 
 interface AuthenticatedRequest extends Request {
@@ -24,23 +24,44 @@ export class NotificationController {
     private notificationService: INotificationService
   ) {}
 
+  // Queue durumunu kontrol et
+  getQueueStatus = asyncErrorWrapper(
+    async (req: Request, res: Response): Promise<void> => {
+      try {
+        if (!this.notificationService.getQueueStatus) {
+          res.status(400).json({
+            success: false,
+            message: 'Queue status not available',
+            error: 'getQueueStatus method not implemented',
+          });
+          return;
+        }
+
+        const status = await this.notificationService.getQueueStatus();
+        res.status(200).json({
+          success: true,
+          data: status,
+        });
+      } catch (error) {
+        res.status(400).json({
+          success: false,
+          message: 'Queue status not available',
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+    }
+  );
+
   // Kullanıcının tüm aktif kanallarına bildirim gönderme
-  async sendNotificationToUser(
-    req: AuthenticatedRequest,
-    res: Response
-  ): Promise<void> {
-    try {
+  sendNotificationToUser = asyncErrorWrapper(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const { userId } = req.params;
       const { subject, message, html, data } = req.body;
-      const userLanguage = (req.locale as SupportedLanguage) || 'tr';
 
       if (!userId) {
         res.status(400).json({
           success: false,
-          message: getLocalizedNotificationMessage(
-            NotificationConstants.UserIdRequired,
-            userLanguage
-          ),
+          message: HelperMessages.UserIdRequired,
         });
         return;
       }
@@ -54,38 +75,15 @@ export class NotificationController {
 
       res.status(200).json({
         success: true,
-        message: getLocalizedNotificationMessage(
-          NotificationConstants.NotificationSentSuccess,
-          userLanguage
-        ),
-      });
-    } catch (error) {
-      const userLanguage = (req.locale as SupportedLanguage) || 'tr';
-      res.status(500).json({
-        success: false,
-        message: getLocalizedNotificationMessage(
-          NotificationConstants.NotificationSendError,
-          userLanguage
-        ),
-        error:
-          error instanceof Error
-            ? error.message
-            : getLocalizedNotificationMessage(
-                NotificationConstants.UnknownError,
-                userLanguage
-              ),
+        message: HelperMessages.NotificationSentSuccess,
       });
     }
-  }
+  );
 
   // Belirli kanallara bildirim gönderme
-  async sendNotificationToChannels(
-    req: AuthenticatedRequest,
-    res: Response
-  ): Promise<void> {
-    try {
+  sendNotificationToChannels = asyncErrorWrapper(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const { channels, to, subject, message, html, data, priority } = req.body;
-      const userLanguage = (req.locale as SupportedLanguage) || 'tr';
 
       const payload: MultiChannelNotificationPayload = {
         channels,
@@ -101,46 +99,20 @@ export class NotificationController {
 
       res.status(200).json({
         success: true,
-        message: getLocalizedNotificationMessage(
-          NotificationConstants.NotificationsSentSuccess,
-          userLanguage
-        ),
-      });
-    } catch (error) {
-      const userLanguage = (req.locale as SupportedLanguage) || 'tr';
-      res.status(500).json({
-        success: false,
-        message: getLocalizedNotificationMessage(
-          NotificationConstants.NotificationsSendError,
-          userLanguage
-        ),
-        error:
-          error instanceof Error
-            ? error.message
-            : getLocalizedNotificationMessage(
-                NotificationConstants.UnknownError,
-                userLanguage
-              ),
+        message: HelperMessages.NotificationSentSuccess,
       });
     }
-  }
+  );
 
   // Kullanıcının bildirim tercihlerini alma
-  async getUserNotificationPreferences(
-    req: AuthenticatedRequest,
-    res: Response
-  ): Promise<void> {
-    try {
+  getUserNotificationPreferences = asyncErrorWrapper(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
       const { userId } = req.params;
-      const userLanguage = (req.locale as SupportedLanguage) || 'tr';
 
       if (!userId) {
         res.status(400).json({
           success: false,
-          message: getLocalizedNotificationMessage(
-            NotificationConstants.UserIdRequired,
-            userLanguage
-          ),
+          message: HelperMessages.UserIdRequired,
         });
         return;
       }
@@ -152,38 +124,19 @@ export class NotificationController {
         success: true,
         data: preferences,
       });
-    } catch (error) {
-      const userLanguage = (req.locale as SupportedLanguage) || 'tr';
-      res.status(500).json({
-        success: false,
-        message: getLocalizedNotificationMessage(
-          NotificationConstants.PreferencesGetError,
-          userLanguage
-        ),
-        error:
-          error instanceof Error
-            ? error.message
-            : getLocalizedNotificationMessage(
-                NotificationConstants.UnknownError,
-                userLanguage
-              ),
-      });
     }
-  }
+  );
 
   // Kullanıcının bildirim tercihlerini güncelleme
-  async updateUserNotificationPreferences(
-    req: Request,
-    res: Response
-  ): Promise<void> {
-    try {
+  updateUserNotificationPreferences = asyncErrorWrapper(
+    async (req: Request, res: Response): Promise<void> => {
       const { userId } = req.params;
-      const preferences = req.body;
+      const preferences: Partial<UserNotificationPreferences> = req.body;
 
       if (!userId) {
         res.status(400).json({
           success: false,
-          message: NotificationConstants.UserIdRequired.tr,
+          message: HelperMessages.UserIdRequired,
         });
         return;
       }
@@ -195,54 +148,150 @@ export class NotificationController {
 
       res.status(200).json({
         success: true,
-        message: NotificationConstants.PreferencesUpdateSuccess.tr,
-      });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: NotificationConstants.PreferencesUpdateError.tr,
-        error:
-          error instanceof Error
-            ? error.message
-            : NotificationConstants.UnknownError.tr,
+        message: HelperMessages.NotificationSentSuccess,
       });
     }
-  }
+  );
+
+  // Template bildirimi gönderme
+  sendTemplateNotification = asyncErrorWrapper(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { userId } = req.params;
+      const { templateName, locale, variables } = req.body;
+
+      if (!userId) {
+        res.status(400).json({
+          success: false,
+          message: HelperMessages.UserIdRequired,
+        });
+        return;
+      }
+
+      if (!templateName) {
+        res.status(400).json({
+          success: false,
+          message: HelperMessages.TemplateNameRequired,
+        });
+        return;
+      }
+
+      const userLocale = locale || req.locale || 'en';
+
+      await this.notificationService.notifyUserWithTemplate(
+        userId,
+        templateName,
+        userLocale,
+        variables || {}
+      );
+
+      res.status(200).json({
+        success: true,
+        message: HelperMessages.TemplateNotificationSentSuccess,
+      });
+    }
+  );
 
   // Test amaçlı - tüm kanallara bildirim gönderme
-  async sendTestNotification(req: Request, res: Response): Promise<void> {
-    try {
+  sendTestNotification = asyncErrorWrapper(
+    async (req: Request, res: Response): Promise<void> => {
       const { userId } = req.params;
 
       if (!userId) {
         res.status(400).json({
           success: false,
-          message: NotificationConstants.UserIdRequired.tr,
+          message: HelperMessages.UserIdRequired,
         });
         return;
       }
 
       await this.notificationService.notifyUser(userId, {
-        subject: 'Test Bildirimi',
-        message:
-          'Bu bir test bildirimidir. Tüm aktif kanallarınıza gönderildi.',
-        html: '<h1>Test Bildirimi</h1><p>Bu bir test bildirimidir.</p>',
+        subject: 'Test Notification',
+        message: 'This is a test notification',
+        html: '<h1>Test Notification</h1><p>This is a test notification</p>',
         data: { test: true, timestamp: new Date().toISOString() },
       });
 
       res.status(200).json({
         success: true,
-        message: NotificationConstants.TestNotificationSentSuccess.tr,
-      });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: NotificationConstants.TestNotificationSendError.tr,
-        error:
-          error instanceof Error
-            ? error.message
-            : NotificationConstants.UnknownError.tr,
+        message: HelperMessages.NotificationSentSuccess,
       });
     }
-  }
+  );
+
+  // Debug endpoint - notification'ları kontrol et
+  debugNotifications = asyncErrorWrapper(
+    async (req: Request, res: Response): Promise<void> => {
+      const { userId } = req.params;
+
+      if (!userId) {
+        res.status(400).json({
+          success: false,
+          message: HelperMessages.UserIdRequired,
+        });
+        return;
+      }
+
+      const notifications = await this.notificationService.getUserNotifications(
+        userId,
+        10,
+        0
+      );
+      const stats = await this.notificationService.getNotificationStats(userId);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          notifications,
+          stats,
+          userId,
+        },
+        message: 'Debug information retrieved',
+      });
+    }
+  );
+
+  // Kullanıcının bildirimlerini getir
+  getUserNotifications = asyncErrorWrapper(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { userId } = req.params;
+      const { limit = 50, offset = 0 } = req.query;
+
+      if (!userId) {
+        res.status(400).json({
+          success: false,
+          message: HelperMessages.UserIdRequired,
+        });
+        return;
+      }
+
+      const notifications = await this.notificationService.getUserNotifications(
+        userId,
+        Number(limit),
+        Number(offset)
+      );
+
+      res.status(200).json({
+        success: true,
+        data: notifications,
+        message: HelperMessages.NotificationsRetrievedSuccess,
+      });
+    }
+  );
+
+  // Bildirim istatistiklerini getir
+  getNotificationStats = asyncErrorWrapper(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const { userId } = req.query;
+
+      const stats = await this.notificationService.getNotificationStats(
+        userId as string
+      );
+
+      res.status(200).json({
+        success: true,
+        data: stats,
+        message: HelperMessages.StatsRetrievedSuccess,
+      });
+    }
+  );
 }

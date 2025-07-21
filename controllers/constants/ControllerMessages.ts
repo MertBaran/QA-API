@@ -68,6 +68,16 @@ export const AuthConstants = {
     tr: 'Çıkış başarılı',
     de: 'Abmeldung erfolgreich',
   },
+  NotLoggedIn: {
+    en: 'User is not logged in',
+    tr: 'Kullanıcı giriş yapmamış',
+    de: 'Benutzer ist nicht angemeldet',
+  },
+  LogoutError: {
+    en: 'Error occurred during logout',
+    tr: 'Çıkış sırasında hata oluştu',
+    de: 'Fehler beim Abmelden',
+  },
   ResetPasswordTokenSent: {
     en: 'Reset password token sent to email',
     tr: 'Şifre sıfırlama bağlantısı e-posta adresinize gönderildi',
@@ -135,5 +145,35 @@ export const NotificationConstants = {
     en: 'Unknown error',
     tr: 'Bilinmeyen hata',
     de: 'Unbekannter Fehler',
+  },
+  NotificationsRetrievedSuccess: {
+    en: 'Notifications retrieved successfully',
+    tr: 'Bildirimler başarıyla alındı',
+    de: 'Benachrichtigungen erfolgreich abgerufen',
+  },
+  StatsRetrievedSuccess: {
+    en: 'Notification statistics retrieved successfully',
+    tr: 'Bildirim istatistikleri başarıyla alındı',
+    de: 'Benachrichtigungsstatistiken erfolgreich abgerufen',
+  },
+  TemplateNotificationSentSuccess: {
+    en: 'Template notification sent successfully',
+    tr: 'Template bildirimi başarıyla gönderildi',
+    de: 'Template-Benachrichtigung erfolgreich gesendet',
+  },
+  TemplateNotificationSendError: {
+    en: 'Error occurred while sending template notification',
+    tr: 'Template bildirimi gönderilirken hata oluştu',
+    de: 'Fehler beim Senden der Template-Benachrichtigung',
+  },
+  TemplateNameRequired: {
+    en: 'Template name is required',
+    tr: 'Template adı gerekli',
+    de: 'Template-Name ist erforderlich',
+  },
+  TemplateNotFound: {
+    en: 'Template not found',
+    tr: 'Template bulunamadı',
+    de: 'Template nicht gefunden',
   },
 };

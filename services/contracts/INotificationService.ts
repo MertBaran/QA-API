@@ -28,4 +28,27 @@ export interface INotificationService {
     userId: string,
     preferences: Partial<UserNotificationPreferences>
   ): Promise<void>;
+
+  // Queue durumunu kontrol etme (opsiyonel)
+  getQueueStatus?(): Promise<{
+    messageCount: number;
+    consumerCount: number;
+    deadLetterCount: number;
+  }>;
+
+  // Database operations
+  getUserNotifications(
+    userId: string,
+    limit?: number,
+    offset?: number
+  ): Promise<any[]>;
+  getNotificationStats(userId?: string): Promise<any>;
+
+  // Template-based notification
+  notifyUserWithTemplate(
+    userId: string,
+    templateName: string,
+    locale: string,
+    variables: Record<string, any>
+  ): Promise<void>;
 }

@@ -94,6 +94,11 @@ export const AuthServiceMessages = {
     tr: 'Kullanıcı bilgisi alınırken veritabanı hatası',
     de: 'Datenbankfehler beim Abrufen des Benutzers',
   },
+  UpdateProfileError: {
+    en: 'Database error during profile update',
+    tr: 'Profil güncelleme sırasında veritabanı hatası',
+    de: 'Datenbankfehler beim Profil-Update',
+  },
 } satisfies Record<string, L10n>;
 
 export const AnswerServiceMessages = {

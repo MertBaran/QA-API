@@ -111,4 +111,41 @@ export class NotificationManager implements INotificationService {
 
     await this.userRepository.updateById(userId as EntityId, updateData);
   }
+
+  async getQueueStatus() {
+    return {
+      messageCount: 0,
+      consumerCount: 0,
+      deadLetterCount: 0,
+    };
+  }
+
+  // Database operations - Not implemented for legacy manager
+  async getUserNotifications(
+    userId: string,
+    limit: number = 50,
+    offset: number = 0
+  ): Promise<any[]> {
+    throw new Error(
+      'getUserNotifications not implemented for NotificationManager'
+    );
+  }
+
+  async getNotificationStats(userId?: string): Promise<any> {
+    throw new Error(
+      'getNotificationStats not implemented for NotificationManager'
+    );
+  }
+
+  async notifyUserWithTemplate(
+    userId: string,
+    templateName: string,
+    locale: string,
+    variables: Record<string, any>
+  ): Promise<void> {
+    // Basic manager template'i desteklemiyor, SmartNotificationManager kullanılmalı
+    throw new Error(
+      'Template notifications are not supported in NotificationManager. Use SmartNotificationManager instead.'
+    );
+  }
 }

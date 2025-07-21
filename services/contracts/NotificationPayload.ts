@@ -3,10 +3,13 @@ export type NotificationChannel = 'email' | 'push' | 'sms' | 'webhook';
 export interface NotificationPayload {
   channel: NotificationChannel;
   to: string;
+  userId?: string;
+  from?: string;
   subject?: string;
   message: string;
   html?: string;
   data?: any;
+  tags?: string[];
 }
 
 // Multi-channel notification için yeni interface

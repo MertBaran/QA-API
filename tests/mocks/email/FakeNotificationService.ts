@@ -51,4 +51,44 @@ export class FakeNotificationService implements INotificationService {
   ): Promise<void> {
     // Mock implementation - preferences güncelleme
   }
+
+  async getQueueStatus() {
+    return {
+      messageCount: 0,
+      consumerCount: 0,
+      deadLetterCount: 0,
+    };
+  }
+
+  // Database operations - Mock implementation
+  async getUserNotifications(
+    userId: string,
+    limit: number = 50,
+    offset: number = 0
+  ): Promise<any[]> {
+    return [];
+  }
+
+  async getNotificationStats(userId?: string): Promise<any> {
+    return {
+      total: 0,
+      pending: 0,
+      sent: 0,
+      failed: 0,
+      delivered: 0,
+      read: 0,
+    };
+  }
+
+  async notifyUserWithTemplate(
+    userId: string,
+    templateName: string,
+    locale: string,
+    variables: Record<string, any>
+  ): Promise<void> {
+    // Mock implementation
+    console.log(
+      `Mock: Template notification sent to user ${userId} using template ${templateName} in locale ${locale}`
+    );
+  }
 }
