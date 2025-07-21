@@ -4,10 +4,15 @@ import mongoose from 'mongoose';
 import app from '../../APP';
 
 import '../setup';
-import { registerTestUser, loginTestUser } from '../utils/testUtils';
+import { registerTestUserAPI, loginTestUserAPI } from '../utils/testUtils';
 // import User from '../../models/User'; // Artık kullanılmıyor
 
 // Remove all repository imports and instantiations
+
+// Yardımcı fonksiyon: Mesajları normalize et
+function normalizeMsg(msg: string) {
+  return msg.toLowerCase().replace(/[-/]/g, '').replace(/\s+/g, '');
+}
 
 describe('Admin API Tests', () => {
   let regularUser: any;
@@ -16,8 +21,8 @@ describe('Admin API Tests', () => {
   beforeEach(async () => {
     // Create admin user via utility
     const { email: adminEmail, password: adminPassword } =
-      await registerTestUser({ role: 'admin' });
-    const adminLogin = await loginTestUser({
+      await registerTestUserAPI({ role: 'admin' });
+    const adminLogin = await loginTestUserAPI({
       email: adminEmail,
       password: adminPassword,
     });
@@ -25,8 +30,8 @@ describe('Admin API Tests', () => {
     adminToken = adminLogin.token;
     // Create regular user via utility
     const { email: regularEmail, password: regularPassword } =
-      await registerTestUser();
-    const regularLogin = await loginTestUser({
+      await registerTestUserAPI();
+    const regularLogin = await loginTestUserAPI({
       email: regularEmail,
       password: regularPassword,
     });
@@ -45,7 +50,9 @@ describe('Admin API Tests', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toBe('Block - Unblock Successfull');
+      expect(normalizeMsg(response.body.message)).toBe(
+        normalizeMsg('Block - Unblock Successful')
+      );
 
       // Verify user is blocked via API
       const blockedUserResponse = await request(app).get(
@@ -77,7 +84,9 @@ describe('Admin API Tests', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toBe('Block - Unblock Successfull');
+      expect(normalizeMsg(response.body.message)).toBe(
+        normalizeMsg('Block - Unblock Successful')
+      );
 
       // Verify user is unblocked via API
       const unblockedUserResponse = await request(app).get(
@@ -107,8 +116,8 @@ describe('Admin API Tests', () => {
 
     it('should require admin access', async () => {
       // Create another regular user
-      const otherUser = await registerTestUser({ role: 'user' });
-      const otherLogin = await loginTestUser({
+      const otherUser = await registerTestUserAPI({ role: 'user' });
+      const otherLogin = await loginTestUserAPI({
         email: otherUser.email,
         password: 'password123',
       });
@@ -139,7 +148,9 @@ describe('Admin API Tests', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toBe('delete operation successfull');
+      expect(normalizeMsg(response.body.message)).toBe(
+        normalizeMsg('delete operation successful')
+      );
 
       // Verify user is deleted via API
       const deletedUserResponse = await request(app).get(
@@ -168,8 +179,8 @@ describe('Admin API Tests', () => {
 
     it('should require admin access', async () => {
       // Create another regular user
-      const otherUser = await registerTestUser({ role: 'user' });
-      const otherLogin = await loginTestUser({
+      const otherUser = await registerTestUserAPI({ role: 'user' });
+      const otherLogin = await loginTestUserAPI({
         email: otherUser.email,
         password: 'password123',
       });

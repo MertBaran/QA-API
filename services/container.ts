@@ -45,6 +45,7 @@ import { RabbitMQProvider } from './providers/RabbitMQProvider';
 import { SmartNotificationManager } from './managers/SmartNotificationManager';
 import { SmartNotificationStrategy } from './strategies/SmartNotificationStrategy';
 import { SystemMetricsCollector } from './metrics/SystemMetricsCollector';
+import { WebSocketMonitorService } from './WebSocketMonitorService';
 
 // Register core services first
 container.registerSingleton('BootstrapService', BootstrapService);
@@ -105,6 +106,9 @@ container.registerSingleton(
 // Register smart notification system
 container.registerSingleton('INotificationStrategy', SmartNotificationStrategy);
 container.registerSingleton('SystemMetricsCollector', SystemMetricsCollector);
+
+// Register WebSocket monitoring service
+container.registerSingleton('WebSocketMonitorService', WebSocketMonitorService);
 
 // Register notification managers based on technology
 // Default olarak smart kullan, bootstrap sonrası güncellenecek

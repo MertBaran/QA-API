@@ -1,0 +1,342 @@
+import { injectable, inject } from 'tsyringe';
+import { EventEmitter } from 'events';
+import { ILoggerProvider } from '../infrastructure/logging/ILoggerProvider';
+import { INotificationService } from './contracts/INotificationService';
+import { ApplicationState } from './ApplicationState';
+
+export interface ConnectionStatus {
+  service: 'database' | 'cache' | 'queue' | 'email';
+  status: 'connected' | 'disconnected' | 'reconnecting';
+  lastCheck: Date;
+  error?: string;
+  details?: any;
+}
+
+export interface ConnectionAlert {
+  type: 'connection_lost' | 'connection_restored' | 'connection_failed';
+  service: string;
+  message: string;
+  timestamp: Date;
+  details?: any;
+}
+
+@injectable()
+export class ConnectionMonitorService extends EventEmitter {
+  private monitoringInterval: NodeJS.Timeout | null = null;
+  private connectionStatus: Map<string, ConnectionStatus> = new Map();
+  private alertHistory: ConnectionAlert[] = [];
+  private isMonitoring = false;
+  private appState = ApplicationState.getInstance();
+
+  constructor(
+    @inject('ILoggerProvider') private logger: ILoggerProvider,
+    @inject('INotificationService')
+    private notificationService: INotificationService
+  ) {
+    super();
+    this.initializeStatus();
+  }
+
+  private initializeStatus(): void {
+    this.connectionStatus.set('database', {
+      service: 'database',
+      status: 'connected',
+      lastCheck: new Date(),
+    });
+
+    this.connectionStatus.set('cache', {
+      service: 'cache',
+      status: 'connected',
+      lastCheck: new Date(),
+    });
+
+    this.connectionStatus.set('queue', {
+      service: 'queue',
+      status: 'connected',
+      lastCheck: new Date(),
+    });
+
+    this.connectionStatus.set('email', {
+      service: 'email',
+      status: 'connected',
+      lastCheck: new Date(),
+    });
+  }
+
+  public startMonitoring(intervalMs: number = 30000): void {
+    if (this.isMonitoring) {
+      this.logger.warn('Connection monitoring is already running');
+      return;
+    }
+
+    this.isMonitoring = true;
+    this.monitoringInterval = setInterval(() => {
+      this.checkAllConnections();
+    }, intervalMs);
+
+    this.logger.info('🔍 Connection monitoring started', {
+      interval: `${intervalMs}ms`,
+      services: ['database', 'cache', 'queue', 'email'],
+    });
+  }
+
+  public stopMonitoring(): void {
+    if (this.monitoringInterval) {
+      clearInterval(this.monitoringInterval);
+      this.monitoringInterval = null;
+    }
+    this.isMonitoring = false;
+    this.logger.info('🛑 Connection monitoring stopped');
+  }
+
+  private async checkAllConnections(): Promise<void> {
+    if (!this.appState.isReady) {
+      return;
+    }
+
+    const config = this.appState.config;
+    const checks = [
+      this.checkDatabaseConnection(config.MONGO_URI),
+      this.checkCacheConnection(config),
+      this.checkQueueConnection(),
+      this.checkEmailConnection(config),
+    ];
+
+    await Promise.allSettled(checks);
+  }
+
+  private async checkDatabaseConnection(mongoUri: string): Promise<void> {
+    try {
+      // Simulate database connection check
+      // In real implementation, you'd ping the database
+      const isConnected = mongoUri && mongoUri.includes('mongodb');
+
+      const previousStatus = this.connectionStatus.get('database');
+      const newStatus: ConnectionStatus = {
+        service: 'database',
+        status: isConnected ? 'connected' : 'disconnected',
+        lastCheck: new Date(),
+        details: {
+          host: new URL(mongoUri).hostname,
+          database: new URL(mongoUri).pathname.substring(1),
+        },
+      };
+
+      this.updateConnectionStatus('database', newStatus, previousStatus);
+    } catch (error) {
+      this.handleConnectionError('database', error as Error);
+    }
+  }
+
+  private async checkCacheConnection(config: any): Promise<void> {
+    try {
+      // Simulate cache connection check
+      const isConnected = config.REDIS_HOST && config.REDIS_PORT;
+
+      const previousStatus = this.connectionStatus.get('cache');
+      const newStatus: ConnectionStatus = {
+        service: 'cache',
+        status: isConnected ? 'connected' : 'disconnected',
+        lastCheck: new Date(),
+        details: {
+          host: config.REDIS_HOST,
+          port: config.REDIS_PORT,
+        },
+      };
+
+      this.updateConnectionStatus('cache', newStatus, previousStatus);
+    } catch (error) {
+      this.handleConnectionError('cache', error as Error);
+    }
+  }
+
+  private async checkQueueConnection(): Promise<void> {
+    try {
+      // Simulate queue connection check
+      const isConnected = true; // Assume connected for now
+
+      const previousStatus = this.connectionStatus.get('queue');
+      const newStatus: ConnectionStatus = {
+        service: 'queue',
+        status: isConnected ? 'connected' : 'disconnected',
+        lastCheck: new Date(),
+        details: {
+          host: 'localhost',
+          port: 5672,
+        },
+      };
+
+      this.updateConnectionStatus('queue', newStatus, previousStatus);
+    } catch (error) {
+      this.handleConnectionError('queue', error as Error);
+    }
+  }
+
+  private async checkEmailConnection(config: any): Promise<void> {
+    try {
+      // Simulate email connection check
+      const isConnected = config.SMTP_HOST && config.SMTP_PORT;
+
+      const previousStatus = this.connectionStatus.get('email');
+      const newStatus: ConnectionStatus = {
+        service: 'email',
+        status: isConnected ? 'connected' : 'disconnected',
+        lastCheck: new Date(),
+        details: {
+          host: config.SMTP_HOST,
+          port: config.SMTP_PORT,
+        },
+      };
+
+      this.updateConnectionStatus('email', newStatus, previousStatus);
+    } catch (error) {
+      this.handleConnectionError('email', error as Error);
+    }
+  }
+
+  private updateConnectionStatus(
+    service: string,
+    newStatus: ConnectionStatus,
+    previousStatus?: ConnectionStatus
+  ): void {
+    this.connectionStatus.set(service, newStatus);
+
+    // Check for status changes
+    if (previousStatus && previousStatus.status !== newStatus.status) {
+      if (newStatus.status === 'disconnected') {
+        this.handleConnectionLost(service, newStatus);
+      } else if (
+        newStatus.status === 'connected' &&
+        previousStatus.status === 'disconnected'
+      ) {
+        this.handleConnectionRestored(service, newStatus);
+      }
+    }
+
+    // Emit status update event
+    this.emit('statusUpdate', { service, status: newStatus });
+  }
+
+  private handleConnectionLost(
+    service: string,
+    status: ConnectionStatus
+  ): void {
+    const alert: ConnectionAlert = {
+      type: 'connection_lost',
+      service,
+      message: `${service.toUpperCase()} connection lost`,
+      timestamp: new Date(),
+      details: status.details,
+    };
+
+    this.createAlert(alert);
+    this.sendNotification(alert);
+  }
+
+  private handleConnectionRestored(
+    service: string,
+    status: ConnectionStatus
+  ): void {
+    const alert: ConnectionAlert = {
+      type: 'connection_restored',
+      service,
+      message: `${service.toUpperCase()} connection restored`,
+      timestamp: new Date(),
+      details: status.details,
+    };
+
+    this.createAlert(alert);
+    this.sendNotification(alert);
+  }
+
+  private handleConnectionError(service: string, error: Error): void {
+    const status: ConnectionStatus = {
+      service: service as any,
+      status: 'disconnected',
+      lastCheck: new Date(),
+      error: error.message,
+    };
+
+    this.connectionStatus.set(service, status);
+    this.handleConnectionLost(service, status);
+  }
+
+  private createAlert(alert: ConnectionAlert): void {
+    this.alertHistory.push(alert);
+
+    // Keep only last 100 alerts
+    if (this.alertHistory.length > 100) {
+      this.alertHistory = this.alertHistory.slice(-100);
+    }
+
+    this.logger.error(`🚨 Connection Alert: ${alert.message}`, {
+      service: alert.service,
+      type: alert.type,
+      timestamp: alert.timestamp,
+      details: alert.details,
+    });
+
+    // Emit alert event
+    this.emit('alert', alert);
+  }
+
+  private async sendNotification(alert: ConnectionAlert): Promise<void> {
+    try {
+      const config = this.appState.config;
+      const notificationPayload = {
+        channel: 'email' as const,
+        to: config.ADMIN_EMAIL || 'admin@example.com', // Config'den al
+        subject: `Connection Alert: ${alert.service.toUpperCase()}`,
+        message: alert.message,
+        data: {
+          service: alert.service,
+          alertType: alert.type,
+          timestamp: alert.timestamp,
+          details: alert.details,
+        },
+        tags: ['system', 'connection', alert.type],
+      };
+
+      await this.notificationService.notify(notificationPayload);
+    } catch (error) {
+      this.logger.error('Failed to send connection alert notification', {
+        error: (error as Error).message,
+        alert: alert,
+      });
+    }
+  }
+
+  public getConnectionStatus(): Map<string, ConnectionStatus> {
+    return new Map(this.connectionStatus);
+  }
+
+  public getAlertHistory(): ConnectionAlert[] {
+    return [...this.alertHistory];
+  }
+
+  public getRecentAlerts(limit: number = 10): ConnectionAlert[] {
+    return this.alertHistory.slice(-limit);
+  }
+
+  public isMonitoringActive(): boolean {
+    return this.isMonitoring;
+  }
+
+  public getMonitoringStats(): any {
+    const totalAlerts = this.alertHistory.length;
+    const lostAlerts = this.alertHistory.filter(
+      a => a.type === 'connection_lost'
+    ).length;
+    const restoredAlerts = this.alertHistory.filter(
+      a => a.type === 'connection_restored'
+    ).length;
+
+    return {
+      isMonitoring: this.isMonitoring,
+      totalAlerts,
+      connectionLost: lostAlerts,
+      connectionRestored: restoredAlerts,
+      lastAlert: this.alertHistory[this.alertHistory.length - 1] || null,
+    };
+  }
+}

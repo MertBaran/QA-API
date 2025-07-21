@@ -13,6 +13,7 @@ export abstract class BaseRepository<TEntity> {
     try {
       return await this.dataSource.create(data);
     } catch (_err) {
+      console.error('BaseRepository create error:', _err);
       throw new CustomError('Database error in BaseRepository.create', 500);
     }
   }
@@ -21,6 +22,7 @@ export abstract class BaseRepository<TEntity> {
     try {
       return await this.dataSource.findById(id.toString());
     } catch (_err) {
+      console.error('BaseRepository findById error:', _err);
       throw new CustomError('Database error in BaseRepository.findById', 500);
     }
   }

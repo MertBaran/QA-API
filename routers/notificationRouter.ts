@@ -4,7 +4,9 @@ import { NotificationController } from '../controllers/notificationController';
 import { getAccessToRoute } from '../middlewares/authorization/authMiddleware';
 
 const router = Router();
-const notificationController = container.resolve(NotificationController);
+const notificationController = new NotificationController(
+  container.resolve('INotificationService')
+);
 
 // Kullanıcının tüm aktif kanallarına bildirim gönderme
 router.post(

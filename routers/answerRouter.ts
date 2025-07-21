@@ -1,12 +1,12 @@
 import express, { Router } from 'express';
-import { container as di } from '../services/container';
+import { container } from 'tsyringe';
 import { AnswerController } from '../controllers/answerController';
 import {
   getAccessToRoute,
   getAnswerOwnerAccess,
 } from '../middlewares/authorization/authMiddleware';
 import { checkQuestionAndAnswerExist } from '../middlewares/database/databaseErrorHelpers';
-import { auditMiddleware } from '../middlewares/audit/auditMiddleware';
+import { AuditMiddleware } from '../middlewares/audit/auditMiddleware';
 import { IValidationProvider } from '../infrastructure/validation/IValidationProvider';
 import {
   createAnswerSchema,
@@ -16,8 +16,13 @@ import { QuestionIdParamSchema } from '../types/dto/common/question-id-param.dto
 import { AnswerIdParamSchema } from '../types/dto/common/answer-id-param.dto';
 
 const router: Router = express.Router({ mergeParams: true }); // question_id parametresini üst router'dan alır
-const answerController = di.resolve<AnswerController>('AnswerController');
-const validator = di.resolve<IValidationProvider>('IValidationProvider');
+const answerController = new AnswerController(
+  container.resolve('IAnswerService')
+);
+const validator = container.resolve<IValidationProvider>('IValidationProvider');
+const auditMiddleware = new AuditMiddleware(
+  container.resolve('IAuditProvider')
+);
 
 // POST /api/questions/:question_id/answers
 router.post(
@@ -25,8 +30,8 @@ router.post(
   getAccessToRoute,
   validator.validateParams(QuestionIdParamSchema),
   validator.validateBody(createAnswerSchema),
-  auditMiddleware('ANSWER_CREATE', {
-    targetExtractor: req => ({ type: 'answer', id: req.body?._id }),
+  auditMiddleware.createMiddleware('ANSWER_CREATE', {
+    targetExtractor: (req: any) => ({ type: 'answer', id: req.body?._id }),
   }),
   answerController.addNewAnswerToQuestion
 );
@@ -72,8 +77,8 @@ router.put(
     getAccessToRoute,
     getAnswerOwnerAccess,
     validator.validateBody(updateAnswerSchema),
-    auditMiddleware('ANSWER_UPDATE', {
-      targetExtractor: req => ({
+    auditMiddleware.createMiddleware('ANSWER_UPDATE', {
+      targetExtractor: (req: any) => ({
         type: 'answer',
         id: req.params['answer_id'],
       }),
@@ -89,8 +94,8 @@ router.delete(
     checkQuestionAndAnswerExist,
     getAccessToRoute,
     getAnswerOwnerAccess,
-    auditMiddleware('ANSWER_DELETE', {
-      targetExtractor: req => ({
+    auditMiddleware.createMiddleware('ANSWER_DELETE', {
+      targetExtractor: (req: any) => ({
         type: 'answer',
         id: req.params['answer_id'],
       }),

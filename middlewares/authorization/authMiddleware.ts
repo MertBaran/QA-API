@@ -15,12 +15,14 @@ import { AuthMiddlewareMessages } from '../constants/MiddlewareMessages';
 interface DecodedToken {
   id: string;
   name: string;
+  role?: string;
 }
 
 interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
     name: string;
+    role?: string;
   };
 }
 
@@ -46,7 +48,11 @@ const getAccessToRoute = (
     const decodedToken = decoded as DecodedToken & {
       lang?: 'en' | 'tr' | 'de';
     };
-    req.user = { id: decodedToken.id, name: decodedToken.name } as any;
+    req.user = {
+      id: decodedToken.id,
+      name: decodedToken.name,
+      role: decodedToken.role,
+    } as any;
     req.locale = decodedToken.lang ?? 'en';
     next();
   });
@@ -54,10 +60,8 @@ const getAccessToRoute = (
 
 const getAdminAccess = asyncErrorWrapper(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    const { id } = req.user!;
-    const userRepository = container.resolve<UserRepository>('UserRepository');
-    const user = await userRepository.findById(id);
-    if (!user || user.role !== 'admin') {
+    const { role } = req.user!;
+    if (role !== 'admin') {
       return next(new CustomError(AuthMiddlewareMessages.OnlyAdmins, 403));
     }
     next();
@@ -69,8 +73,9 @@ const getQuestionOwnerAccess = asyncErrorWrapper(
     const userId = req.user!.id;
     const questionId = req.params['id'];
     if (!questionId) throw new Error('questionId is required');
-    const questionRepository =
-      container.resolve<QuestionRepository>('QuestionRepository');
+    const questionRepository = container.resolve<QuestionRepository>(
+      'IQuestionRepository'
+    );
     const question = await questionRepository.findById(questionId);
     if (!question || question.user !== userId) {
       return next(new CustomError(AuthMiddlewareMessages.OwnerOnly, 403));
@@ -85,7 +90,7 @@ const getAnswerOwnerAccess = asyncErrorWrapper(
     const answerId = req.params['answer_id'];
     if (!answerId) throw new Error('answerId is required');
     const answerRepository =
-      container.resolve<AnswerRepository>('AnswerRepository');
+      container.resolve<AnswerRepository>('IAnswerRepository');
     const answer = await answerRepository.findById(answerId);
     const answerUserId =
       answer &&

@@ -53,14 +53,29 @@ export async function loginTestUser({
   password: string;
 }) {
   try {
-    // Use AuthManager directly for tests
-    const authService = container.resolve<AuthManager>('IAuthService');
-    const user = await authService.loginUser(email, password);
+    // First try to register the user if they don't exist
+    try {
+      await registerTestUser({ email, password });
+    } catch (error) {
+      // User might already exist, continue with login
+    }
 
-    // Generate a simple test token
-    const token = `test-token-${Date.now()}-${user._id}`;
+    // Use API endpoint for login instead of direct service call
+    const request = require('supertest');
+    const app = require('../../APP').default;
 
-    return { user, token };
+    const response = await request(app)
+      .post('/api/auth/login')
+      .send({ email, password });
+
+    if (response.status !== 200) {
+      throw new Error(`Login failed: ${response.body.message}`);
+    }
+
+    return {
+      user: response.body.data,
+      token: response.body.access_token,
+    };
   } catch (error) {
     console.error('loginTestUser error:', error);
     throw error;
@@ -79,10 +94,15 @@ export async function createTestQuestion({
   content?: string;
 }) {
   try {
-    // Extract user ID from test token
-    const userId = token.split('-').pop();
+    // Extract user ID from JWT token
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(
+      token,
+      process.env['JWT_SECRET_KEY'] || 'test-secret-key'
+    );
+    const userId = decoded.id;
     if (!userId) {
-      throw new Error('Invalid test token format');
+      throw new Error('Invalid JWT token format');
     }
 
     // Use QuestionManager directly for tests
@@ -114,10 +134,15 @@ export async function createTestAnswer({
   content?: string;
 }) {
   try {
-    // Extract user ID from test token
-    const userId = token.split('-').pop();
+    // Extract user ID from JWT token
+    const jwt = require('jsonwebtoken');
+    const decoded = jwt.verify(
+      token,
+      process.env['JWT_SECRET_KEY'] || 'test-secret-key'
+    );
+    const userId = decoded.id;
     if (!userId) {
-      throw new Error('Invalid test token format');
+      throw new Error('Invalid JWT token format');
     }
 
     // Use AnswerManager directly for tests

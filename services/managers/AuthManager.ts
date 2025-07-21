@@ -261,13 +261,23 @@ export class AuthManager implements IAuthService {
     id: string;
     name: string;
     lang: string;
+    role?: string;
   }): string {
     const secret = (process.env['JWT_SECRET_KEY'] ||
       'default_secret') as jwt.Secret;
     const expires: string | number = process.env['JWT_EXPIRE'] ?? '1d';
-    return jwt.sign({ id: user.id, name: user.name, lang: user.lang }, secret, {
-      expiresIn: expires,
-    } as jwt.SignOptions);
+    return jwt.sign(
+      {
+        id: user.id,
+        name: user.name,
+        lang: user.lang,
+        role: user.role || 'user',
+      },
+      secret,
+      {
+        expiresIn: expires,
+      } as jwt.SignOptions
+    );
   }
 
   static generateResetPasswordToken(): { token: string; expire: Date } {

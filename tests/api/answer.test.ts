@@ -4,8 +4,8 @@ import mongoose from 'mongoose';
 import app from '../../APP';
 import '../setup';
 import {
-  registerTestUser,
-  loginTestUser,
+  registerTestUserAPI,
+  loginTestUserAPI,
   createTestQuestion,
   createTestAnswer,
 } from '../utils/testUtils';
@@ -18,8 +18,8 @@ describe('Answer API Tests', () => {
 
   beforeEach(async () => {
     // Kullanıcı oluştur ve login ol
-    const { email, password } = await registerTestUser();
-    const login = await loginTestUser({ email, password });
+    const { email, password } = await registerTestUserAPI();
+    const login = await loginTestUserAPI({ email, password });
     testUser = login.user;
     authToken = login.token;
 

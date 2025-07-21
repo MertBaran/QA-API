@@ -1,108 +1,26 @@
 import 'reflect-metadata';
-import express, { Request, Response, Application } from 'express';
-import cors from 'cors';
-import path from 'path';
 
-// Import container and bootstrap service
-import { container, initializeContainer } from './services/container';
-import { BootstrapService } from './services/BootstrapService';
-import { HealthCheckService } from './services/HealthCheckService';
-import routers from './routers';
-import customErrorHandler from './middlewares/errors/customErrorHandler';
+import { ApplicationSetup } from './services/ApplicationSetup';
+import { ApplicationState } from './services/ApplicationState';
 
-const app: Application = express();
+// Main application instance
+const appSetup = new ApplicationSetup();
+const app = appSetup.getApp();
 
-// CORS and Language Middleware
-app.use(
-  cors({
-    origin: true, // Allow all origins for development
-    credentials: true,
-  })
-);
-
-// Body Middleware
-app.use(express.json());
-
-// Health check endpoint
-app.get('/health', async (req: Request, res: Response) => {
-  try {
-    const _healthCheckService =
-      container.resolve<HealthCheckService>('HealthCheckService');
-    const health = await _healthCheckService.checkHealth();
-    res.json(health);
-  } catch (error) {
-    res.status(500).json({
-      status: 'error',
-      message: 'Health check failed',
-      error: error instanceof Error ? error.message : 'Unknown error',
-    });
-  }
-});
-
-app.get('/', (req: Request, res: Response) => {
-  res.send('Hello World');
-});
-
-// Use Routers Middleware
-app.use('/api', routers);
-
-// Custom Error Handler - MUST BE LAST
-app.use(customErrorHandler);
-
-// Static Files
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Database Connection
+// Server startup
 async function startServer() {
   try {
-    // Initialize container and get config
-    const config = await initializeContainer();
+    await appSetup.initialize();
 
-    const _bootstrapService =
-      container.resolve<BootstrapService>('BootstrapService');
-    const _healthCheckService =
-      container.resolve<HealthCheckService>('HealthCheckService');
-
-    // Set database connection config
-    const databaseConfig = {
-      connectionString: config.MONGO_URI,
-    };
-    container.register('IDatabaseConnectionConfig', {
-      useValue: databaseConfig,
-    });
-
-    // Set cache connection config
-    const cacheConfig = {
-      host: config.REDIS_HOST,
-      port: config.REDIS_PORT,
-      url: config.REDIS_URL,
-    };
-    container.register('ICacheConnectionConfig', {
-      useValue: cacheConfig,
-    });
-
-    // Connect to database
-    const databaseAdapter = container.resolve<any>('IDatabaseAdapter');
-    await databaseAdapter.connect();
-
-    // Cache provider is initialized automatically on first use
-    const _cacheProvider = container.resolve<any>('ICacheProvider');
-    //console.log('🔗 Cache provider initialized');
-
-    // Only start the server if this is the main module (not imported for testing)
-    if (require.main === module) {
-      app.listen(config.PORT, () => {
-        console.log(
-          `🚀 Server is running on port ${config.PORT} in ${config.NODE_ENV} environment`
-        );
-      });
-    }
+    const config = ApplicationState.getInstance().config;
+    appSetup.startServer(config.PORT, config.NODE_ENV);
   } catch (error) {
     console.error('❌ Failed to start server:', error);
     process.exit(1);
   }
 }
 
+// Start server only if this is the main module
 if (require.main === module) {
   startServer();
 }

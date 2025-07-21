@@ -4,8 +4,8 @@ import mongoose from 'mongoose';
 import app from '../../APP';
 import '../setup';
 import {
-  registerTestUser,
-  loginTestUser,
+  registerTestUserAPI,
+  loginTestUserAPI,
   createTestQuestion,
 } from '../utils/testUtils';
 
@@ -15,8 +15,8 @@ describe('Question API Tests', () => {
   let testQuestion: any;
 
   beforeEach(async () => {
-    const { email, password } = await registerTestUser();
-    const login = await loginTestUser({ email, password });
+    const { email, password } = await registerTestUserAPI();
+    const login = await loginTestUserAPI({ email, password });
     testUser = login.user;
     authToken = login.token;
     testQuestion = await createTestQuestion({ token: authToken });

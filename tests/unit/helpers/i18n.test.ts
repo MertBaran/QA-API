@@ -15,7 +15,7 @@ describe('i18n Unit Tests', () => {
   let fakeCacheProvider: FakeCacheProvider;
 
   beforeEach(async () => {
-    fakeCacheProvider = container.resolve<FakeCacheProvider>('CacheProvider');
+    fakeCacheProvider = container.resolve<FakeCacheProvider>('ICacheProvider');
     setI18nCacheProvider(fakeCacheProvider);
     await clearI18nCache();
     await fakeCacheProvider.clear();

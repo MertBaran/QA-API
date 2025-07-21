@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 import app from '../../APP';
 
 import '../setup';
-import { registerTestUser, loginTestUser } from '../utils/testUtils';
+import { registerTestUserAPI, loginTestUserAPI } from '../utils/testUtils';
 // import User from '../../models/User'; // Artık kullanılmıyor
 
 describe('User API Tests', () => {
@@ -13,12 +13,18 @@ describe('User API Tests', () => {
 
   beforeEach(async () => {
     // Create first user via utility
-    const { email: email1, password: password1 } = await registerTestUser();
-    const login1 = await loginTestUser({ email: email1, password: password1 });
+    const { email: email1, password: password1 } = await registerTestUserAPI();
+    const login1 = await loginTestUserAPI({
+      email: email1,
+      password: password1,
+    });
     testUser = login1.user;
     // Create second user via utility
-    const { email: email2, password: password2 } = await registerTestUser();
-    const login2 = await loginTestUser({ email: email2, password: password2 });
+    const { email: email2, password: password2 } = await registerTestUserAPI();
+    const login2 = await loginTestUserAPI({
+      email: email2,
+      password: password2,
+    });
     testUser2 = login2.user;
   });
 

@@ -1,14 +1,14 @@
 import express, { Router } from 'express';
 // api/questions
 import answer from './answerRouter';
-import { container as di } from '../services/container';
+import { container } from 'tsyringe';
 import { QuestionController } from '../controllers/questionController';
 import {
   getAccessToRoute,
   getQuestionOwnerAccess,
 } from '../middlewares/authorization/authMiddleware';
 import { checkQuestionExist } from '../middlewares/database/databaseErrorHelpers';
-import { auditMiddleware } from '../middlewares/audit/auditMiddleware';
+import { AuditMiddleware } from '../middlewares/audit/auditMiddleware';
 import { IValidationProvider } from '../infrastructure/validation/IValidationProvider';
 import { IdParamSchema } from '../types/dto/common/id-param.dto';
 import {
@@ -17,8 +17,13 @@ import {
 } from '../infrastructure/validation/schemas/questionSchemas';
 
 const router: Router = express.Router();
-const questionController = di.resolve(QuestionController);
-const validator = di.resolve<IValidationProvider>('IValidationProvider');
+const questionController = new QuestionController(
+  container.resolve('IQuestionService')
+);
+const validator = container.resolve<IValidationProvider>('IValidationProvider');
+const auditMiddleware = new AuditMiddleware(
+  container.resolve('IAuditProvider')
+);
 
 router.get('/', questionController.getAllQuestions);
 router.get(
@@ -31,8 +36,8 @@ router.post(
   '/ask',
   getAccessToRoute,
   validator.validateBody(createQuestionSchema),
-  auditMiddleware('QUESTION_CREATE', {
-    targetExtractor: req => ({ type: 'question', id: req.body?._id }),
+  auditMiddleware.createMiddleware('QUESTION_CREATE', {
+    targetExtractor: (req: any) => ({ type: 'question', id: req.body?._id }),
   }),
   questionController.askNewQuestion
 );
@@ -62,8 +67,11 @@ router.put(
     checkQuestionExist,
     getQuestionOwnerAccess,
     validator.validateBody(updateQuestionSchema),
-    auditMiddleware('QUESTION_UPDATE', {
-      targetExtractor: req => ({ type: 'question', id: req.params['id'] }),
+    auditMiddleware.createMiddleware('QUESTION_UPDATE', {
+      targetExtractor: (req: any) => ({
+        type: 'question',
+        id: req.params['id'],
+      }),
     }),
   ],
   questionController.editQuestion
@@ -75,8 +83,11 @@ router.delete(
     validator.validateParams!(IdParamSchema),
     checkQuestionExist,
     getQuestionOwnerAccess,
-    auditMiddleware('QUESTION_DELETE', {
-      targetExtractor: req => ({ type: 'question', id: req.params['id'] }),
+    auditMiddleware.createMiddleware('QUESTION_DELETE', {
+      targetExtractor: (req: any) => ({
+        type: 'question',
+        id: req.params['id'],
+      }),
     }),
   ],
   questionController.deleteQuestion

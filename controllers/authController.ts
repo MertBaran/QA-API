@@ -75,6 +75,7 @@ export class AuthController {
         id: user._id,
         name: user.name,
         lang: locale,
+        role: user.role,
       });
       sendJwtToClient(jwt, user, res);
     }
@@ -95,6 +96,7 @@ export class AuthController {
         id: user._id,
         name: user.name,
         lang: locale,
+        role: user.role,
       });
 
       // Audit middleware için kullanıcı bilgisini response'a ekle

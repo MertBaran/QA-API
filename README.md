@@ -9,8 +9,9 @@
 ![RabbitMQ](https://img.shields.io/badge/RabbitMQ-FF6600?style=for-the-badge&logo=rabbitmq&logoColor=white)
 ![Jest](https://img.shields.io/badge/-jest-%23C21325?style=for-the-badge&logo=jest&logoColor=white)
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
+![WebSocket](https://img.shields.io/badge/WebSocket-000000?style=for-the-badge&logo=websocket&logoColor=white)
 
-**Enterprise-grade Q&A platform API with AI-powered development and smart notification system**
+**Enterprise-grade Q&A platform API with AI-powered development, real-time monitoring, and smart notification system**
 
 </div>
 
@@ -23,7 +24,7 @@
 - Intelligent architecture decisions
 - Smart notification strategy selection
 
-**94/94 Unit Tests** ✅ | **Multi-language i18n** 🌍 | **Redis Caching** ⚡ | **Smart Notifications** 📧
+**232+ Tests** ✅ | **Multi-language i18n** 🌍 | **Redis Caching** ⚡ | **Smart Notifications** 📧 | **Real-time Monitoring** 📊
 
 ## ✨ Core Features
 
@@ -49,6 +50,7 @@
 - **Dynamic language switching**
 - **Localized error messages**
 - **Template-based content localization**
+- **Redis-based caching** for translations
 
 ### 📧 Smart Notification System
 
@@ -60,6 +62,16 @@
 - **Notification history** and tracking
 - **Dynamic strategy selection** based on load and priority
 
+### 📊 Real-time Monitoring & Health Checks
+
+- **Hybrid health check system** (Quick & Full)
+- **WebSocket-based real-time monitoring**
+- **Connection status monitoring** (Database, Cache, Queue, Email)
+- **Automatic alert notifications** on service failures
+- **Monitoring statistics** and metrics
+- **Alert history** with configurable limits
+- **Service dependency tracking**
+
 ### 🚀 Performance & Scalability
 
 - **Redis caching** for improved performance
@@ -67,6 +79,7 @@
 - **Horizontal scaling** support
 - **Performance monitoring** with metrics
 - **Rate limiting** and throttling
+- **Connection pooling** optimization
 
 ### 🛡️ Security & Monitoring
 
@@ -75,6 +88,7 @@
 - **Error handling** with custom error types
 - **Request/Response logging**
 - **Health check endpoints**
+- **Security middleware** stack
 
 ## 🏗️ Architecture
 
@@ -91,6 +105,22 @@
 - **MongoDB Adapter** for database abstraction
 - **Repository pattern** for data access
 - **Mongoose** for schema management
+
+### 📡 Real-time Monitoring Architecture
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   WebSocket     │    │   Connection     │    │   Alert         │
+│   Server        │───▶│   Monitor        │───▶│   System        │
+│                 │    │                  │    │                 │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Real-time     │    │   Service        │    │   Notification  │
+│   Updates       │    │   Health Check   │    │   Manager       │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+```
 
 ### 🔄 Notification Architecture
 
@@ -153,81 +183,97 @@ docker run -p 3000:3000 --env-file config/env/config.env qa-api
 ### 🔐 Authentication
 
 ```
-POST   /auth/register              # User registration
-POST   /auth/login                 # User login
-POST   /auth/loginGoogle           # Google OAuth login
-POST   /auth/logout                # User logout
-POST   /auth/forgot-password       # Password reset request
-POST   /auth/reset-password        # Password reset
-GET    /auth/profile               # Get user profile
-PUT    /auth/profile               # Edit user profile
+POST   /api/auth/register              # User registration
+POST   /api/auth/login                 # User login
+POST   /api/auth/loginGoogle           # Google OAuth login
+GET    /api/auth/logout                # User logout
+POST   /api/auth/forgotpassword        # Password reset request
+PUT    /api/auth/resetpassword         # Password reset
+GET    /api/auth/profile               # Get user profile
+PUT    /api/auth/edit                  # Edit user profile
 ```
 
 ### ❓ Questions
 
 ```
-GET    /questions                  # List questions
-POST   /questions                  # Create question
-GET    /questions/:id              # Get question details
-PUT    /questions/:id              # Update question
-DELETE /questions/:id              # Delete question
-POST   /questions/:id/like         # Like/unlike question
+GET    /api/questions                  # List questions
+POST   /api/questions/ask              # Create question
+GET    /api/questions/:id              # Get question details
+PUT    /api/questions/:id/edit         # Update question
+DELETE /api/questions/:id/delete       # Delete question
+GET    /api/questions/:id/like         # Like question
+GET    /api/questions/:id/undo_like    # Unlike question
 ```
 
 ### 💬 Answers
 
 ```
-GET    /questions/:id/answers      # Get question answers
-POST   /questions/:id/answers      # Add answer
-PUT    /answers/:id                # Update answer
-DELETE /answers/:id                # Delete answer
-POST   /answers/:id/like           # Like/unlike answer
+POST   /api/answers/:questionId/answer # Add answer to question
+GET    /api/answers/:id                # Get answer details
+PUT    /api/answers/:id/edit           # Update answer
+DELETE /api/answers/:id/delete         # Delete answer
+GET    /api/answers/:id/like           # Like answer
+GET    /api/answers/:id/undo_like      # Unlike answer
 ```
 
 ### 📧 Notifications
 
 ```
-POST   /notifications/send         # Send notification
-POST   /notifications/template     # Send template notification
-GET    /notifications/history      # Get notification history
-GET    /notifications/templates    # List available templates
+POST   /api/notifications/send         # Send notification
+POST   /api/notifications/template     # Send template notification
+GET    /api/notifications/history      # Get notification history
+GET    /api/notifications/templates    # List available templates
+GET    /api/notifications/queue-status # Get queue status
 ```
 
 ### 👥 User Management
 
 ```
-GET    /users                      # List users (Admin)
-GET    /users/:id                  # Get user details
-PUT    /users/:id                  # Update user (Admin)
-DELETE /users/:id                  # Delete user (Admin)
+GET    /api/users                      # List users (Admin)
+GET    /api/users/:id                  # Get user details
+PUT    /api/users/:id                  # Update user (Admin)
+DELETE /api/users/:id                  # Delete user (Admin)
 ```
 
 ### 🏥 Health & Monitoring
 
 ```
-GET    /health                     # Health check
-GET    /metrics                    # System metrics
-GET    /logs                       # Application logs
+GET    /health                         # Full health check
+GET    /health/quick                   # Quick health check
+GET    /api/monitoring/connections     # Connection status
+GET    /api/monitoring/alerts          # Alert history
+GET    /api/monitoring/stats           # Monitoring statistics
+POST   /api/monitoring/start           # Start monitoring
+POST   /api/monitoring/stop            # Stop monitoring
+```
+
+### 🔌 WebSocket Endpoints
+
+```
+WS     /ws/monitoring                  # Real-time monitoring updates
 ```
 
 ## 🧪 Testing
 
 ```bash
-# Unit tests
-npm test                          # Run all unit tests
-npm run test:watch                # Watch mode
-npm run test:coverage             # Coverage report
+# All tests (excluding API tests)
+npm test                              # Run all tests
+npm run test:watch                    # Watch mode
+npm run test:coverage                 # Coverage report
 
-# Integration tests
-npm run test:integration          # Integration tests
+# Specific test suites
+npm run test:unit                     # Unit tests only
+npm run test:integration              # Integration tests only
+npm run test:websocket                # WebSocket tests
 
 # Performance tests
-npm run test:performance          # k6 performance tests
-npm run test:load                 # Load testing
-npm run test:stress               # Stress testing
+npm run test:performance              # k6 performance tests
+npm run test:load                     # Load testing
+npm run test:stress                   # Stress testing
 
-# E2E tests
-npm run test:e2e                  # End-to-end tests
+# Test utilities
+npm run test:setup                    # Setup test environment
+npm run test:clean                    # Clean test data
 ```
 
 ## 🔧 Configuration
@@ -273,6 +319,12 @@ NOTIFICATION_STRATEGY=smart        # direct, queue, smart
 NOTIFICATION_CHANNELS=email,sms    # email,sms,push,webhook
 NOTIFICATION_TEMPLATE_LANG=en      # en,tr,de
 
+# Monitoring Settings
+MONITORING_ENABLED=true            # Enable monitoring
+MONITORING_INTERVAL=30000          # Check interval (30s)
+MONITORING_ALERT_LIMIT=50          # Max alerts to store
+WEBSOCKET_PORT=3001                # WebSocket server port
+
 # Logging
 LOG_LEVEL=info                     # error, warn, info, debug
 LOG_FORMAT=json                    # json, simple
@@ -283,17 +335,24 @@ RATE_LIMIT_WINDOW=900000           # Rate limit window (15 min)
 RATE_LIMIT_MAX=100                 # Max requests per window
 ```
 
-### Notification Configuration
+### Health Check Configuration
 
 ```typescript
-// Notification strategy selection
-NOTIFICATION_STRATEGY = smart; // Automatically chooses best strategy
+// Health check types
+GET /health/quick    // Fast check - basic service status
+GET /health          // Full check - detailed service information
 
-// Available channels
-((NOTIFICATION_CHANNELS = email), sms, push, webhook);
-
-// Template language
-NOTIFICATION_TEMPLATE_LANG = en; // Default template language
+// Health check response format
+{
+  "status": "healthy" | "unhealthy" | "starting",
+  "timestamp": "2024-01-01T00:00:00.000Z",
+  "services": {
+    "database": { "status": "connected", "responseTime": 15 },
+    "cache": { "status": "connected", "responseTime": 5 },
+    "queue": { "status": "connected", "responseTime": 10 },
+    "email": { "status": "connected", "responseTime": 25 }
+  }
+}
 ```
 
 ## 📊 Performance Metrics
@@ -304,6 +363,8 @@ NOTIFICATION_TEMPLATE_LANG = en; // Default template language
 - ✅ **Multi-language** caching
 - ✅ **Smart notification** strategy selection
 - ✅ **Queue-based** async processing
+- ✅ **Real-time monitoring** with WebSocket
+- ✅ **Hybrid health checks** for optimal performance
 
 ## 🐳 Docker & Deployment
 
@@ -316,6 +377,7 @@ services:
     build: .
     ports:
       - '3000:3000'
+      - '3001:3001' # WebSocket port
     environment:
       - NODE_ENV=production
     depends_on:
@@ -372,11 +434,21 @@ kubectl apply -f k8s/
 QA-API/
 ├── controllers/          # Request handlers
 ├── services/            # Business logic
+│   ├── managers/        # Business managers
+│   ├── providers/       # External service providers
+│   └── monitoring/      # Monitoring services
 ├── repositories/        # Data access layer
 ├── models/              # Data models
 ├── middlewares/         # Express middlewares
 ├── infrastructure/      # External services
+│   ├── cache/          # Cache providers
+│   ├── validation/     # Validation schemas
+│   ├── logging/        # Logging providers
+│   └── audit/          # Audit providers
 ├── tests/               # Test suites
+│   ├── unit/           # Unit tests
+│   ├── integration/    # Integration tests
+│   └── mocks/          # Test mocks
 ├── scripts/             # Utility scripts
 └── types/               # TypeScript types
 ```
@@ -388,6 +460,32 @@ QA-API/
 - **Service Layer** for business logic
 - **Middleware Pattern** for cross-cutting concerns
 - **Strategy Pattern** for notification selection
+- **Observer Pattern** for real-time monitoring
+- **Factory Pattern** for service creation
+
+## 🔍 Monitoring & Observability
+
+### Health Checks
+
+- **Quick Health Check**: Basic service availability
+- **Full Health Check**: Detailed service information with response times
+- **Service-specific checks**: Database, Cache, Queue, Email connectivity
+
+### Real-time Monitoring
+
+- **WebSocket-based** real-time updates
+- **Connection status** monitoring
+- **Automatic alerts** on service failures
+- **Monitoring statistics** and metrics
+- **Alert history** with configurable limits
+
+### Metrics & Logging
+
+- **Request/Response logging**
+- **Performance metrics**
+- **Error tracking**
+- **Audit logging**
+- **Custom metrics** collection
 
 ## 🤝 Contributing
 
@@ -407,7 +505,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Made with ❤️ using AI-powered development**
 
-_Enterprise-grade architecture • Comprehensive testing • Smart notifications • Modern practices_
+_Enterprise-grade architecture • Comprehensive testing • Smart notifications • Real-time monitoring • Modern practices_
 
 [![GitHub stars](https://img.shields.io/github/stars/MertBaran/QA-API?style=social)](https://github.com/MertBaran/QA-API)
 [![GitHub forks](https://img.shields.io/github/forks/MertBaran/QA-API?style=social)](https://github.com/MertBaran/QA-API)

@@ -27,6 +27,7 @@ export class QuestionManager implements IQuestionService {
       await this.cacheProvider.del('questions:all');
       return question;
     } catch (_err) {
+      console.error('QuestionManager createQuestion error:', _err);
       throw new CustomError(
         QuestionServiceMessages.QuestionCreationDbError.en,
         500

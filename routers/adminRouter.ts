@@ -4,19 +4,24 @@ import {
   getAdminAccess,
 } from '../middlewares/authorization/authMiddleware';
 import { checkUserExist } from '../middlewares/database/databaseErrorHelpers';
-import { auditMiddleware } from '../middlewares/audit/auditMiddleware';
-import { container as di } from '../services/container';
+import { AuditMiddleware } from '../middlewares/audit/auditMiddleware';
+import { container } from 'tsyringe';
 import { AdminController } from '../controllers/adminController';
 import { ICacheProvider } from '../infrastructure/cache/ICacheProvider';
 import { IValidationProvider } from '../infrastructure/validation/IValidationProvider';
 import { IdParamSchema } from '../types/dto/common/id-param.dto';
 
 const router: Router = express.Router();
-const adminController = di.resolve(AdminController);
-const validator = di.resolve<IValidationProvider>('IValidationProvider');
+const adminController = new AdminController(container.resolve('IAdminService'));
+const validator = container.resolve<IValidationProvider>('IValidationProvider');
+const auditMiddleware = new AuditMiddleware(
+  container.resolve('IAuditProvider')
+);
 
 router.use(getAccessToRoute, getAdminAccess);
-router.use(auditMiddleware('ADMIN_ACTION', { tags: ['admin'] }));
+router.use(
+  auditMiddleware.createMiddleware('ADMIN_ACTION', { tags: ['admin'] })
+);
 
 //Block User
 router.get(
@@ -36,7 +41,7 @@ router.delete(
 // Basit Redis test endpointi
 router.get('/redis-test', async (req, res) => {
   const { key = 'test', value } = req.query;
-  const cacheProvider = di.resolve<ICacheProvider>('ICacheProvider');
+  const cacheProvider = container.resolve<ICacheProvider>('ICacheProvider');
   if (value) {
     await cacheProvider.set(key as string, value, 60); // 60 sn cache
   }

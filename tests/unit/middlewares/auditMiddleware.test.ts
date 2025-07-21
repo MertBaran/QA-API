@@ -1,4 +1,4 @@
-import { auditMiddleware } from '../../../middlewares/audit/auditMiddleware';
+import { AuditMiddleware } from '../../../middlewares/audit/auditMiddleware';
 import { container } from 'tsyringe';
 
 class FakeAuditProvider {
@@ -36,7 +36,8 @@ describe('auditMiddleware', () => {
   });
 
   it('should call auditProvider.log on response finish', async () => {
-    const mw = auditMiddleware('TEST_ACTION');
+    const auditMiddleware = container.resolve(AuditMiddleware);
+    const mw = auditMiddleware.createMiddleware('TEST_ACTION');
     mw(req, res, next);
     expect(next).toHaveBeenCalled();
     // Simulate response finish
@@ -50,9 +51,10 @@ describe('auditMiddleware', () => {
   });
 
   it('should include tags and target if provided', async () => {
-    const mw = auditMiddleware('TAGGED', {
+    const auditMiddleware = container.resolve(AuditMiddleware);
+    const mw = auditMiddleware.createMiddleware('TAGGED', {
       tags: ['t1'],
-      targetExtractor: _r => ({ id: 'target' }),
+      targetExtractor: (_r: any) => ({ id: 'target' }),
     });
     mw(req, res, next);
     await res._finish();
@@ -63,7 +65,8 @@ describe('auditMiddleware', () => {
 
   it('should set isSuccess false if statusCode >= 400', async () => {
     res.statusCode = 404;
-    const mw = auditMiddleware('FAIL_ACTION');
+    const auditMiddleware = container.resolve(AuditMiddleware);
+    const mw = auditMiddleware.createMiddleware('FAIL_ACTION');
     mw(req, res, next);
     await res._finish();
     expect(fakeAudit.log).toHaveBeenCalledWith(

@@ -164,6 +164,10 @@ export class BootstrapService {
     return this.config;
   }
 
+  public isReady(): boolean {
+    return this.config !== null;
+  }
+
   public getEnvironment(): EnvironmentType {
     return this.getConfig()['NODE_ENV'] as EnvironmentType;
   }
