@@ -1,5 +1,13 @@
-import { RabbitMQProvider } from '../../../services/providers/RabbitMQProvider';
 import { ILoggerProvider } from '../../../infrastructure/logging/ILoggerProvider';
+
+// Mock amqplib before importing the provider so the mock is used
+jest.mock('amqplib', () => ({
+  connect: jest.fn(),
+}));
+
+import * as amqp from 'amqplib';
+
+import { RabbitMQProvider } from '../../../services/providers/RabbitMQProvider';
 import {
   QueueMessage,
   QueueOptions,
@@ -44,11 +52,7 @@ describe('RabbitMQProvider', () => {
         close: jest.fn(),
       };
 
-      const mockAmqp = {
-        connect: jest.fn().mockResolvedValue(mockConnection),
-      };
-
-      jest.doMock('amqplib', () => mockAmqp);
+      (amqp.connect as jest.Mock).mockResolvedValue(mockConnection);
 
       // Mock the logger calls
       mockLogger.info = jest.fn();
@@ -56,19 +60,14 @@ describe('RabbitMQProvider', () => {
 
       await rabbitMQProvider.connect();
 
-      // Skip the logger assertion for now
-      // expect(mockLogger.info).toHaveBeenCalledWith(
-      //   'RabbitMQ connected successfully'
-      // );
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        'RabbitMQ connected successfully'
+      );
       expect(rabbitMQProvider.isConnected()).toBe(true);
     });
 
     it('should handle connection errors', async () => {
-      const mockAmqp = {
-        connect: jest.fn().mockRejectedValue(new Error('Connection failed')),
-      };
-
-      jest.doMock('amqplib', () => mockAmqp);
+      (amqp.connect as jest.Mock).mockRejectedValue(new Error('Connection failed'));
 
       // Mock the logger calls
       mockLogger.error = jest.fn();
@@ -79,11 +78,10 @@ describe('RabbitMQProvider', () => {
         expect(_error.message).toBe('Connection failed');
       }
 
-      // Skip the logger assertion for now
-      // expect(mockLogger.error).toHaveBeenCalledWith(
-      //   'Failed to connect to RabbitMQ',
-      //   { error: 'Connection failed' }
-      // );
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'Failed to connect to RabbitMQ',
+        { error: 'Connection failed' }
+      );
     });
 
     it('should disconnect successfully', async () => {

@@ -23,6 +23,7 @@ export class RabbitMQProvider implements IQueueProvider {
       this.channel = await this.connection.createChannel();
 
       // Connected successfully
+      this.logger.info('RabbitMQ connected successfully');
 
       // Connection event handlers
       this.connection.on('error', (error: Error) => {
