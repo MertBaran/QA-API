@@ -88,8 +88,15 @@ describe('QueueBasedNotificationManager', () => {
     });
 
     it('should handle initialization errors', async () => {
-      // Skip this test for now - mock issues
-      expect(true).toBe(true);
+      (mockQueueProvider.createExchange as jest.Mock).mockRejectedValueOnce(
+        new Error('init error')
+      );
+
+      await expect(notificationManager.initialize()).rejects.toThrow('init error');
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        'Failed to initialize queue-based notification system',
+        { error: 'init error' }
+      );
     });
   });
 
@@ -199,21 +206,62 @@ describe('QueueBasedNotificationManager', () => {
     });
 
     it('should process single channel notification message', async () => {
-      // Skip this test for now - mock issues
-      expect(true).toBe(true);
+      const payload: NotificationPayload = {
+        channel: 'email',
+        to: 'test@example.com',
+        subject: 'Test',
+        message: 'Msg',
+      };
+
+      const sendEmailSpy = jest
+        .spyOn(notificationManager as any, 'sendEmailNotification')
+        .mockResolvedValue(undefined);
+
+      await (notificationManager as any).processSingleChannelNotification(payload);
+
+      expect(sendEmailSpy).toHaveBeenCalledWith(payload);
     });
 
     it('should process multi-channel notification message', async () => {
-      // Skip this test for now - mock issues
-      expect(true).toBe(true);
+      const payload: MultiChannelNotificationPayload = {
+        channels: ['email', 'sms'],
+        to: 'test@example.com',
+        subject: 'Test',
+        message: 'Msg',
+      };
+
+      const emailSpy = jest
+        .spyOn(notificationManager as any, 'sendEmailNotification')
+        .mockResolvedValue(undefined);
+      const smsSpy = jest
+        .spyOn(notificationManager as any, 'sendSMSNotification')
+        .mockResolvedValue(undefined);
+
+      await (notificationManager as any).processMultiChannelNotification(payload);
+
+      expect(emailSpy).toHaveBeenCalled();
+      expect(smsSpy).toHaveBeenCalled();
     });
   });
 
   describe('Priority Logic', () => {
-    it('should assign correct priorities', () => {
-      // Priority logic is tested through the public methods
-      // Private getPriority method is not directly testable
-      expect(true).toBe(true);
+    it('should assign correct priorities', async () => {
+      (mockQueueProvider.publishToQueue as jest.Mock).mockResolvedValue(undefined);
+
+      const payload: NotificationPayload = {
+        channel: 'email',
+        to: 'test@example.com',
+        subject: 'T',
+        message: 'M',
+        data: { priority: 'urgent' },
+      };
+
+      await notificationManager.notify(payload);
+
+      const publishArg = (
+        mockQueueProvider.publishToQueue as jest.Mock
+      ).mock.calls[0][1];
+      expect(publishArg.priority).toBe(10);
     });
   });
 });
