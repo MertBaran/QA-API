@@ -8,8 +8,8 @@ import app from '../testApp';
 
 describe('Monitoring Integration Tests', () => {
   let webSocketMonitor: WebSocketMonitorService;
-  let fakeLogger: FakeLoggerProvider;
-  let fakeNotification: FakeNotificationProvider;
+  let _fakeLogger: FakeLoggerProvider;
+  let _fakeNotification: FakeNotificationProvider;
   let appState: ApplicationState;
 
   beforeAll(async () => {
@@ -22,8 +22,8 @@ describe('Monitoring Integration Tests', () => {
 
     // Get instances
     webSocketMonitor = container.resolve(WebSocketMonitorService);
-    fakeLogger = container.resolve('ILoggerProvider') as FakeLoggerProvider;
-    fakeNotification = container.resolve(
+    _fakeLogger = container.resolve('ILoggerProvider') as FakeLoggerProvider;
+    _fakeNotification = container.resolve(
       'INotificationService'
     ) as FakeNotificationProvider;
     appState = ApplicationState.getInstance();

@@ -1,0 +1,120 @@
+import { injectable } from 'tsyringe';
+import { IEntityModel } from '../interfaces/IEntityModel';
+import { IUserRoleModel } from '../../models/interfaces/IUserRoleModel';
+import { IDataSource } from '../interfaces/IDataSource';
+import CustomError from '../../helpers/error/CustomError';
+
+@injectable()
+export class UserRoleMongooseDataSource implements IDataSource<IUserRoleModel> {
+  private model: IEntityModel<any>;
+
+  constructor() {
+    // Import dynamically to avoid circular dependency
+    const UserRoleMongo =
+      require('../../models/mongodb/UserRoleMongoModel').default;
+    this.model = UserRoleMongo;
+  }
+
+  private toEntity(mongoDoc: any): IUserRoleModel {
+    return {
+      _id: mongoDoc._id.toString(),
+      userId: mongoDoc.userId.toString(),
+      roleId: mongoDoc.roleId.toString(),
+      assignedAt: mongoDoc.assignedAt,
+      assignedBy: mongoDoc.assignedBy?.toString(),
+      expiresAt: mongoDoc.expiresAt,
+      isActive: mongoDoc.isActive,
+      createdAt: mongoDoc.createdAt,
+      updatedAt: mongoDoc.updatedAt,
+    };
+  }
+
+  async create(data: Partial<IUserRoleModel>): Promise<IUserRoleModel> {
+    try {
+      const { _id, ...rest } = data;
+      const result = await this.model.create(rest);
+      return this.toEntity(result);
+    } catch (_err) {
+      throw new CustomError(
+        'Database error in UserRoleMongooseDataSource.create',
+        500
+      );
+    }
+  }
+
+  async findById(id: string): Promise<IUserRoleModel | null> {
+    try {
+      const result = await this.model.findById(id);
+      return result ? this.toEntity(result) : null;
+    } catch (_err) {
+      throw new CustomError(
+        'Database error in UserRoleMongooseDataSource.findById',
+        500
+      );
+    }
+  }
+
+  async findAll(): Promise<IUserRoleModel[]> {
+    try {
+      const results = await this.model.find();
+      return results.map((doc: any) => this.toEntity(doc));
+    } catch (_err) {
+      throw new CustomError(
+        'Database error in UserRoleMongooseDataSource.findAll',
+        500
+      );
+    }
+  }
+
+  async updateById(
+    id: string,
+    data: Partial<IUserRoleModel>
+  ): Promise<IUserRoleModel | null> {
+    try {
+      const { _id, ...rest } = data;
+      const result = await this.model.findByIdAndUpdate(id, rest, {
+        new: true,
+      });
+      return result ? this.toEntity(result) : null;
+    } catch (_err) {
+      throw new CustomError(
+        'Database error in UserRoleMongooseDataSource.updateById',
+        500
+      );
+    }
+  }
+
+  async deleteById(id: string): Promise<IUserRoleModel | null> {
+    try {
+      const result = await this.model.findByIdAndDelete(id);
+      return result ? this.toEntity(result) : null;
+    } catch (_err) {
+      throw new CustomError(
+        'Database error in UserRoleMongooseDataSource.deleteById',
+        500
+      );
+    }
+  }
+
+  async countAll(): Promise<number> {
+    try {
+      return this.model.countDocuments();
+    } catch (_err) {
+      throw new CustomError(
+        'Database error in UserRoleMongooseDataSource.countAll',
+        500
+      );
+    }
+  }
+
+  async deleteAll(): Promise<any> {
+    try {
+      return this.model.deleteMany({});
+    } catch (_err) {
+      throw new CustomError(
+        'Database error in UserRoleMongooseDataSource.deleteAll',
+        500
+      );
+    }
+  }
+}

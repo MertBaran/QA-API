@@ -17,7 +17,7 @@ export class ZodValidationProvider implements IValidationProvider {
         });
       }
       req.body = result.data;
-      next();
+      return next();
     };
   }
 
@@ -35,7 +35,7 @@ export class ZodValidationProvider implements IValidationProvider {
         });
       }
       req.params = result.data;
-      next();
+      return next();
     };
   }
 }

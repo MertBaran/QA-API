@@ -4,6 +4,7 @@ export enum AuthMiddlewareMessages {
   JwtSecretMissing = 'JWT secret key is not set',
   OnlyAdmins = 'Only admins can access this route',
   OwnerOnly = 'Only owner can handle this operation',
+  TokenExpired = 'Token expired due to password change',
 }
 
 export enum ValidationMiddlewareMessages {

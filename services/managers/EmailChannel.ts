@@ -22,8 +22,8 @@ export class EmailChannel extends NotificationChannel {
         html: payload.html || payload.message,
       };
 
-      const info = await transporter.sendMail(mailOptions);
-    } catch (error) {
+      const _info = await transporter.sendMail(mailOptions);
+    } catch (_error) {
       throw new Error('Email sending failed');
     }
   }

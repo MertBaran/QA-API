@@ -32,9 +32,21 @@ export class QuestionMongooseDataSource implements IDataSource<IQuestionModel> {
   async create(data: Partial<IQuestionModel>): Promise<IQuestionModel> {
     try {
       const { _id, ...rest } = data;
-      const result = await this.model.create(rest as Partial<IQuestionMongo>);
+
+      // user field'ını ObjectId'ye çevir
+      const createData = {
+        ...rest,
+        user: rest.user, // user zaten string olarak geliyor, mongoose otomatik çevirir
+        likes: rest.likes || [],
+        answers: rest.answers || [],
+      };
+
+      const result = await this.model.create(
+        createData as unknown as Partial<IQuestionMongo>
+      );
       return this.toEntity(result);
     } catch (_err) {
+      console.error('QuestionMongooseDataSource create error:', _err);
       throw new CustomError(
         'Database error in QuestionMongooseDataSource.create',
         500

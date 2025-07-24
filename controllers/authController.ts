@@ -4,6 +4,7 @@ import { sendJwtToClient } from '../helpers/authorization/tokenHelpers';
 import { injectable, inject } from 'tsyringe';
 import jwt from 'jsonwebtoken';
 import { IAuthService } from '../services/contracts/IAuthService';
+import { IUserRoleService } from '../services/contracts/IUserRoleService';
 import { AuthConstants } from './constants/ControllerMessages';
 import { AuthManager } from '../services/managers/AuthManager';
 import { ILoggerProvider } from '../infrastructure/logging/ILoggerProvider';
@@ -15,7 +16,9 @@ import type { EditProfileDTO } from '../types/dto/auth/edit-profile.dto';
 import type { AuthTokenResponseDTO } from '../types/dto/auth/auth-token.response.dto';
 import type { SuccessResponseDTO } from '../types/dto/common/success-response.dto';
 import type { LogoutResponseDTO } from '../types/dto/auth/logout-response.dto';
-import type { IUserModel } from '../models/interfaces/IUserModel';
+// IUserModel kullanılmıyor, kaldırıldı
+import type { UploadImageResponseDTO } from '../types/dto/auth/upload-image.response.dto';
+import type { UserResponseDTO } from '../types/dto/user/user-response.dto';
 import { normalizeLocale, i18n } from '../types/i18n';
 
 interface AuthenticatedRequest<T = any> extends Request<{}, any, T> {
@@ -30,6 +33,7 @@ interface AuthenticatedRequest<T = any> extends Request<{}, any, T> {
 export class AuthController {
   constructor(
     @inject('IAuthService') private authService: IAuthService,
+    @inject('IUserRoleService') private userRoleService: IUserRoleService,
     @inject('ILoggerProvider') private logger: ILoggerProvider
   ) {}
 
@@ -60,13 +64,12 @@ export class AuthController {
       res: Response<AuthTokenResponseDTO>,
       _next: NextFunction
     ): Promise<void> => {
-      const { firstName, lastName, email, password, role } = req.body;
+      const { firstName, lastName, email, password } = req.body;
       const user = await this.authService.registerUser({
         firstName,
         lastName,
         email,
         password,
-        role,
       });
       const locale = normalizeLocale(
         req.headers['accept-language'] as string | undefined
@@ -75,7 +78,6 @@ export class AuthController {
         id: user._id,
         name: user.name,
         lang: locale,
-        role: user.role,
       });
       sendJwtToClient(jwt, user, res);
     }
@@ -96,7 +98,6 @@ export class AuthController {
         id: user._id,
         name: user.name,
         lang: locale,
-        role: user.role,
       });
 
       // Audit middleware için kullanıcı bilgisini response'a ekle
@@ -105,7 +106,6 @@ export class AuthController {
         user: {
           id: user._id,
           email: user.email,
-          role: user.role,
         },
       };
 
@@ -151,7 +151,7 @@ export class AuthController {
             id: decoded.id,
             name: decoded.name,
           };
-        } catch (jwtError) {
+        } catch (_jwtError) {
           const locale = req.locale ?? 'en';
           const message = await i18n(AuthConstants.NotLoggedIn, locale);
           res.status(401).json({
@@ -182,7 +182,7 @@ export class AuthController {
           success: true,
           message,
         });
-      } catch (error) {
+      } catch (_error) {
         const locale = req.locale ?? 'en';
         const message = await i18n(AuthConstants.LogoutError, locale);
         res.status(500).json({
@@ -212,7 +212,7 @@ export class AuthController {
   imageUpload = asyncErrorWrapper(
     async (
       req: AuthenticatedRequest<any>,
-      res: Response<SuccessResponseDTO<IUserModel>>,
+      res: Response<UploadImageResponseDTO>,
       _next: NextFunction
     ): Promise<void> => {
       const user = await this.authService.updateProfileImage(
@@ -222,7 +222,9 @@ export class AuthController {
       res.status(200).json({
         success: true,
         message: 'Image uploaded successfully',
-        data: user,
+        data: {
+          profile_image: user.profile_image,
+        },
       });
     }
   );
@@ -230,7 +232,7 @@ export class AuthController {
   editProfile = asyncErrorWrapper(
     async (
       req: AuthenticatedRequest<EditProfileDTO>,
-      res: Response<SuccessResponseDTO<IUserModel>>,
+      res: Response<SuccessResponseDTO<UserResponseDTO>>,
       _next: NextFunction
     ): Promise<void> => {
       const { firstName, lastName, email, website, place, title, about } =
@@ -245,10 +247,32 @@ export class AuthController {
         title,
         about,
       });
+
+      // UserRole tablosundan role'leri çek
+      const userRoles = await this.userRoleService.getUserActiveRoles(user._id);
+      const roleIds = userRoles.map(userRole => userRole.roleId);
+
+      // Güvenli response - password ve diğer hassas bilgileri çıkar
+      const safeUser: UserResponseDTO = {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        roles: roleIds,
+        title: user.title,
+        about: user.about,
+        place: user.place,
+        website: user.website,
+        profile_image: user.profile_image,
+        blocked: user.blocked,
+        createdAt: user.createdAt,
+        language: user.language,
+        notificationPreferences: user.notificationPreferences,
+      };
+
       res.status(200).json({
         success: true,
         message: 'Profile updated successfully',
-        data: user,
+        data: safeUser,
       });
     }
   );

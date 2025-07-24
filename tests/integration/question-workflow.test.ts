@@ -7,7 +7,7 @@ import { container } from 'tsyringe';
 import { QuestionRepository } from '../../repositories/QuestionRepository';
 import '../setup';
 
-const questionRepository = container.resolve(QuestionRepository);
+const _questionRepository = container.resolve(QuestionRepository);
 
 describe('Question Workflow Integration Tests', () => {
   let user1: any;

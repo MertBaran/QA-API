@@ -177,3 +177,111 @@ export const NotificationConstants = {
     de: 'Template nicht gefunden',
   },
 };
+
+export const PermissionConstants = {
+  UserNotFound: {
+    en: 'User not found',
+    tr: 'Kullanıcı bulunamadı',
+    de: 'Benutzer nicht gefunden',
+  },
+  RoleNotFound: {
+    en: 'Role not found',
+    tr: 'Rol bulunamadı',
+    de: 'Rolle nicht gefunden',
+  },
+  RoleNotActive: {
+    en: 'Role is not active',
+    tr: 'Rol aktif değil',
+    de: 'Rolle ist nicht aktiv',
+  },
+  RoleAssignedSuccess: {
+    en: 'Role assigned successfully',
+    tr: 'Rol başarıyla atandı',
+    de: 'Rolle erfolgreich zugewiesen',
+  },
+  RoleAssignmentFailed: {
+    en: 'Failed to assign role to user',
+    tr: 'Kullanıcıya rol atama başarısız',
+    de: 'Fehler beim Zuweisen der Rolle zum Benutzer',
+  },
+  RoleRemovedSuccess: {
+    en: 'Role removed successfully',
+    tr: 'Rol başarıyla kaldırıldı',
+    de: 'Rolle erfolgreich entfernt',
+  },
+  RoleRemovalFailed: {
+    en: 'Failed to remove role from user',
+    tr: 'Kullanıcıdan rol kaldırma başarısız',
+    de: 'Fehler beim Entfernen der Rolle vom Benutzer',
+  },
+  UserDoesNotHaveRole: {
+    en: 'User does not have this role',
+    tr: 'Kullanıcının bu rolü yok',
+    de: 'Benutzer hat diese Rolle nicht',
+  },
+  UserRolesRetrievedSuccess: {
+    en: 'User roles retrieved successfully',
+    tr: 'Kullanıcı rolleri başarıyla alındı',
+    de: 'Benutzerrollen erfolgreich abgerufen',
+  },
+  UserRolesRetrievalFailed: {
+    en: 'Failed to get user roles',
+    tr: 'Kullanıcı rolleri alınamadı',
+    de: 'Fehler beim Abrufen der Benutzerrollen',
+  },
+  RolesRetrievedSuccess: {
+    en: 'Roles retrieved successfully',
+    tr: 'Roller başarıyla alındı',
+    de: 'Rollen erfolgreich abgerufen',
+  },
+  RolesRetrievalFailed: {
+    en: 'Failed to get roles',
+    tr: 'Roller alınamadı',
+    de: 'Fehler beim Abrufen der Rollen',
+  },
+  PermissionsRetrievedSuccess: {
+    en: 'Permissions retrieved successfully',
+    tr: 'İzinler başarıyla alındı',
+    de: 'Berechtigungen erfolgreich abgerufen',
+  },
+  PermissionsRetrievalFailed: {
+    en: 'Failed to get permissions',
+    tr: 'İzinler alınamadı',
+    de: 'Fehler beim Abrufen der Berechtigungen',
+  },
+  PermissionsAddedToRoleSuccess: {
+    en: 'Permissions added to role successfully',
+    tr: 'İzinler role başarıyla eklendi',
+    de: 'Berechtigungen erfolgreich zur Rolle hinzugefügt',
+  },
+  PermissionsAddedToRoleFailed: {
+    en: 'Failed to add permissions to role',
+    tr: 'İzinleri role ekleme başarısız',
+    de: 'Fehler beim Hinzufügen von Berechtigungen zur Rolle',
+  },
+  PermissionsRemovedFromRoleSuccess: {
+    en: 'Permissions removed from role successfully',
+    tr: 'İzinler rolden başarıyla kaldırıldı',
+    de: 'Berechtigungen erfolgreich von der Rolle entfernt',
+  },
+  PermissionsRemovedFromRoleFailed: {
+    en: 'Failed to remove permissions from role',
+    tr: 'İzinleri rolden kaldırma başarısız',
+    de: 'Fehler beim Entfernen von Berechtigungen von der Rolle',
+  },
+  SomePermissionsNotFound: {
+    en: 'Some permissions not found',
+    tr: 'Bazı izinler bulunamadı',
+    de: 'Einige Berechtigungen nicht gefunden',
+  },
+  UserPermissionsRetrievedSuccess: {
+    en: 'User permissions retrieved successfully',
+    tr: 'Kullanıcı izinleri başarıyla alındı',
+    de: 'Benutzerberechtigungen erfolgreich abgerufen',
+  },
+  UserPermissionsRetrievalFailed: {
+    en: 'Failed to get user permissions',
+    tr: 'Kullanıcı izinleri alınamadı',
+    de: 'Fehler beim Abrufen der Benutzerberechtigungen',
+  },
+} satisfies Record<string, L10n>;

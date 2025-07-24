@@ -22,7 +22,7 @@ export interface ConnectionAlert {
 
 @injectable()
 export class ConnectionMonitorService extends EventEmitter {
-  private monitoringInterval: NodeJS.Timeout | null = null;
+  private monitoringInterval: ReturnType<typeof setInterval> | null = null;
   private connectionStatus: Map<string, ConnectionStatus> = new Map();
   private alertHistory: ConnectionAlert[] = [];
   private isMonitoring = false;

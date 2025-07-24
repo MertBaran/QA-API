@@ -75,8 +75,8 @@ describe('RabbitMQProvider', () => {
 
       try {
         await rabbitMQProvider.connect();
-      } catch (error: any) {
-        expect(error.message).toBe('Connection failed');
+      } catch (_error: any) {
+        expect(_error.message).toBe('Connection failed');
       }
 
       // Skip the logger assertion for now

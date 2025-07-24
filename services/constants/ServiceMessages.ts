@@ -247,3 +247,117 @@ export const EmailTemplates = {
     `,
   },
 };
+
+export const PermissionServiceMessages = {
+  PermissionExists: {
+    en: 'Permission already exists',
+    tr: 'Bu izin zaten mevcut',
+    de: 'Berechtigung existiert bereits',
+  },
+  PermissionCreateError: {
+    en: 'Database error during permission creation',
+    tr: 'İzin oluşturulurken veritabanı hatası',
+    de: 'Datenbankfehler beim Erstellen der Berechtigung',
+  },
+  PermissionNotFound: {
+    en: 'Permission not found',
+    tr: 'İzin bulunamadı',
+    de: 'Berechtigung nicht gefunden',
+  },
+  PermissionListError: {
+    en: 'Database error during permission list',
+    tr: 'İzin listesi alınırken veritabanı hatası',
+    de: 'Datenbankfehler beim Abrufen der Berechtigungsliste',
+  },
+  PermissionUpdateError: {
+    en: 'Database error during permission update',
+    tr: 'İzin güncellenirken veritabanı hatası',
+    de: 'Datenbankfehler beim Aktualisieren der Berechtigung',
+  },
+  PermissionDeleteError: {
+    en: 'Database error during permission delete',
+    tr: 'İzin silinirken veritabanı hatası',
+    de: 'Datenbankfehler beim Löschen der Berechtigung',
+  },
+};
+
+export const RoleServiceMessages = {
+  RoleExists: {
+    en: 'Role already exists',
+    tr: 'Bu rol zaten mevcut',
+    de: 'Rolle existiert bereits',
+  },
+  RoleCreateError: {
+    en: 'Database error during role creation',
+    tr: 'Rol oluşturulurken veritabanı hatası',
+    de: 'Datenbankfehler beim Erstellen der Rolle',
+  },
+  RoleNotFound: {
+    en: 'Role not found',
+    tr: 'Rol bulunamadı',
+    de: 'Rolle nicht gefunden',
+  },
+  RoleListError: {
+    en: 'Database error during role list',
+    tr: 'Rol listesi alınırken veritabanı hatası',
+    de: 'Datenbankfehler beim Abrufen der Rollenliste',
+  },
+  RoleUpdateError: {
+    en: 'Database error during role update',
+    tr: 'Rol güncellenirken veritabanı hatası',
+    de: 'Datenbankfehler beim Aktualisieren der Rolle',
+  },
+  RoleDeleteError: {
+    en: 'Database error during role delete',
+    tr: 'Rol silinirken veritabanı hatası',
+    de: 'Datenbankfehler beim Löschen der Rolle',
+  },
+  DefaultRoleNotFound: {
+    en: 'Default role not found',
+    tr: 'Varsayılan rol bulunamadı',
+    de: 'Standardrolle nicht gefunden',
+  },
+};
+
+export const UserServiceMessages = {
+  UserNotFound: {
+    en: 'User not found',
+    tr: 'Kullanıcı bulunamadı',
+    de: 'Benutzer nicht gefunden',
+  },
+  UserCreateError: {
+    en: 'Database error during user creation',
+    tr: 'Kullanıcı oluşturulurken veritabanı hatası',
+    de: 'Datenbankfehler beim Erstellen des Benutzers',
+  },
+  UserUpdateError: {
+    en: 'Database error during user update',
+    tr: 'Kullanıcı güncellenirken veritabanı hatası',
+    de: 'Datenbankfehler beim Aktualisieren des Benutzers',
+  },
+  UserDeleteError: {
+    en: 'Database error during user delete',
+    tr: 'Kullanıcı silinirken veritabanı hatası',
+    de: 'Datenbankfehler beim Löschen des Benutzers',
+  },
+  UserListError: {
+    en: 'Database error during user list',
+    tr: 'Kullanıcı listesi alınırken veritabanı hatası',
+    de: 'Datenbankfehler beim Abrufen der Benutzerliste',
+  },
+  UserCountError: {
+    en: 'Database error during user count',
+    tr: 'Kullanıcı sayısı alınırken veritabanı hatası',
+    de: 'Datenbankfehler beim Zählen der Benutzer',
+  },
+  EmailExists: {
+    en: 'User with this email already exists',
+    tr: 'Bu e-posta ile kayıtlı kullanıcı var',
+    de: 'Benutzer mit dieser E-Mail existiert bereits',
+  },
+  InvalidUserId: {
+    en: 'Invalid user ID',
+    tr: 'Geçersiz kullanıcı ID',
+    de: 'Ungültige Benutzer-ID',
+  },
+};

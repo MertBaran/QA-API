@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import { randomUUID } from 'crypto';
 
 // Database-agnostic ID type
 export type EntityId = string;
@@ -36,7 +36,7 @@ export class MongoDBIdAdapter implements IDatabaseIdAdapter {
 export class PostgreSQLIdAdapter implements IDatabaseIdAdapter {
   createId(): EntityId {
     // PostgreSQL için UUID veya serial ID kullanılabilir
-    return crypto.randomUUID();
+    return randomUUID();
   }
 
   isValidId(id: EntityId): boolean {

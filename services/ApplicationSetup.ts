@@ -89,8 +89,8 @@ export class ApplicationSetup {
       const databaseAdapter = container.resolve<any>('IDatabaseAdapter');
       await databaseAdapter.connect();
 
-      // Initialize cache provider
-      const cacheProvider = container.resolve<any>('ICacheProvider');
+      // Initialize cache provider (kullanılmıyor ama gerekli)
+      const _cacheProvider = container.resolve<any>('ICacheProvider');
 
       // Connection monitoring WebSocket ile yapılacak (setInterval kaldırıldı)
 

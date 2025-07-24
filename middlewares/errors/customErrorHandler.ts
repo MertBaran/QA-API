@@ -3,7 +3,7 @@ import CustomError from '../../helpers/error/CustomError';
 
 function customErrorHandler(
   err: any,
-  req: Request,
+  _req: Request,
   res: Response,
   _next: NextFunction
 ) {

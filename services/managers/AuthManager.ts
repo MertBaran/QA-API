@@ -4,9 +4,13 @@ import { comparePassword } from '../../helpers/input/inputHelpers';
 import { OAuth2Client } from 'google-auth-library';
 import { injectable, inject } from 'tsyringe';
 import { IUserRepository } from '../../repositories/interfaces/IUserRepository';
+import { IUserService } from '../contracts/IUserService';
+import { IRoleService } from '../contracts/IRoleService';
+import { IUserRoleService } from '../contracts/IUserRoleService';
 import { EntityId } from '../../types/database';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 import { IAuthService } from '../contracts/IAuthService';
 import { INotificationService } from '../contracts/INotificationService';
 import { AuthServiceMessages } from '../constants/ServiceMessages';
@@ -18,6 +22,9 @@ const client = new OAuth2Client(process.env['GOOGLE_CLIENT_ID']);
 export class AuthManager implements IAuthService {
   constructor(
     @inject('IUserRepository') private userRepository: IUserRepository,
+    @inject('IUserService') private userService: IUserService,
+    @inject('IRoleService') private roleService: IRoleService,
+    @inject('IUserRoleService') private userRoleService: IUserRoleService,
     @inject('INotificationService')
     private notificationService: INotificationService
   ) {}
@@ -27,21 +34,41 @@ export class AuthManager implements IAuthService {
     lastName: string;
     email: string;
     password: string;
-    role?: 'user' | 'admin';
+    roleId?: string;
+    language?: string;
   }): Promise<IUserModel> {
-    const { firstName, lastName, email, password, role } = userData;
+    const { firstName, lastName, email, password, roleId, language } = userData;
     try {
       const existingUser = await this.userRepository.findByEmail(email);
       if (existingUser) {
         throw new CustomError(AuthServiceMessages.EmailExists.en, 400);
       }
+
       const name = `${firstName} ${lastName}`.trim();
       const user = await this.userRepository.create({
         name,
         email,
         password,
-        role,
+        language: (language as any) || 'en',
       });
+
+      // Role atama: Eğer roleId verilmişse onu kullan, yoksa varsayılan role'ü ata
+      if (roleId) {
+        // Verilen role'ün var olup olmadığını kontrol et
+        const role = await this.roleService.findById(roleId);
+        if (!role) {
+          throw new CustomError('Specified role not found', 400);
+        }
+        if (!role.isActive) {
+          throw new CustomError('Specified role is not active', 400);
+        }
+        await this.userRoleService.assignRoleToUser(user._id, roleId);
+      } else {
+        // Varsayılan user role'ünü al ve ata
+        const defaultRole = await this.roleService.getDefaultRole();
+        await this.userRoleService.assignRoleToUser(user._id, defaultRole._id);
+      }
+
       return user;
     } catch (_err) {
       // Re-throw CustomErrors as-is
@@ -94,7 +121,12 @@ export class AuthManager implements IAuthService {
           name,
           email,
           password: Math.random().toString(36),
+          language: 'en',
         });
+
+        // Varsayılan user role'ünü al ve ata
+        const defaultRole = await this.roleService.getDefaultRole();
+        await this.userRoleService.assignRoleToUser(user._id, defaultRole._id);
       }
       return user;
     } catch (_err) {
@@ -148,10 +180,16 @@ export class AuthManager implements IAuthService {
           400
         );
       }
+
+      // Yeni şifreyi hash'le
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(newPassword, salt);
+
       await this.userRepository.updateById(user._id, {
-        password: newPassword,
+        password: hashedPassword,
         resetPasswordToken: undefined,
         resetPasswordExpire: undefined,
+        lastPasswordChange: new Date(),
       });
     } catch (_err) {
       throw new CustomError(AuthServiceMessages.ResetPasswordDbError.en, 500);
@@ -202,10 +240,10 @@ export class AuthManager implements IAuthService {
       }
 
       // İsim ve soyisim değişikliği varsa, name alanını güncelle
-      let updateData: any = { ...profileData };
+      const updateData: any = { ...profileData };
 
       if (profileData.firstName || profileData.lastName) {
-        const currentUser = await this.userRepository.findById(userId);
+        const currentUser = await this.userService.findById(userId);
         if (!currentUser) {
           throw new CustomError(AuthServiceMessages.UserNotFound.en, 404);
         }
@@ -245,23 +283,10 @@ export class AuthManager implements IAuthService {
     }
   }
 
-  async getUserById(userId: EntityId): Promise<IUserModel> {
-    try {
-      const user = await this.userRepository.findById(userId);
-      if (!user) {
-        throw new CustomError(AuthServiceMessages.UserNotFound.en, 404);
-      }
-      return user;
-    } catch (_err) {
-      throw new CustomError(AuthServiceMessages.GetUserDbError.en, 500);
-    }
-  }
-
   static generateJWTFromUser(user: {
     id: string;
     name: string;
     lang: string;
-    role?: string;
   }): string {
     const secret = (process.env['JWT_SECRET_KEY'] ||
       'default_secret') as jwt.Secret;
@@ -271,7 +296,7 @@ export class AuthManager implements IAuthService {
         id: user.id,
         name: user.name,
         lang: user.lang,
-        role: user.role || 'user',
+        iat: Math.floor(Date.now() / 1000), // Added iat
       },
       secret,
       {

@@ -3,7 +3,6 @@ import { INotificationService } from '../contracts/INotificationService';
 import {
   INotificationStrategy,
   NotificationContext,
-  SystemMetrics,
 } from '../contracts/INotificationStrategy';
 import { SystemMetricsCollector } from '../metrics/SystemMetricsCollector';
 import { QueueBasedNotificationManager } from './QueueBasedNotificationManager';
@@ -13,7 +12,7 @@ import {
   MultiChannelNotificationPayload,
   UserNotificationPreferences,
 } from '../contracts/NotificationPayload';
-import { IUserRepository } from '../../repositories/interfaces/IUserRepository';
+import { IUserService } from '../contracts/IUserService';
 import { INotificationRepository } from '../../repositories/interfaces/INotificationRepository';
 import { IEnvironmentProvider } from '../contracts/IEnvironmentProvider';
 import { EntityId } from '../../types/database';
@@ -28,7 +27,7 @@ export class SmartNotificationManager implements INotificationService {
     @inject('INotificationStrategy') private strategy: INotificationStrategy,
     @inject('SystemMetricsCollector')
     private metricsCollector: SystemMetricsCollector,
-    @inject('IUserRepository') private userRepository: IUserRepository,
+    @inject('IUserService') private userService: IUserService,
     @inject('INotificationRepository')
     private notificationRepository: INotificationRepository,
     @inject('IEnvironmentProvider')
@@ -135,7 +134,7 @@ export class SmartNotificationManager implements INotificationService {
     userId: string,
     payload: Omit<NotificationPayload, 'channel' | 'to'>
   ): Promise<void> {
-    const user = await this.userRepository.findById(userId as EntityId);
+    const user = await this.userService.findById(userId as EntityId);
     if (!user) {
       throw new Error(`User with ID ${userId} not found.`);
     }
@@ -226,7 +225,7 @@ export class SmartNotificationManager implements INotificationService {
   }
 
   private createDefaultContext(
-    payload: NotificationPayload | MultiChannelNotificationPayload
+    _payload: NotificationPayload | MultiChannelNotificationPayload
   ): NotificationContext {
     return this.strategy.createContext(
       'unknown',
@@ -300,7 +299,7 @@ export class SmartNotificationManager implements INotificationService {
     userId: string,
     templateName: string,
     locale: string,
-    variables: Record<string, any>
+    _variables: Record<string, any>
   ): Promise<void> {
     try {
       // Template'i veritabanından al
@@ -330,7 +329,7 @@ export class SmartNotificationManager implements INotificationService {
       let processedMessage = message;
       let processedHtml = html;
 
-      for (const [key, value] of Object.entries(variables)) {
+      for (const [key, value] of Object.entries(_variables)) {
         const placeholder = `{{${key}}}`;
         processedSubject = processedSubject.replace(
           new RegExp(placeholder, 'g'),
@@ -349,7 +348,7 @@ export class SmartNotificationManager implements INotificationService {
       }
 
       // Kullanıcı bilgilerini al
-      const user = await this.userRepository.findById(userId as any);
+      const user = await this.userService.findById(userId as any);
       if (!user) {
         throw new Error(`User '${userId}' not found`);
       }
@@ -359,7 +358,7 @@ export class SmartNotificationManager implements INotificationService {
         subject: processedSubject,
         message: processedMessage,
         html: processedHtml,
-        data: variables,
+        data: _variables,
       });
     } catch (error) {
       this.logger.error('Template notification failed', {

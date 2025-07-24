@@ -1,8 +1,6 @@
 import express, { Router } from 'express';
-import {
-  getAccessToRoute,
-  getAdminAccess,
-} from '../middlewares/authorization/authMiddleware';
+import { getAccessToRoute } from '../middlewares/authorization/authMiddleware';
+import { requireAdmin } from '../middlewares/authorization/permissionMiddleware';
 import { checkUserExist } from '../middlewares/database/databaseErrorHelpers';
 import { AuditMiddleware } from '../middlewares/audit/auditMiddleware';
 import { container } from 'tsyringe';
@@ -12,13 +10,16 @@ import { IValidationProvider } from '../infrastructure/validation/IValidationPro
 import { IdParamSchema } from '../types/dto/common/id-param.dto';
 
 const router: Router = express.Router();
-const adminController = new AdminController(container.resolve('IAdminService'));
+const adminController = new AdminController(
+  container.resolve('IAdminService'),
+  container.resolve('IUserRoleService')
+);
 const validator = container.resolve<IValidationProvider>('IValidationProvider');
 const auditMiddleware = new AuditMiddleware(
   container.resolve('IAuditProvider')
 );
 
-router.use(getAccessToRoute, getAdminAccess);
+router.use(getAccessToRoute, requireAdmin);
 router.use(
   auditMiddleware.createMiddleware('ADMIN_ACTION', { tags: ['admin'] })
 );

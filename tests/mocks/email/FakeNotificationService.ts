@@ -34,10 +34,10 @@ export class FakeNotificationService implements INotificationService {
   }
 
   async getUserNotificationPreferences(
-    userId: string
+    _userId: string
   ): Promise<UserNotificationPreferences> {
     return {
-      userId,
+      userId: _userId,
       email: true,
       push: false,
       sms: false,
@@ -46,8 +46,8 @@ export class FakeNotificationService implements INotificationService {
   }
 
   async updateUserNotificationPreferences(
-    userId: string,
-    preferences: Partial<UserNotificationPreferences>
+    _userId: string,
+    _preferences: Partial<UserNotificationPreferences>
   ): Promise<void> {
     // Mock implementation - preferences güncelleme
   }
@@ -62,14 +62,14 @@ export class FakeNotificationService implements INotificationService {
 
   // Database operations - Mock implementation
   async getUserNotifications(
-    userId: string,
-    limit: number = 50,
-    offset: number = 0
+    _userId: string,
+    _limit: number = 50,
+    _offset: number = 0
   ): Promise<any[]> {
     return [];
   }
 
-  async getNotificationStats(userId?: string): Promise<any> {
+  async getNotificationStats(_userId?: string): Promise<any> {
     return {
       total: 0,
       pending: 0,
@@ -81,14 +81,14 @@ export class FakeNotificationService implements INotificationService {
   }
 
   async notifyUserWithTemplate(
-    userId: string,
-    templateName: string,
-    locale: string,
-    variables: Record<string, any>
+    _userId: string,
+    _templateName: string,
+    _locale: string,
+    _variables: Record<string, any>
   ): Promise<void> {
     // Mock implementation
     console.log(
-      `Mock: Template notification sent to user ${userId} using template ${templateName} in locale ${locale}`
+      `Mock: Template notification sent to user ${_userId} using template ${_templateName} in locale ${_locale}`
     );
   }
 }

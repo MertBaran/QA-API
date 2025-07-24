@@ -21,7 +21,7 @@ export class QuestionRepository
     return this.findById(id);
   }
 
-  async findAll(): Promise<IQuestionModel[]> {
+  override async findAll(): Promise<IQuestionModel[]> {
     return this.dataSource.findAll();
   }
 

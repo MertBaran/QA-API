@@ -1,8 +1,4 @@
-import {
-  NotificationPayload,
-  MultiChannelNotificationPayload,
-  UserNotificationPreferences,
-} from './NotificationPayload';
+// Bu import'lar kullanılmıyor, kaldırıldı
 
 export interface SystemMetrics {
   queueSize: number;

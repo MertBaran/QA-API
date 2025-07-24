@@ -16,7 +16,6 @@ describe('UserRepository Unit Tests', () => {
       name: 'RepoUser',
       email: 'repo@a.com',
       password: 'x',
-      role: 'user',
       profile_image: '',
       blocked: false,
     });
@@ -30,7 +29,6 @@ describe('UserRepository Unit Tests', () => {
       name: 'RepoUser2',
       email: 'repo2@a.com',
       password: 'x',
-      role: 'user',
       profile_image: '',
       blocked: false,
     });
@@ -44,7 +42,6 @@ describe('UserRepository Unit Tests', () => {
       name: 'RepoUser3',
       email: 'repo3@a.com',
       password: 'x',
-      role: 'user',
       profile_image: '',
       blocked: false,
     });
@@ -60,7 +57,6 @@ describe('UserRepository Unit Tests', () => {
       name: 'RepoUser4',
       email: 'repo4@a.com',
       password: 'x',
-      role: 'user',
       profile_image: '',
       blocked: false,
     });

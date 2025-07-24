@@ -24,6 +24,7 @@ try {
 
 const authController = new AuthController(
   container.resolve('IAuthService'),
+  container.resolve('IUserRoleService'),
   loggerProvider
 );
 const validator = container.resolve<IValidationProvider>('IValidationProvider');

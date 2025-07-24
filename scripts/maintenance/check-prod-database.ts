@@ -33,8 +33,8 @@ async function checkProdDatabase() {
     console.log(`- Kullanıcılar: ${userCount}`);
     console.log(`- Sorular: ${questionCount}`);
     console.log(`- Cevaplar: ${answerCount}`);
-  } catch (error: any) {
-    console.error('Hata:', error.message);
+  } catch (_error: any) {
+    console.error('Hata:', _error.message);
   } finally {
     await mongoose.connection.close();
     console.log('Prod MongoDB bağlantısı kapatıldı');

@@ -17,7 +17,7 @@ export class WebhookChannel extends NotificationChannel {
 
     try {
       // Simüle edilmiş webhook gönderimi
-      const webhookData = {
+      const _webhookData = {
         message: payload.message,
         subject: payload.subject,
         data: payload.data,

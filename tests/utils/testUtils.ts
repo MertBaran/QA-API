@@ -2,7 +2,7 @@ import request from 'supertest';
 import app from '../../APP';
 import { container } from 'tsyringe';
 import { FakeUserDataSource } from '../mocks/datasource/FakeUserDataSource';
-import { AuthManager } from '../../services/managers/AuthManager';
+// AuthManager kullanılmıyor, kaldırıldı
 import { QuestionManager } from '../../services/managers/QuestionManager';
 import { AnswerManager } from '../../services/managers/AnswerManager';
 
@@ -23,6 +23,8 @@ export async function registerTestUser({
   password: string;
   role: string;
 }> = {}) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _role = role; // role parametresi kullanılmıyor ama interface'de gerekli
   try {
     // Use fake data source directly for tests
     const userDataSource =
@@ -33,7 +35,7 @@ export async function registerTestUser({
       name: `${firstName} ${lastName}`,
       email,
       password: hashedPassword,
-      role: role as any,
+      // roles field'ı artık UserRole tablosunda tutuluyor
       profile_image: '',
       blocked: false,
     });
@@ -56,7 +58,7 @@ export async function loginTestUser({
     // First try to register the user if they don't exist
     try {
       await registerTestUser({ email, password });
-    } catch (error) {
+    } catch (_error) {
       // User might already exist, continue with login
     }
 

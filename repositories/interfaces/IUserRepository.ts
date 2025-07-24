@@ -12,4 +12,6 @@ export interface IUserRepository extends IRepository<IUserModel> {
     resetExpire: Date
   ): Promise<IUserModel | null>;
   clearResetToken(userId: EntityId): Promise<IUserModel | null>;
+  findActive(): Promise<IUserModel[]>;
+  countAll(): Promise<number>;
 }

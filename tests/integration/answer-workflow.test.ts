@@ -1,20 +1,16 @@
 import 'reflect-metadata';
 import request from 'supertest';
-import mongoose from 'mongoose';
+// mongoose kullanılmıyor, kaldırıldı
 import app from '../testApp';
 import { container } from 'tsyringe';
 
 import { QuestionRepository } from '../../repositories/QuestionRepository';
 import { AnswerRepository } from '../../repositories/AnswerRepository';
 import '../setup';
-import {
-  registerTestUser,
-  loginTestUser,
-  createTestQuestion,
-} from '../utils/testUtils';
+import { registerTestUser, createTestQuestion } from '../utils/testUtils';
 
-const questionRepository = container.resolve(QuestionRepository);
-const answerRepository = container.resolve(AnswerRepository);
+const _questionRepository = container.resolve(QuestionRepository);
+const _answerRepository = container.resolve(AnswerRepository);
 
 describe('Answer Workflow Integration Tests', () => {
   let user1: any;

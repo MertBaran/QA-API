@@ -35,7 +35,7 @@ export class AuditMiddleware {
     options?: { tags?: string[]; targetExtractor?: (req: Request) => any }
   ) {
     return async (req: Request, res: Response, next: NextFunction) => {
-      const start = Date.now();
+      const _start = Date.now();
       res.on('finish', async () => {
         try {
           const user = (req as any).user || {};

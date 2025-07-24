@@ -1,8 +1,13 @@
 import { Router } from 'express';
 import { MonitoringController } from '../controllers/monitoringController';
+import { getAccessToRoute } from '../middlewares/authorization/authMiddleware';
+import { requireAdmin } from '../middlewares/authorization/permissionMiddleware';
 
 const router = Router();
 const monitoringController = new MonitoringController();
+
+// Admin yetkisi gerektiren endpoint'ler
+router.use(getAccessToRoute, requireAdmin);
 
 // Connection status
 router.get('/connections', (req, res) => {

@@ -48,8 +48,8 @@ async function checkTestDatabase() {
     } else {
       console.log('  - Test kullanıcısı bulunamadı!');
     }
-  } catch (error: any) {
-    console.error('Hata:', error.message);
+  } catch (_error: any) {
+    console.error('Hata:', _error.message);
   } finally {
     await mongoose.connection.close();
     console.log('Test MongoDB bağlantısı kapatıldı');

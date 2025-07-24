@@ -7,7 +7,7 @@ import {
   UserNotificationPreferences,
 } from '../services/contracts/NotificationPayload';
 import { HelperMessages } from '../helpers/constants/HelperMessages';
-import { SupportedLanguage } from '../constants/supportedLanguages';
+// SupportedLanguage kullanılmıyor, kaldırıldı
 
 interface AuthenticatedRequest extends Request {
   user?: {

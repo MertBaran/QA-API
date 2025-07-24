@@ -18,14 +18,17 @@ const QuestionSchema = new Schema<IQuestionMongo>({
     type: String,
     required: [true, 'Please provide a title'],
     minlength: [10, 'Please provide a title at least 10 characters'],
-    unique: true,
   },
   content: {
     type: String,
     required: [true, 'Please provide a content'],
     minlength: [20, 'Please provide a content at least 20 characters'],
   },
-  slug: String,
+  slug: {
+    type: String,
+    unique: true,
+    sparse: true, // null/undefined değerler için index oluşturma
+  },
   createdAt: {
     type: Date,
     default: Date.now,

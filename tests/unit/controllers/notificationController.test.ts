@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { NotificationController } from '../../../controllers/notificationController';
 import { INotificationService } from '../../../services/contracts/INotificationService';
-import { NotificationConstants } from '../../../controllers/constants/ControllerMessages';
+// NotificationConstants kullanılmıyor, kaldırıldı
 import { HelperMessages } from '../../../helpers/constants/HelperMessages';
 import { UserNotificationPreferences } from '../../../services/contracts/NotificationPayload';
 

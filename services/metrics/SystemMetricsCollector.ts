@@ -56,7 +56,7 @@ export class SystemMetricsCollector {
         activeConnections,
         memoryUsage: memoryUsagePercent,
       };
-    } catch (error) {
+    } catch (_error) {
       // Hata durumunda default değerler döndür
       return {
         queueSize: 0,

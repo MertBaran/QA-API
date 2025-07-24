@@ -3,16 +3,15 @@ import { MultiChannelNotificationManager } from '../../../services/managers/Mult
 import {
   NotificationPayload,
   MultiChannelNotificationPayload,
-  UserNotificationPreferences,
 } from '../../../services/contracts/NotificationPayload';
 import { INotificationChannelRegistry } from '../../../services/contracts/INotificationChannelRegistry';
-import { IUserRepository } from '../../../repositories/interfaces/IUserRepository';
+import { IUserService } from '../../../services/contracts/IUserService';
 import { NotificationChannel } from '../../../services/contracts/NotificationChannel';
 
 describe('MultiChannelNotificationManager Unit Tests', () => {
   let multiChannelNotificationManager: MultiChannelNotificationManager;
   let fakeChannelRegistry: INotificationChannelRegistry;
-  let fakeUserRepository: IUserRepository;
+  let fakeUserService: IUserService;
   let fakeEmailChannel: NotificationChannel;
   let fakeSMSChannel: NotificationChannel;
   let fakePushChannel: NotificationChannel;
@@ -57,12 +56,16 @@ describe('MultiChannelNotificationManager Unit Tests', () => {
       sendToChannel: jest.fn(),
     } as any;
 
-    fakeUserRepository = {
+    fakeUserService = {
       findById: jest.fn(),
       create: jest.fn(),
       updateById: jest.fn(),
       deleteById: jest.fn(),
       findAll: jest.fn(),
+      findByEmail: jest.fn(),
+      findByEmailWithPassword: jest.fn(),
+      findActive: jest.fn(),
+      countAll: jest.fn(),
     } as any;
 
     // Channel registry'yi mock'la
@@ -90,7 +93,7 @@ describe('MultiChannelNotificationManager Unit Tests', () => {
 
     multiChannelNotificationManager = new MultiChannelNotificationManager(
       fakeChannelRegistry,
-      fakeUserRepository
+      fakeUserService
     );
   });
 
@@ -265,7 +268,7 @@ describe('MultiChannelNotificationManager Unit Tests', () => {
     };
 
     beforeEach(() => {
-      (fakeUserRepository.findById as jest.Mock).mockResolvedValue(mockUser);
+      (fakeUserService.findById as jest.Mock).mockResolvedValue(mockUser);
     });
 
     it('should send notification to user active channels', async () => {
@@ -278,7 +281,7 @@ describe('MultiChannelNotificationManager Unit Tests', () => {
 
       await multiChannelNotificationManager.notifyUser('123', payload);
 
-      expect(fakeUserRepository.findById).toHaveBeenCalledWith('123');
+      expect(fakeUserService.findById).toHaveBeenCalledWith('123');
       expect(fakeChannelRegistry.sendToChannel).toHaveBeenCalledTimes(3); // email, sms, webhook
 
       // Email channel
@@ -316,7 +319,7 @@ describe('MultiChannelNotificationManager Unit Tests', () => {
     });
 
     it('should throw error when user not found', async () => {
-      (fakeUserRepository.findById as jest.Mock).mockResolvedValue(null);
+      (fakeUserService.findById as jest.Mock).mockResolvedValue(null);
 
       const payload = {
         subject: 'Test Subject',
@@ -340,7 +343,7 @@ describe('MultiChannelNotificationManager Unit Tests', () => {
           webhook: false,
         },
       };
-      (fakeUserRepository.findById as jest.Mock).mockResolvedValue(
+      (fakeUserService.findById as jest.Mock).mockResolvedValue(
         userWithNoActiveChannels
       );
 
@@ -367,7 +370,7 @@ describe('MultiChannelNotificationManager Unit Tests', () => {
           webhook: true,
         },
       };
-      (fakeUserRepository.findById as jest.Mock).mockResolvedValue(
+      (fakeUserService.findById as jest.Mock).mockResolvedValue(
         userWithoutContact
       );
 
@@ -394,7 +397,7 @@ describe('MultiChannelNotificationManager Unit Tests', () => {
         ...mockUser,
         language: 'en',
       };
-      (fakeUserRepository.findById as jest.Mock).mockResolvedValue(
+      (fakeUserService.findById as jest.Mock).mockResolvedValue(
         userWithLanguage
       );
 
@@ -432,7 +435,7 @@ describe('MultiChannelNotificationManager Unit Tests', () => {
     };
 
     beforeEach(() => {
-      (fakeUserRepository.findById as jest.Mock).mockResolvedValue(mockUser);
+      (fakeUserService.findById as jest.Mock).mockResolvedValue(mockUser);
     });
 
     it('should return user notification preferences', async () => {
@@ -441,7 +444,7 @@ describe('MultiChannelNotificationManager Unit Tests', () => {
           '123'
         );
 
-      expect(fakeUserRepository.findById).toHaveBeenCalledWith('123');
+      expect(fakeUserService.findById).toHaveBeenCalledWith('123');
       expect(preferences).toEqual({
         userId: '123',
         email: true,
@@ -459,7 +462,7 @@ describe('MultiChannelNotificationManager Unit Tests', () => {
         ...mockUser,
         notificationPreferences: undefined,
       };
-      (fakeUserRepository.findById as jest.Mock).mockResolvedValue(
+      (fakeUserService.findById as jest.Mock).mockResolvedValue(
         userWithoutPreferences
       );
 
@@ -481,7 +484,7 @@ describe('MultiChannelNotificationManager Unit Tests', () => {
     });
 
     it('should throw error when user not found', async () => {
-      (fakeUserRepository.findById as jest.Mock).mockResolvedValue(null);
+      (fakeUserService.findById as jest.Mock).mockResolvedValue(null);
 
       await expect(
         multiChannelNotificationManager.getUserNotificationPreferences('999')
@@ -502,8 +505,8 @@ describe('MultiChannelNotificationManager Unit Tests', () => {
     };
 
     beforeEach(() => {
-      (fakeUserRepository.findById as jest.Mock).mockResolvedValue(mockUser);
-      (fakeUserRepository.updateById as jest.Mock).mockResolvedValue(undefined);
+      (fakeUserService.findById as jest.Mock).mockResolvedValue(mockUser);
+      (fakeUserService.updateById as jest.Mock).mockResolvedValue(undefined);
     });
 
     it('should update user notification preferences', async () => {
@@ -519,8 +522,8 @@ describe('MultiChannelNotificationManager Unit Tests', () => {
         preferences
       );
 
-      expect(fakeUserRepository.findById).toHaveBeenCalledWith('123');
-      expect(fakeUserRepository.updateById).toHaveBeenCalledWith('123', {
+      expect(fakeUserService.findById).toHaveBeenCalledWith('123');
+      expect(fakeUserService.updateById).toHaveBeenCalledWith('123', {
         'notificationPreferences.email': false,
         'notificationPreferences.sms': true,
         'notificationPreferences.push': false,
@@ -529,7 +532,7 @@ describe('MultiChannelNotificationManager Unit Tests', () => {
     });
 
     it('should throw error when user not found', async () => {
-      (fakeUserRepository.findById as jest.Mock).mockResolvedValue(null);
+      (fakeUserService.findById as jest.Mock).mockResolvedValue(null);
 
       const preferences = { email: false };
 
@@ -540,7 +543,7 @@ describe('MultiChannelNotificationManager Unit Tests', () => {
         )
       ).rejects.toThrow('User with ID 999 not found.');
 
-      expect(fakeUserRepository.updateById).not.toHaveBeenCalled();
+      expect(fakeUserService.updateById).not.toHaveBeenCalled();
     });
   });
 
@@ -562,7 +565,7 @@ describe('MultiChannelNotificationManager Unit Tests', () => {
 
     it('should handle user repository findById error', async () => {
       const error = new Error('Database connection failed');
-      (fakeUserRepository.findById as jest.Mock).mockRejectedValue(error);
+      (fakeUserService.findById as jest.Mock).mockRejectedValue(error);
 
       const payload = {
         subject: 'Test Subject',
@@ -575,11 +578,11 @@ describe('MultiChannelNotificationManager Unit Tests', () => {
     });
 
     it('should handle user repository updateById error', async () => {
-      (fakeUserRepository.findById as jest.Mock).mockResolvedValue({
+      (fakeUserService.findById as jest.Mock).mockResolvedValue({
         id: '123',
       });
       const error = new Error('Update failed');
-      (fakeUserRepository.updateById as jest.Mock).mockRejectedValue(error);
+      (fakeUserService.updateById as jest.Mock).mockRejectedValue(error);
 
       const preferences = { email: false };
 

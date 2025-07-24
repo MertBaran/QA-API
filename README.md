@@ -24,7 +24,7 @@
 - Intelligent architecture decisions
 - Smart notification strategy selection
 
-**232+ Tests** ✅ | **Multi-language i18n** 🌍 | **Redis Caching** ⚡ | **Smart Notifications** 📧 | **Real-time Monitoring** 📊
+**232+ Tests** ✅ | **Multi-language i18n** 🌍 | **Redis Caching** ⚡ | **Smart Notifications** 📧 | **Real-time Monitoring** 📊 | **Permission Management** 🔐
 
 ## ✨ Core Features
 
@@ -32,7 +32,8 @@
 
 - **JWT Authentication** with refresh tokens
 - **Google OAuth2** integration
-- **Role-based access control** (User, Admin)
+- **Role-based access control** (User, Moderator, Admin)
+- **Permission-based authorization** with granular control
 - **Password reset** with template-based emails
 - **Profile management** with edit capabilities
 
@@ -104,6 +105,7 @@
 - **MongoDB** as primary database
 - **MongoDB Adapter** for database abstraction
 - **Repository pattern** for data access
+- **Service layer** for business logic abstraction
 - **Mongoose** for schema management
 
 ### 📡 Real-time Monitoring Architecture
@@ -233,6 +235,17 @@ GET    /api/users                      # List users (Admin)
 GET    /api/users/:id                  # Get user details
 PUT    /api/users/:id                  # Update user (Admin)
 DELETE /api/users/:id                  # Delete user (Admin)
+```
+
+### 🔐 Permission Management
+
+```
+GET    /api/permissions/roles          # List all roles
+GET    /api/permissions/users/:userId/roles    # Get user roles
+POST   /api/permissions/users/:userId/roles    # Assign role to user
+DELETE /api/permissions/users/:userId/roles/:roleId  # Remove role from user
+POST   /api/permissions/roles/:roleId/permissions    # Add permissions to role
+DELETE /api/permissions/roles/:roleId/permissions    # Remove permissions from role
 ```
 
 ### 🏥 Health & Monitoring
@@ -457,7 +470,8 @@ QA-API/
 
 - **Dependency Injection** with tsyringe
 - **Repository Pattern** for data access
-- **Service Layer** for business logic
+- **Service Layer** for business logic abstraction
+- **DTO Pattern** for request/response type safety
 - **Middleware Pattern** for cross-cutting concerns
 - **Strategy Pattern** for notification selection
 - **Observer Pattern** for real-time monitoring

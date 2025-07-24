@@ -1,4 +1,4 @@
-import { injectable, inject } from 'tsyringe';
+import { injectable } from 'tsyringe';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';

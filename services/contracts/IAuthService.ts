@@ -7,7 +7,7 @@ export interface IAuthService {
     lastName: string;
     email: string;
     password: string;
-    role?: 'user' | 'admin';
+    roleId?: string; // Role ID'si ile role atama
     language?: string;
   }): Promise<IUserModel>;
   loginUser(email: string, password: string): Promise<IUserModel>;
@@ -30,5 +30,4 @@ export interface IAuthService {
       about?: string;
     }
   ): Promise<IUserModel>;
-  getUserById(userId: EntityId): Promise<IUserModel>;
 }

@@ -1,5 +1,5 @@
 import 'reflect-metadata';
-import { container } from 'tsyringe';
+// container kullanılmıyor, kaldırıldı
 import dotenv from 'dotenv';
 import path from 'path';
 

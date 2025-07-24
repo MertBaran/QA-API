@@ -2,11 +2,15 @@ import { Router } from 'express';
 import { container } from 'tsyringe';
 import { NotificationController } from '../controllers/notificationController';
 import { getAccessToRoute } from '../middlewares/authorization/authMiddleware';
+import { requireAdmin } from '../middlewares/authorization/permissionMiddleware';
 
 const router = Router();
 const notificationController = new NotificationController(
   container.resolve('INotificationService')
 );
+
+// Admin yetkisi gerektiren endpoint'ler
+router.use(getAccessToRoute, requireAdmin);
 
 // Kullanıcının tüm aktif kanallarına bildirim gönderme
 router.post(

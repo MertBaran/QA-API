@@ -9,6 +9,7 @@ import adminRouter from './adminRouter';
 import answerRouter from './answerRouter';
 import notificationRouter from './notificationRouter';
 import monitoringRouter from './monitoringRouter';
+import permissionRouter from './permissionRouter';
 router.get('/', (req: Request, res: Response) => {
   res.send('Home Page');
 });
@@ -20,5 +21,6 @@ router.use('/admin', adminRouter);
 router.use('/questions/:question_id/answers', answerRouter);
 router.use('/notifications', notificationRouter);
 router.use('/monitoring', monitoringRouter);
+router.use('/permissions', permissionRouter);
 
 export default router;

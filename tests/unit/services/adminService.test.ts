@@ -1,17 +1,20 @@
 import 'reflect-metadata';
 import { AdminManager } from '../../../services/managers/AdminManager';
 import { UserRepository } from '../../../repositories/UserRepository';
+import { UserManager } from '../../../services/managers/UserManager';
 import { FakeUserDataSource } from '../../mocks/datasource/FakeUserDataSource';
 
 describe('AdminService Unit Tests', () => {
   let adminService: AdminManager;
   let userRepository: UserRepository;
+  let userService: UserManager;
   let fakeUserDataSource: FakeUserDataSource;
 
   beforeEach(() => {
     fakeUserDataSource = new FakeUserDataSource();
     userRepository = new UserRepository(fakeUserDataSource);
-    adminService = new AdminManager(userRepository);
+    userService = new UserManager(userRepository);
+    adminService = new AdminManager(userService);
   });
 
   it('should create and get all users', async () => {
@@ -19,7 +22,6 @@ describe('AdminService Unit Tests', () => {
       name: 'User1',
       email: 'u1@a.com',
       password: 'x',
-      role: 'user',
       profile_image: '',
       blocked: false,
     });
@@ -27,7 +29,6 @@ describe('AdminService Unit Tests', () => {
       name: 'User2',
       email: 'u2@a.com',
       password: 'x',
-      role: 'user',
       profile_image: '',
       blocked: false,
     });
@@ -42,7 +43,6 @@ describe('AdminService Unit Tests', () => {
       name: 'User3',
       email: 'u3@a.com',
       password: 'x',
-      role: 'user',
       profile_image: '',
       blocked: false,
     });
@@ -56,7 +56,6 @@ describe('AdminService Unit Tests', () => {
       name: 'User4',
       email: 'u4@a.com',
       password: 'x',
-      role: 'user',
       profile_image: '',
       blocked: false,
     });
@@ -71,7 +70,6 @@ describe('AdminService Unit Tests', () => {
       name: 'User5',
       email: 'u5@a.com',
       password: 'x',
-      role: 'user',
       profile_image: '',
       blocked: false,
     });

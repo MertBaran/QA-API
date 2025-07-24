@@ -1,20 +1,37 @@
 {
   "compilerOptions": {
     "target": "ES2022", // Modern JS özellikleri için
-    "module": "NodeNext", // Node 18+ ve ESM desteği için
-    "moduleResolution": "NodeNext", // Modern modül çözümleme
+    "module": "CommonJS", // CommonJS modül sistemi
+    "moduleResolution": "node", // Node modül çözümleme
     "outDir": "dist",
     "rootDir": "./",
     "strict": true,
     "esModuleInterop": true,
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true, // JSON import desteği
     "noUncheckedIndexedAccess": true, // Daha güvenli index erişimi
     "noPropertyAccessFromIndexSignature": true, // Daha güvenli property erişimi
-    "useUnknownInCatchVariables": true // Hatalarda 'any' yerine 'unknown' kullanımı
+    "useUnknownInCatchVariables": true, // Hatalarda 'any' yerine 'unknown' kullanımı
+    "declaration": true, // .d.ts dosyaları oluştur
+    "declarationMap": true, // Declaration map dosyaları
+    "sourceMap": true, // Source map dosyaları
+    "incremental": true, // Incremental compilation
+    "tsBuildInfoFile": "./dist/.tsbuildinfo", // Build info dosyası
+    "composite": false, // Project references için
+    "removeComments": false, // Yorumları koru
+    "noEmitOnError": true, // Hata varsa emit etme
+    "allowSyntheticDefaultImports": true, // Default import desteği
+    "allowUnusedLabels": false, // Kullanılmayan label'ları engelle
+    "allowUnreachableCode": false, // Ulaşılamayan kodu engelle
+    "noImplicitReturns": true, // Implicit return'ları engelle
+    "noFallthroughCasesInSwitch": true, // Switch'te fallthrough'u engelle
+    "noImplicitOverride": true, // Override keyword'ü zorunlu kıl
+    "allowImportingTsExtensions": false, // .ts extension import'unu engelle
+    "noEmit": false, // Emit et (production için gerekli)
+    "lib": ["ES2022"], // Modern JS library'leri
+    "types": ["node", "jest", "@types/node"] // Type definitions
   },
   "include": [
     "./**/*.ts"
@@ -22,5 +39,8 @@
   "exclude": [
     "node_modules",
     "dist"
-  ]
+  ],
+  "ts-node": {
+    "esm": false
+  }
 } 

@@ -1,4 +1,4 @@
-import { ObjectId } from 'bson';
+// ObjectId kullanılmıyor, kaldırıldı
 import { L10n } from '../../types/i18n';
 
 export interface INotificationTemplateModel {

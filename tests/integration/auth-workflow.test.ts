@@ -255,7 +255,7 @@ describe('Authentication Workflow Integration Tests', () => {
         expect(logoutResponse.body.success).toBe(true);
 
         // Verify the message is in the expected language
-        const expectedMessages: Record<string, string> = {
+        const _expectedMessages: Record<string, string> = {
           en: 'Logout success',
           tr: 'Çıkış başarılı',
           de: 'Abmeldung erfolgreich',

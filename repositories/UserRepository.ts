@@ -61,4 +61,14 @@ export class UserRepository
       resetPasswordExpire: undefined,
     });
   }
+
+  async findActive(): Promise<IUserModel[]> {
+    const all = await this.dataSource.findAll();
+    return all.filter(user => !user.blocked);
+  }
+
+  override async countAll(): Promise<number> {
+    const all = await this.dataSource.findAll();
+    return all.length;
+  }
 }

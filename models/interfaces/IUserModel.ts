@@ -12,7 +12,7 @@ export interface IUserModel {
   _id: EntityId;
   name: string;
   email: string;
-  role: 'user' | 'admin';
+
   password: string;
   title?: string;
   about?: string;
@@ -22,6 +22,7 @@ export interface IUserModel {
   blocked: boolean;
   resetPasswordToken?: string;
   resetPasswordExpire?: Date;
+  lastPasswordChange?: Date;
   createdAt?: Date;
   // Notification için yeni alanlar
   phoneNumber?: string;

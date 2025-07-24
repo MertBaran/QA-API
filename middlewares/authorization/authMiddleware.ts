@@ -7,7 +7,7 @@ import {
 } from '../../helpers/authorization/tokenHelpers';
 import asyncErrorWrapper from 'express-async-handler';
 import { container } from 'tsyringe';
-import { UserRepository } from '../../repositories/UserRepository';
+// UserRepository kullanılmıyor, kaldırıldı
 import { QuestionRepository } from '../../repositories/QuestionRepository';
 import { AnswerRepository } from '../../repositories/AnswerRepository';
 import { AuthMiddlewareMessages } from '../constants/MiddlewareMessages';
@@ -42,31 +42,54 @@ const getAccessToRoute = (
   if (!process.env['JWT_SECRET_KEY']) {
     return next(new CustomError(AuthMiddlewareMessages.JwtSecretMissing, 500));
   }
-  jwt.verify(access_token, process.env['JWT_SECRET_KEY']!, (err, decoded) => {
-    if (err)
-      return next(new CustomError(AuthMiddlewareMessages.Unauthorized, 401));
-    const decodedToken = decoded as DecodedToken & {
-      lang?: 'en' | 'tr' | 'de';
-    };
-    req.user = {
-      id: decodedToken.id,
-      name: decodedToken.name,
-      role: decodedToken.role,
-    } as any;
-    req.locale = decodedToken.lang ?? 'en';
-    next();
-  });
+  jwt.verify(
+    access_token,
+    process.env['JWT_SECRET_KEY']!,
+    async (err, decoded) => {
+      if (err)
+        return next(new CustomError(AuthMiddlewareMessages.Unauthorized, 401));
+      const decodedToken = decoded as DecodedToken & {
+        lang?: 'en' | 'tr' | 'de';
+        iat?: number;
+      };
+
+      // Token'ın oluşturulma zamanını kontrol et
+      if (decodedToken.iat) {
+        const tokenCreatedAt = new Date(decodedToken.iat * 1000);
+
+        // Kullanıcının son şifre değişiklik zamanını kontrol et
+        try {
+          const userService = container.resolve('IUserService') as any;
+          const user = await userService.findById(decodedToken.id);
+
+          if (
+            user &&
+            user.lastPasswordChange &&
+            tokenCreatedAt < user.lastPasswordChange
+          ) {
+            return next(
+              new CustomError(AuthMiddlewareMessages.TokenExpired, 401)
+            );
+          }
+        } catch (error) {
+          // Veritabanı hatası durumunda token'ı kabul et (güvenlik için)
+          console.error('Password change check error:', error);
+        }
+      }
+
+      req.user = {
+        id: decodedToken.id,
+        name: decodedToken.name,
+        role: decodedToken.role,
+      } as any;
+      req.locale = decodedToken.lang ?? 'en';
+      next();
+    }
+  );
 };
 
-const getAdminAccess = asyncErrorWrapper(
-  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    const { role } = req.user!;
-    if (role !== 'admin') {
-      return next(new CustomError(AuthMiddlewareMessages.OnlyAdmins, 403));
-    }
-    next();
-  }
-);
+// getAdminAccess artık permission middleware'de requireAdmin olarak tanımlandı
+// Kaldırıldı - requireAdmin kullanılmalı
 
 const getQuestionOwnerAccess = asyncErrorWrapper(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -106,9 +129,4 @@ const getAnswerOwnerAccess = asyncErrorWrapper(
   }
 );
 
-export {
-  getAccessToRoute,
-  getAdminAccess,
-  getQuestionOwnerAccess,
-  getAnswerOwnerAccess,
-};
+export { getAccessToRoute, getQuestionOwnerAccess, getAnswerOwnerAccess };

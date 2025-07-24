@@ -6,9 +6,9 @@ import {
   MultiChannelNotificationPayload,
   UserNotificationPreferences,
 } from '../contracts/NotificationPayload';
-import { IUserRepository } from '../../repositories/interfaces/IUserRepository';
+import { IUserService } from '../contracts/IUserService';
 import { EntityId } from '../../types/database';
-import { getLocalizedNotificationMessage } from '../../helpers/i18n/messageHelper';
+// getLocalizedNotificationMessage kullanılmıyor, kaldırıldı
 import { SupportedLanguage } from '../../constants/supportedLanguages';
 import { ILoggerProvider } from '../../infrastructure/logging/ILoggerProvider';
 
@@ -30,7 +30,7 @@ export class QueueBasedNotificationManager implements INotificationService {
 
   constructor(
     @inject('IQueueProvider') private queueProvider: IQueueProvider,
-    @inject('IUserRepository') private userRepository: IUserRepository,
+    @inject('IUserService') private userService: IUserService,
     @inject('ILoggerProvider') private logger: ILoggerProvider
   ) {}
 
@@ -112,7 +112,7 @@ export class QueueBasedNotificationManager implements INotificationService {
     userId: string,
     payload: Omit<NotificationPayload, 'channel' | 'to'>
   ): Promise<void> {
-    const user = await this.userRepository.findById(userId as EntityId);
+    const user = await this.userService.findById(userId as EntityId);
     if (!user) {
       this.logger.error('User not found', { userId });
       throw new Error(`User with ID ${userId} not found.`);
@@ -173,7 +173,7 @@ export class QueueBasedNotificationManager implements INotificationService {
   async getUserNotificationPreferences(
     userId: string
   ): Promise<UserNotificationPreferences> {
-    const user = await this.userRepository.findById(userId as EntityId);
+    const user = await this.userService.findById(userId as EntityId);
     if (!user) {
       throw new Error(`User with ID ${userId} not found.`);
     }
@@ -193,7 +193,7 @@ export class QueueBasedNotificationManager implements INotificationService {
     userId: string,
     preferences: Partial<UserNotificationPreferences>
   ): Promise<void> {
-    const user = await this.userRepository.findById(userId as EntityId);
+    const user = await this.userService.findById(userId as EntityId);
     if (!user) {
       throw new Error(`User with ID ${userId} not found.`);
     }
@@ -400,26 +400,26 @@ export class QueueBasedNotificationManager implements INotificationService {
 
   // Database operations - Not implemented for queue manager
   async getUserNotifications(
-    userId: string,
-    limit: number = 50,
-    offset: number = 0
+    _userId: string,
+    _limit: number = 50,
+    _offset: number = 0
   ): Promise<any[]> {
     throw new Error(
       'getUserNotifications not implemented for QueueBasedNotificationManager'
     );
   }
 
-  async getNotificationStats(userId?: string): Promise<any> {
+  async getNotificationStats(_userId?: string): Promise<any> {
     throw new Error(
       'getNotificationStats not implemented for QueueBasedNotificationManager'
     );
   }
 
   async notifyUserWithTemplate(
-    userId: string,
-    templateName: string,
-    locale: string,
-    variables: Record<string, any>
+    _userId: string,
+    _templateName: string,
+    _locale: string,
+    _variables: Record<string, any>
   ): Promise<void> {
     // Queue-based manager template'i desteklemiyor, SmartNotificationManager kullanılmalı
     throw new Error(

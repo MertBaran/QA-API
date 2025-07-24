@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import CustomError from '../../helpers/error/CustomError';
 import asyncErrorWrapper from 'express-async-handler';
 import { container } from 'tsyringe';
-import { IUserRepository } from '../../repositories/interfaces/IUserRepository';
+// IUserRepository kullanılmıyor, kaldırıldı
 import { IQuestionRepository } from '../../repositories/interfaces/IQuestionRepository';
 import { IAnswerRepository } from '../../repositories/interfaces/IAnswerRepository';
 import { DatabaseMiddlewareMessages } from '../constants/MiddlewareMessages';
@@ -11,9 +11,8 @@ const checkUserExist = asyncErrorWrapper(
   async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
     if (!id) throw new Error('id is required');
-    const userRepository =
-      container.resolve<IUserRepository>('IUserRepository');
-    const user = await userRepository.findById(id);
+    const userService = container.resolve<any>('IUserService');
+    const user = await userService.findById(id);
     if (!user) {
       return next(
         new CustomError(DatabaseMiddlewareMessages.UserNotFound, 404)

@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 import { container } from 'tsyringe';
+import { TOKENS } from './TOKENS';
 import { BootstrapService } from './BootstrapService';
 import { HealthCheckService } from './HealthCheckService';
 import { EnvironmentProvider } from './providers/EnvironmentProvider';
@@ -9,8 +10,7 @@ import { QuestionManager } from './managers/QuestionManager';
 import { AnswerManager } from './managers/AnswerManager';
 import { AdminManager } from './managers/AdminManager';
 
-import { NotificationManager } from './managers/NotificationManager';
-import { MultiChannelNotificationManager } from './managers/MultiChannelNotificationManager';
+// MultiChannelNotificationManager kullanılmıyor, kaldırıldı
 import { NotificationChannelRegistry } from './managers/NotificationChannelRegistry';
 import { EmailNotificationHandler } from './managers/EmailNotificationHandler';
 import { EmailChannel } from './managers/EmailChannel';
@@ -30,6 +30,8 @@ import { QuestionMongooseDataSource } from '../repositories/mongodb/QuestionMong
 import { AnswerMongooseDataSource } from '../repositories/mongodb/AnswerMongooseDataSource';
 import { MongoAuditProvider } from '../infrastructure/audit/MongoAuditProvider';
 import { ZodValidationProvider } from '../infrastructure/validation/ZodValidationProvider';
+import { MongoDBMigrationStrategy } from '../database/strategies/MongoDBMigrationStrategy';
+import { MongoDBSeedStrategy } from '../database/strategies/MongoDBSeedStrategy';
 import UserMongo from '../models/mongodb/UserMongoModel';
 import QuestionMongo from '../models/mongodb/QuestionMongoModel';
 import AnswerMongo from '../models/mongodb/AnswerMongoModel';
@@ -46,123 +48,166 @@ import { SmartNotificationManager } from './managers/SmartNotificationManager';
 import { SmartNotificationStrategy } from './strategies/SmartNotificationStrategy';
 import { SystemMetricsCollector } from './metrics/SystemMetricsCollector';
 import { WebSocketMonitorService } from './WebSocketMonitorService';
+import { PermissionManager } from './managers/PermissionManager';
+import { RoleManager } from './managers/RoleManager';
+import { UserRoleManager } from './managers/UserRoleManager';
+import { UserManager } from './managers/UserManager';
+import { PermissionRepository } from '../repositories/PermissionRepository';
+import { RoleRepository } from '../repositories/RoleRepository';
+import { UserRoleRepository } from '../repositories/UserRoleRepository';
+import { PermissionMongooseDataSource } from '../repositories/mongodb/PermissionMongooseDataSource';
+import { RoleMongooseDataSource } from '../repositories/mongodb/RoleMongooseDataSource';
+import { UserRoleMongooseDataSource } from '../repositories/mongodb/UserRoleMongooseDataSource';
 
 // Register core services first
-container.registerSingleton('BootstrapService', BootstrapService);
+container.registerSingleton(TOKENS.BootstrapService, BootstrapService);
 
 // Bootstrap function
 export async function initializeContainer() {
   const bootstrapService = container.resolve(BootstrapService);
   const config = await bootstrapService.bootstrap();
-
   return config;
 }
 
 // Register core services
-container.registerSingleton('HealthCheckService', HealthCheckService);
+container.registerSingleton(TOKENS.HealthCheckService, HealthCheckService);
 
 // Register infrastructure providers
-container.registerSingleton('ILoggerProvider', PinoLoggerProvider);
-container.registerSingleton('ICacheProvider', RedisCacheProvider);
-container.registerSingleton('IDatabaseAdapter', MongoDBAdapter);
-container.registerSingleton('IAuditProvider', MongoAuditProvider);
-container.registerSingleton('AuditProvider', MongoAuditProvider);
-container.registerSingleton('IEnvironmentProvider', EnvironmentProvider);
+container.registerSingleton(TOKENS.ILoggerProvider, PinoLoggerProvider);
+container.registerSingleton(TOKENS.ICacheProvider, RedisCacheProvider);
+container.registerSingleton(TOKENS.IDatabaseAdapter, MongoDBAdapter);
+container.registerSingleton(TOKENS.IAuditProvider, MongoAuditProvider);
+container.registerSingleton(TOKENS.AuditProvider, MongoAuditProvider);
+container.registerSingleton(TOKENS.IEnvironmentProvider, EnvironmentProvider);
 
 // Register queue providers
-container.registerSingleton('IQueueProvider', RabbitMQProvider);
+container.registerSingleton(TOKENS.IQueueProvider, RabbitMQProvider);
 
 // Register data sources
-container.registerSingleton('IUserDataSource', UserMongooseDataSource);
-container.registerSingleton('IQuestionDataSource', QuestionMongooseDataSource);
-container.registerSingleton('IAnswerDataSource', AnswerMongooseDataSource);
+container.registerSingleton(TOKENS.IUserDataSource, UserMongooseDataSource);
+container.registerSingleton(
+  TOKENS.IQuestionDataSource,
+  QuestionMongooseDataSource
+);
+container.registerSingleton(TOKENS.IAnswerDataSource, AnswerMongooseDataSource);
+container.registerSingleton(
+  TOKENS.IPermissionDataSource,
+  PermissionMongooseDataSource
+);
+container.registerSingleton(TOKENS.IRoleDataSource, RoleMongooseDataSource);
+container.registerSingleton(
+  TOKENS.IUserRoleDataSource,
+  UserRoleMongooseDataSource
+);
 
 // Register repositories
-container.registerSingleton('IUserRepository', UserRepository);
-container.registerSingleton('IQuestionRepository', QuestionRepository);
-container.registerSingleton('IAnswerRepository', AnswerRepository);
-container.registerSingleton('INotificationRepository', NotificationRepository);
+container.registerSingleton(TOKENS.IUserRepository, UserRepository);
+container.registerSingleton(TOKENS.IQuestionRepository, QuestionRepository);
+container.registerSingleton(TOKENS.IAnswerRepository, AnswerRepository);
+container.registerSingleton(
+  TOKENS.INotificationRepository,
+  NotificationRepository
+);
+container.registerSingleton(TOKENS.IPermissionRepository, PermissionRepository);
+container.registerSingleton(TOKENS.IRoleRepository, RoleRepository);
+container.registerSingleton(TOKENS.IUserRoleRepository, UserRoleRepository);
 
 // Register managers as services
-container.registerSingleton('IAuthService', AuthManager);
-container.registerSingleton('IQuestionService', QuestionManager);
-container.registerSingleton('IAnswerService', AnswerManager);
-container.registerSingleton('IAdminService', AdminManager);
-
-// Register controllers
-container.registerSingleton('AuthController', AuthController);
-container.registerSingleton('UserController', UserController);
-container.registerSingleton('AdminController', AdminController);
-container.registerSingleton('QuestionController', QuestionController);
-container.registerSingleton('AnswerController', AnswerController);
-container.registerSingleton('NotificationController', NotificationController);
+container.registerSingleton(TOKENS.IAuthService, AuthManager);
+container.registerSingleton(TOKENS.IUserService, UserManager);
+container.registerSingleton(TOKENS.IQuestionService, QuestionManager);
+container.registerSingleton(TOKENS.IAnswerService, AnswerManager);
+container.registerSingleton(TOKENS.IAdminService, AdminManager);
+container.registerSingleton(TOKENS.IPermissionService, PermissionManager);
+container.registerSingleton(TOKENS.IRoleService, RoleManager);
+container.registerSingleton(TOKENS.IUserRoleService, UserRoleManager);
 
 // Register notification services
 container.registerSingleton(
-  'INotificationChannelRegistry',
+  TOKENS.INotificationChannelRegistry,
   NotificationChannelRegistry
 );
 
 // Register smart notification system
-container.registerSingleton('INotificationStrategy', SmartNotificationStrategy);
-container.registerSingleton('SystemMetricsCollector', SystemMetricsCollector);
+container.registerSingleton(
+  TOKENS.INotificationStrategy,
+  SmartNotificationStrategy
+);
+container.registerSingleton(
+  TOKENS.SystemMetricsCollector,
+  SystemMetricsCollector
+);
 
 // Register WebSocket monitoring service
-container.registerSingleton('WebSocketMonitorService', WebSocketMonitorService);
+container.registerSingleton(
+  TOKENS.WebSocketMonitorService,
+  WebSocketMonitorService
+);
 
 // Register notification managers based on technology
-// Default olarak smart kullan, bootstrap sonrası güncellenecek
-container.registerSingleton('INotificationService', SmartNotificationManager);
+container.registerSingleton(
+  TOKENS.INotificationService,
+  SmartNotificationManager
+);
 
 // Register notification channels
-container.registerSingleton('IEmailChannel', EmailChannel);
-container.registerSingleton('ISMSChannel', SMSChannel);
-container.registerSingleton('IPushChannel', PushChannel);
-container.registerSingleton('IWebhookChannel', WebhookChannel);
+container.registerSingleton(TOKENS.IEmailChannel, EmailChannel);
+container.registerSingleton(TOKENS.ISMSChannel, SMSChannel);
+container.registerSingleton(TOKENS.IPushChannel, PushChannel);
+container.registerSingleton(TOKENS.IWebhookChannel, WebhookChannel);
 
-// Register legacy notification services (for backward compatibility)
-container.registerSingleton('LegacyNotificationManager', NotificationManager);
+// Register legacy notification services
 container.registerSingleton(
-  'IEmailNotificationHandler',
+  TOKENS.IEmailNotificationHandler,
   EmailNotificationHandler
 );
-container.registerSingleton('INotificationProvider', EmailNotificationProvider);
+container.registerSingleton(
+  TOKENS.INotificationProvider,
+  EmailNotificationProvider
+);
 
-// Register legacy services (for backward compatibility)
-container.registerSingleton('EnvironmentProvider', EnvironmentProvider);
-container.registerSingleton('ConfigurationManager', ConfigurationManager);
+// Register legacy services
+container.registerSingleton(TOKENS.EnvironmentProvider, EnvironmentProvider);
+container.registerSingleton(TOKENS.ConfigurationManager, ConfigurationManager);
+container.registerSingleton(TOKENS.IConfigurationService, ConfigurationManager);
 
 // Register models for data source compatibility
-container.register('IUserModel', { useValue: UserMongo });
-container.register('IQuestionModel', { useValue: QuestionMongo });
-container.register('IAnswerModel', { useValue: AnswerMongo });
-container.register('INotificationModel', { useValue: NotificationMongo });
-container.register('INotificationTemplateModel', {
+container.register(TOKENS.IUserModel, { useValue: UserMongo });
+container.register(TOKENS.IQuestionModel, { useValue: QuestionMongo });
+container.register(TOKENS.IAnswerModel, { useValue: AnswerMongo });
+container.register(TOKENS.INotificationModel, { useValue: NotificationMongo });
+container.register(TOKENS.INotificationTemplateModel, {
   useValue: NotificationTemplateMongo,
 });
 
 // Register typed configuration
-container.register('AppConfig', { useValue: null }); // Will be set after bootstrap
-container.register('IDatabaseConnectionConfig', {
-  useValue: { connectionString: '' }, // Will be set after bootstrap
+container.register(TOKENS.AppConfig, { useValue: null });
+container.register(TOKENS.IDatabaseConnectionConfig, {
+  useValue: { connectionString: '' },
 });
-container.register('ICacheConnectionConfig', {
-  useValue: {
-    host: '',
-    port: 0,
-    url: '',
-  }, // Will be set after bootstrap
+container.register(TOKENS.ICacheConnectionConfig, {
+  useValue: { host: '', port: 0, url: '' },
 });
 
 // Register validation provider
-container.registerSingleton('IValidationProvider', ZodValidationProvider);
+container.registerSingleton(TOKENS.IValidationProvider, ZodValidationProvider);
+
+// Register database strategies
+container.registerSingleton(
+  TOKENS.IMigrationStrategy,
+  MongoDBMigrationStrategy
+);
+container.registerSingleton(TOKENS.ISeedStrategy, MongoDBSeedStrategy);
 
 // Register controllers
-container.registerSingleton('AuthController', AuthController);
-container.registerSingleton('UserController', UserController);
-container.registerSingleton('AdminController', AdminController);
-container.registerSingleton('QuestionController', QuestionController);
-container.registerSingleton('AnswerController', AnswerController);
-container.registerSingleton('NotificationController', NotificationController);
+container.registerSingleton(TOKENS.AuthController, AuthController);
+container.registerSingleton(TOKENS.UserController, UserController);
+container.registerSingleton(TOKENS.AdminController, AdminController);
+container.registerSingleton(TOKENS.QuestionController, QuestionController);
+container.registerSingleton(TOKENS.AnswerController, AnswerController);
+container.registerSingleton(
+  TOKENS.NotificationController,
+  NotificationController
+);
 
 export { container };

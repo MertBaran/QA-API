@@ -95,6 +95,9 @@ container.registerInstance(
   'IAuthService',
   new AuthManager(
     container.resolve('IUserRepository'),
+    container.resolve('IUserService'),
+    container.resolve('IRoleService'),
+    container.resolve('IUserRoleService'),
     container.resolve('INotificationService')
   )
 );
@@ -147,6 +150,7 @@ export function createTestApp(): Application {
   // Controller'ları oluştur
   const authController = new AuthController(
     container.resolve('IAuthService'),
+    container.resolve('IUserRoleService'),
     container.resolve('ILoggerProvider')
   );
   const questionController = new QuestionController(
@@ -155,11 +159,15 @@ export function createTestApp(): Application {
   const answerController = new AnswerController(
     container.resolve('IAnswerService')
   );
-  const userController = new UserController(container.resolve('IAdminService'));
-  const adminController = new AdminController(
-    container.resolve('IAdminService')
+  const _userController = new UserController(
+    container.resolve('IAdminService'),
+    container.resolve('IUserRoleService')
   );
-  const notificationController = new NotificationController(
+  const _adminController = new AdminController(
+    container.resolve('IAdminService'),
+    container.resolve('IUserRoleService')
+  );
+  const _notificationController = new NotificationController(
     container.resolve('INotificationService')
   );
   const monitoringController = new MonitoringController();

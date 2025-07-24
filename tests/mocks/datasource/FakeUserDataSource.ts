@@ -21,7 +21,7 @@ export class FakeUserDataSource implements IDataSource<IUserModel> {
       _id,
       name: data.name || '',
       email: data.email || '',
-      role: data.role || 'user',
+      // roles: data.roles || [], // TODO: UserRole tablosundan al
       password, // Use hashed password
       profile_image: data.profile_image || 'default.jpg',
       blocked: data.blocked ?? false,
@@ -32,6 +32,7 @@ export class FakeUserDataSource implements IDataSource<IUserModel> {
       website: data.website,
       resetPasswordToken: data.resetPasswordToken,
       resetPasswordExpire: data.resetPasswordExpire,
+      lastPasswordChange: data.lastPasswordChange,
       createdAt: data.createdAt || new Date(),
     };
     this.store.set(_id, user);
@@ -78,5 +79,10 @@ export class FakeUserDataSource implements IDataSource<IUserModel> {
   async findByEmailWithPassword(email: string): Promise<IUserModel | null> {
     const users = Array.from(this.store.values());
     return users.find(user => user.email === email) || null;
+  }
+
+  // Add findByEmail method for test compatibility
+  async findByEmail(email: string): Promise<IUserModel | null> {
+    return this.findByEmailWithPassword(email);
   }
 }

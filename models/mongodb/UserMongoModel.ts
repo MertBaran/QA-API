@@ -12,7 +12,7 @@ export interface IUserMongo extends Document {
   _id: EntityId;
   name: string;
   email: string;
-  role: 'user' | 'admin';
+
   password: string;
   createdAt: Date;
   title?: string;
@@ -23,6 +23,7 @@ export interface IUserMongo extends Document {
   blocked: boolean;
   resetPasswordToken?: string;
   resetPasswordExpire?: Date;
+  lastPasswordChange?: Date;
   // Notification için yeni alanlar
   phoneNumber?: string;
   webhookUrl?: string;
@@ -49,11 +50,7 @@ const userSchema = new Schema<IUserMongo>({
     unique: true,
     match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email'],
   },
-  role: {
-    type: String,
-    enum: ['user', 'admin'],
-    default: 'user',
-  },
+
   password: {
     type: String,
     required: [true, 'Please provide a password'],
@@ -88,6 +85,9 @@ const userSchema = new Schema<IUserMongo>({
     type: String,
   },
   resetPasswordExpire: {
+    type: Date,
+  },
+  lastPasswordChange: {
     type: Date,
   },
   // Notification için yeni alanlar
@@ -130,6 +130,7 @@ userSchema.methods['generateJWTFromUser'] = function (
   const payload = {
     id: this._id,
     name: this.name,
+    // Role'leri JWT'de tutmuyoruz, güvenlik için veritabanından alacağız
   };
   const secret: string = JWT_SECRET_KEY || 'default_secret';
   const expires: string | number = JWT_EXPIRE ? JWT_EXPIRE : '1d';
@@ -158,9 +159,7 @@ userSchema.methods['getResetPasswordTokenFromUser'] = function (
 //pre hooks - şifre hashleme işlemi
 userSchema.pre('save', function (this: IUserMongo, next) {
   // Set default values if not provided
-  if (this.role === undefined) {
-    this.role = 'user';
-  }
+  // Role'ler artık AuthManager'da atanıyor, burada varsayılan değer vermeye gerek yok
   if (this.profile_image === undefined) {
     this.profile_image = 'default.jpg';
   }

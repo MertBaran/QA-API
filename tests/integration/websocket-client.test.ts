@@ -1,4 +1,4 @@
-import WebSocket from 'ws';
+// WebSocket kullanılmıyor, kaldırıldı
 import { container } from 'tsyringe';
 import {
   WebSocketMonitorService,
@@ -11,7 +11,7 @@ import { ApplicationState } from '../../services/ApplicationState';
 
 describe('WebSocket Client Integration Tests', () => {
   let webSocketMonitor: WebSocketMonitorService;
-  let fakeLogger: FakeLoggerProvider;
+  let _fakeLogger: FakeLoggerProvider;
   let fakeNotification: FakeNotificationProvider;
   let appState: ApplicationState;
 
@@ -25,7 +25,7 @@ describe('WebSocket Client Integration Tests', () => {
 
     // Get instances
     webSocketMonitor = container.resolve(WebSocketMonitorService);
-    fakeLogger = container.resolve('ILoggerProvider') as FakeLoggerProvider;
+    _fakeLogger = container.resolve('ILoggerProvider') as FakeLoggerProvider;
     fakeNotification = container.resolve(
       'INotificationService'
     ) as FakeNotificationProvider;

@@ -41,7 +41,7 @@ export class WebSocketMonitorService {
   private clients: Set<WebSocket> = new Set();
   private connectionStatus: Map<string, ConnectionStatus> = new Map();
   private alertHistory: ConnectionAlert[] = [];
-  private monitoringInterval: NodeJS.Timeout | null = null;
+  private monitoringInterval: ReturnType<typeof setInterval> | null = null;
   private isMonitoring = false;
   private appState = ApplicationState.getInstance();
 
@@ -151,7 +151,7 @@ export class WebSocketMonitorService {
           });
           break;
 
-        case 'get_alerts':
+        case 'get_alerts': {
           const limit = parsedMessage.data?.limit || 50;
           this.sendToClient(ws, {
             type: 'alert',
@@ -159,6 +159,7 @@ export class WebSocketMonitorService {
             timestamp: new Date(),
           });
           break;
+        }
 
         case 'get_stats':
           this.sendToClient(ws, {

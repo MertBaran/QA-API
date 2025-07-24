@@ -20,7 +20,7 @@ export class UserMongooseDataSource implements IDataSource<IUserModel> {
       _id: mongoDoc._id.toString(),
       name: mongoDoc.name,
       email: mongoDoc.email,
-      role: mongoDoc.role,
+      // roles field'ı artık UserRole tablosunda tutuluyor
       password: mongoDoc.password,
       title: mongoDoc.title,
       about: mongoDoc.about,
@@ -30,6 +30,7 @@ export class UserMongooseDataSource implements IDataSource<IUserModel> {
       blocked: mongoDoc.blocked,
       resetPasswordToken: mongoDoc.resetPasswordToken,
       resetPasswordExpire: mongoDoc.resetPasswordExpire,
+      lastPasswordChange: mongoDoc.lastPasswordChange,
       createdAt: mongoDoc.createdAt,
       language: mongoDoc.language,
       phoneNumber: mongoDoc.phoneNumber,
@@ -137,6 +138,18 @@ export class UserMongooseDataSource implements IDataSource<IUserModel> {
     } catch (_err) {
       throw new CustomError(
         'Database error in UserMongooseDataSource.findByEmailWithPassword',
+        500
+      );
+    }
+  }
+
+  async findActive(): Promise<IUserModel[]> {
+    try {
+      const results = await this.model.find({ blocked: { $ne: true } });
+      return results.map((doc: any) => this.toEntity(doc));
+    } catch (_err) {
+      throw new CustomError(
+        'Database error in UserMongooseDataSource.findActive',
         500
       );
     }

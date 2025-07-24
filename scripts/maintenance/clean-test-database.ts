@@ -52,8 +52,8 @@ async function cleanTestDatabase() {
     console.log(`- Sorular: ${finalQuestionCount}`);
     console.log(`- Cevaplar: ${finalAnswerCount}`);
     console.log('\n✅ Test database tamamen temizlendi!');
-  } catch (error: any) {
-    console.error('Hata:', error.message);
+  } catch (_error: any) {
+    console.error('Hata:', _error.message);
   } finally {
     await mongoose.connection.close();
     console.log('Test MongoDB bağlantısı kapatıldı');
