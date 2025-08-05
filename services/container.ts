@@ -19,6 +19,7 @@ import { PushChannel } from './managers/PushChannel';
 import { WebhookChannel } from './managers/WebhookChannel';
 import { EmailNotificationProvider } from './notification/EmailNotificationProvider';
 import { PinoLoggerProvider } from '../infrastructure/logging/PinoLoggerProvider';
+import { SentryTracker } from '../infrastructure/error/SentryTracker';
 import { RedisCacheProvider } from '../infrastructure/cache/RedisCacheProvider';
 import { MongoDBAdapter } from '../repositories/adapters/MongoDBAdapter';
 import { UserRepository } from '../repositories/UserRepository';
@@ -74,6 +75,7 @@ container.registerSingleton(TOKENS.HealthCheckService, HealthCheckService);
 
 // Register infrastructure providers
 container.registerSingleton(TOKENS.ILoggerProvider, PinoLoggerProvider);
+container.registerSingleton(TOKENS.IExceptionTracker, SentryTracker);
 container.registerSingleton(TOKENS.ICacheProvider, RedisCacheProvider);
 container.registerSingleton(TOKENS.IDatabaseAdapter, MongoDBAdapter);
 container.registerSingleton(TOKENS.IAuditProvider, MongoAuditProvider);
@@ -167,7 +169,6 @@ container.registerSingleton(
 );
 
 // Register legacy services
-container.registerSingleton(TOKENS.EnvironmentProvider, EnvironmentProvider);
 container.registerSingleton(TOKENS.ConfigurationManager, ConfigurationManager);
 container.registerSingleton(TOKENS.IConfigurationService, ConfigurationManager);
 

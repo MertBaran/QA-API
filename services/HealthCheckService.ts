@@ -147,11 +147,12 @@ export class HealthCheckService {
       const uri = new URL(mongoUri);
       const database = uri.pathname.substring(1); // Remove leading slash
 
-      // Simple connection check - in a real app, you might want to ping the database
-      if (
-        !mongoUri ||
-        mongoUri === 'mongodb://localhost:27017/question-answer-test'
-      ) {
+      // Get database adapter from container to check actual connection
+      const { container } = require('./container');
+      const databaseAdapter = container.resolve('IDatabaseAdapter');
+
+      // Check if database is actually connected
+      if (databaseAdapter && databaseAdapter.isConnected()) {
         return {
           status: 'connected',
           details: {
@@ -164,16 +165,9 @@ export class HealthCheckService {
             ), // Mask credentials
           },
         };
+      } else {
+        return { status: 'disconnected' };
       }
-      return {
-        status: 'connected',
-        details: {
-          host: uri.hostname,
-          port: parseInt(uri.port) || 27017,
-          database,
-          connectionString: mongoUri.replace(/\/\/[^:]+:[^@]+@/, '//***:***@'),
-        },
-      };
     } catch (error) {
       console.error('Database health check failed:', error);
       return { status: 'disconnected' };

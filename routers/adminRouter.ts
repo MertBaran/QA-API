@@ -1,53 +1,24 @@
-import express, { Router } from 'express';
-import { getAccessToRoute } from '../middlewares/authorization/authMiddleware';
-import { requireAdmin } from '../middlewares/authorization/permissionMiddleware';
-import { checkUserExist } from '../middlewares/database/databaseErrorHelpers';
-import { AuditMiddleware } from '../middlewares/audit/auditMiddleware';
-import { container } from 'tsyringe';
+import { Router } from 'express';
 import { AdminController } from '../controllers/adminController';
-import { ICacheProvider } from '../infrastructure/cache/ICacheProvider';
-import { IValidationProvider } from '../infrastructure/validation/IValidationProvider';
-import { IdParamSchema } from '../types/dto/common/id-param.dto';
+import { getAccessToRoute } from '../middlewares/authorization/authMiddleware';
 
-const router: Router = express.Router();
-const adminController = new AdminController(
-  container.resolve('IAdminService'),
-  container.resolve('IUserRoleService')
-);
-const validator = container.resolve<IValidationProvider>('IValidationProvider');
-const auditMiddleware = new AuditMiddleware(
-  container.resolve('IAuditProvider')
-);
+const router = Router();
+const adminController = new AdminController();
 
-router.use(getAccessToRoute, requireAdmin);
-router.use(
-  auditMiddleware.createMiddleware('ADMIN_ACTION', { tags: ['admin'] })
+// Admin routes - tümü authentication ve admin yetkisi gerektirir
+router.get('/users', getAccessToRoute, adminController.getUsers);
+router.put('/users/:userId', getAccessToRoute, adminController.updateUser);
+router.delete('/users/:userId', getAccessToRoute, adminController.deleteUser);
+router.patch(
+  '/users/:userId/block',
+  getAccessToRoute,
+  adminController.toggleUserBlock
 );
-
-//Block User
-router.get(
-  '/block/:id',
-  validator.validateParams!(IdParamSchema),
-  checkUserExist,
-  adminController.blockUser
+router.patch(
+  '/users/:userId/roles',
+  getAccessToRoute,
+  adminController.updateUserRoles
 );
-
-router.delete(
-  '/user/:id',
-  validator.validateParams!(IdParamSchema),
-  checkUserExist,
-  adminController.deleteUser
-);
-
-// Basit Redis test endpointi
-router.get('/redis-test', async (req, res) => {
-  const { key = 'test', value } = req.query;
-  const cacheProvider = container.resolve<ICacheProvider>('ICacheProvider');
-  if (value) {
-    await cacheProvider.set(key as string, value, 60); // 60 sn cache
-  }
-  const data = await cacheProvider.get(key as string);
-  res.json({ key, value: data });
-});
+router.get('/users/stats', getAccessToRoute, adminController.getUserStats);
 
 export default router;

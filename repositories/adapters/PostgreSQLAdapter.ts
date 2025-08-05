@@ -1,6 +1,7 @@
 import { IDatabaseAdapter } from './IDatabaseAdapter';
 import { PostgreSQLIdAdapter } from '../../types/database';
 import CustomError from '../../helpers/error/CustomError';
+import { RepositoryConstants } from '../constants/RepositoryMessages';
 
 export class PostgreSQLAdapter implements IDatabaseAdapter {
   private isConnectedFlag = false;
@@ -21,10 +22,15 @@ export class PostgreSQLAdapter implements IDatabaseAdapter {
       // await this.client.connect();
 
       this.isConnectedFlag = true;
-      console.log('PostgreSQL connected successfully');
+      console.log(
+        RepositoryConstants.DATABASE_ADAPTER.POSTGRESQL.CONNECT_SUCCESS.en
+      );
     } catch (error) {
-      console.error('PostgreSQL connection error:', error);
-      throw new CustomError('Database error in PostgreSQLAdapter.connect', 500);
+      console.error('❌ PostgreSQL connection error:', error);
+      throw new CustomError(
+        `Database connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        500
+      );
     }
   }
 
@@ -34,11 +40,13 @@ export class PostgreSQLAdapter implements IDatabaseAdapter {
       //   await this.client.end();
       // }
       this.isConnectedFlag = false;
-      console.log('PostgreSQL disconnected successfully');
+      console.log(
+        RepositoryConstants.DATABASE_ADAPTER.POSTGRESQL.DISCONNECT_SUCCESS.en
+      );
     } catch (error) {
       console.error('PostgreSQL disconnection error:', error);
       throw new CustomError(
-        'Database error in PostgreSQLAdapter.disconnect',
+        RepositoryConstants.DATABASE_ADAPTER.POSTGRESQL.DISCONNECT_ERROR.en,
         500
       );
     }

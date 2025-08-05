@@ -8,8 +8,6 @@ import {
 import { container } from 'tsyringe';
 import { ICacheProvider } from '../../infrastructure/cache/ICacheProvider';
 import { IEnvironmentProvider } from '../contracts/IEnvironmentProvider';
-import dotenv from 'dotenv';
-import path from 'path';
 
 @injectable()
 export class ConfigurationManager implements IConfigurationService {
@@ -18,46 +16,11 @@ export class ConfigurationManager implements IConfigurationService {
 
   constructor() {
     this.environmentProvider = container.resolve<IEnvironmentProvider>(
-      'EnvironmentProvider'
+      'IEnvironmentProvider'
     );
 
-    // Load environment-specific configuration based on EnvironmentProvider's decision
-    this.loadEnvironmentSpecificConfig();
+    // EnvironmentProvider zaten config dosyasını yükledi, sadece config'i oluştur
     this.config = this.loadConfiguration();
-  }
-
-  private loadEnvironmentSpecificConfig(): void {
-    const env = this.environmentProvider.getEnvironment();
-    let envFile = 'config.env';
-
-    if (env === 'production') {
-      envFile = 'config.env.prod';
-    } else if (env === 'development') {
-      envFile = 'config.env.dev';
-    } else if (env === 'test') {
-      envFile = 'config.env.test';
-    } else if (env === 'docker') {
-      envFile = 'config.env.docker';
-    } else {
-      envFile = 'config.env.dev';
-    }
-
-    const configPath = path.resolve(process.cwd(), `./config/env/${envFile}`);
-    console.log(
-      `⚙️ ConfigurationManager loading config for ${env}: ${envFile}`
-    );
-
-    const result = dotenv.config({ path: configPath });
-    if (result.error) {
-      console.error(
-        `❌ Error loading config in ConfigurationManager: ${result.error.message}`
-      );
-    } else {
-      console.log(`✅ ConfigurationManager loaded: ${envFile}`);
-      console.log(`🔧 MONGO_URI: ${process.env['MONGO_URI']}`);
-      console.log(`🔧 REDIS_URL: ${process.env['REDIS_URL']}`);
-      console.log(`🔧 REDIS_HOST: ${process.env['REDIS_HOST']}`);
-    }
   }
 
   private loadConfiguration(): EnvironmentConfig {
@@ -104,6 +67,35 @@ export class ConfigurationManager implements IConfigurationService {
         'GOOGLE_CLIENT_ID',
         ''
       ),
+      exceptionTracking: {
+        dsn: this.environmentProvider.getEnvironmentVariable(
+          'EXCEPTION_TRACKING_DSN',
+          'YOUR_EXCEPTION_TRACKING_DSN_HERE'
+        ),
+        environment: this.environmentProvider.getEnvironment(),
+        release: this.environmentProvider.getEnvironmentVariable(
+          'APP_VERSION',
+          '1.0.0'
+        ),
+        tracesSampleRate: this.isProduction() ? 0.1 : 1.0,
+        profilesSampleRate: this.isProduction() ? 0.1 : 1.0,
+        sampleRate: this.isProduction() ? 0.1 : 1.0,
+      },
+      fileLogging: {
+        enabled: this.environmentProvider.getEnvironmentVariableAsBoolean(
+          'FILE_LOGGING_ENABLED',
+          true
+        ),
+        basePath: this.environmentProvider.getEnvironmentVariable(
+          'FILE_LOGGING_BASE_PATH',
+          '../qa-api-logs'
+        ),
+        version: this.environmentProvider.getEnvironmentVariable(
+          'APP_VERSION',
+          '1.0.0'
+        ),
+        environment: this.environmentProvider.getEnvironment(),
+      },
     };
   }
 
@@ -136,6 +128,14 @@ export class ConfigurationManager implements IConfigurationService {
         6379
       ),
     };
+  }
+
+  public getExceptionTrackingConfig(): EnvironmentConfig['exceptionTracking'] {
+    return this.config.exceptionTracking;
+  }
+
+  public getFileLoggingConfig(): EnvironmentConfig['fileLogging'] {
+    return this.config.fileLogging;
   }
 
   public logEnvironmentInfo(): void {

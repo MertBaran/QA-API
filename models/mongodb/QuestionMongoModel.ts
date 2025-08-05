@@ -6,6 +6,8 @@ export interface IQuestionMongo extends Document {
   title: string;
   content: string;
   slug: string;
+  category: string;
+  tags: string[];
   createdAt: Date;
   user: mongoose.Types.ObjectId;
   likes: mongoose.Types.ObjectId[];
@@ -24,6 +26,16 @@ const QuestionSchema = new Schema<IQuestionMongo>({
     required: [true, 'Please provide a content'],
     minlength: [20, 'Please provide a content at least 20 characters'],
   },
+  //TODO: Category ayrı bir model olarak yapılacak
+  category: {
+    type: String,
+    default: 'General',
+  },
+  tags: [
+    {
+      type: String,
+    },
+  ],
   slug: {
     type: String,
     unique: true,

@@ -3,25 +3,41 @@ import { IRoleModel } from '../../../models/interfaces/IRoleModel';
 import { EntityId } from '../../../types/database';
 
 export class FakeRoleService implements IRoleService {
-  private roles: IRoleModel[] = [];
-
-  async create(roleData: Partial<IRoleModel>): Promise<IRoleModel> {
-    const role: IRoleModel = {
-      _id: `role_${Date.now()}`,
-      name: roleData.name || 'default',
-      description: roleData.description || '',
-      permissions: roleData.permissions || [],
-      isSystem: roleData.isSystem || false,
-      isActive: roleData.isActive ?? true,
+  private roles: IRoleModel[] = [
+    {
+      _id: 'role1',
+      name: 'admin',
+      description: 'Administrator role',
+      permissions: [],
+      isSystem: true,
+      isActive: true,
       createdAt: new Date(),
       updatedAt: new Date(),
-    };
-    this.roles.push(role);
-    return role;
-  }
+    },
+    {
+      _id: 'role2',
+      name: 'moderator',
+      description: 'Moderator role',
+      permissions: [],
+      isSystem: true,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      _id: 'role3',
+      name: 'user',
+      description: 'User role',
+      permissions: [],
+      isSystem: true,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+  ];
 
-  async findById(id: EntityId): Promise<IRoleModel | null> {
-    return this.roles.find(role => role._id === id) || null;
+  async findById(roleId: EntityId): Promise<IRoleModel | null> {
+    return this.roles.find(role => role._id === roleId) || null;
   }
 
   async findByName(name: string): Promise<IRoleModel | null> {
@@ -30,30 +46,6 @@ export class FakeRoleService implements IRoleService {
 
   async findAll(): Promise<IRoleModel[]> {
     return this.roles;
-  }
-
-  async updateById(
-    id: EntityId,
-    updateData: Partial<IRoleModel>
-  ): Promise<IRoleModel | null> {
-    const index = this.roles.findIndex(role => role._id === id);
-    if (index === -1) return null;
-
-    const updatedRole: IRoleModel = {
-      ...this.roles[index],
-      ...updateData,
-      updatedAt: new Date(),
-    } as IRoleModel;
-    this.roles[index] = updatedRole;
-    return updatedRole;
-  }
-
-  async deleteById(id: EntityId): Promise<boolean> {
-    const index = this.roles.findIndex(role => role._id === id);
-    if (index === -1) return false;
-
-    this.roles.splice(index, 1);
-    return true;
   }
 
   async getDefaultRole(): Promise<IRoleModel> {
@@ -72,6 +64,44 @@ export class FakeRoleService implements IRoleService {
     return this.roles.filter(role => role.isActive);
   }
 
+  async create(roleData: Partial<IRoleModel>): Promise<IRoleModel> {
+    const newRole: IRoleModel = {
+      _id: `role${Date.now()}`,
+      name: roleData.name || 'new-role',
+      description: roleData.description || '',
+      permissions: roleData.permissions || [],
+      isSystem: roleData.isSystem || false,
+      isActive: roleData.isActive ?? true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    this.roles.push(newRole);
+    return newRole;
+  }
+
+  async updateById(
+    roleId: EntityId,
+    data: Partial<IRoleModel>
+  ): Promise<IRoleModel | null> {
+    const roleIndex = this.roles.findIndex(role => role._id === roleId);
+    if (roleIndex === -1) return null;
+
+    this.roles[roleIndex] = {
+      ...this.roles[roleIndex],
+      ...data,
+      updatedAt: new Date(),
+    } as IRoleModel;
+    return this.roles[roleIndex];
+  }
+
+  async deleteById(roleId: EntityId): Promise<boolean> {
+    const roleIndex = this.roles.findIndex(role => role._id === roleId);
+    if (roleIndex === -1) return false;
+
+    this.roles.splice(roleIndex, 1);
+    return true;
+  }
+
   async assignPermissionToRole(
     roleId: EntityId,
     permissionId: EntityId
@@ -83,7 +113,7 @@ export class FakeRoleService implements IRoleService {
       role.permissions.push(permissionId);
       role.updatedAt = new Date();
     }
-    return role;
+    return role || null;
   }
 
   async removePermissionFromRole(
@@ -98,7 +128,7 @@ export class FakeRoleService implements IRoleService {
       role.permissions.splice(index, 1);
       role.updatedAt = new Date();
     }
-    return role;
+    return role || null;
   }
 
   async getPermissionById(permissionId: EntityId): Promise<any> {
@@ -125,7 +155,7 @@ export class FakeRoleService implements IRoleService {
       }
     });
     role.updatedAt = new Date();
-    return role;
+    return role || null;
   }
 
   async removePermissionsFromRole(
@@ -142,6 +172,6 @@ export class FakeRoleService implements IRoleService {
       }
     });
     role.updatedAt = new Date();
-    return role;
+    return role || null;
   }
 }

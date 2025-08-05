@@ -5,8 +5,17 @@ export interface IQuestionModel {
   title: string;
   content: string;
   slug: string;
+  category?: string;
+  tags?: string[];
+  views?: number;
   createdAt: Date;
   user: EntityId;
+  userInfo?: {
+    _id: string;
+    name: string;
+    email: string;
+    profile_image?: string;
+  };
   likes: EntityId[];
   answers: EntityId[];
 }

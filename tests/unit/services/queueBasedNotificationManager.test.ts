@@ -44,6 +44,11 @@ const mockLogger: ILoggerProvider = {
   warn: jest.fn(),
   error: jest.fn(),
   debug: jest.fn(),
+  trace: jest.fn(),
+  fatal: jest.fn(),
+  isEnabled: jest.fn().mockReturnValue(true),
+  setLevel: jest.fn(),
+  getLevel: jest.fn().mockReturnValue('info'),
 };
 
 describe('QueueBasedNotificationManager', () => {

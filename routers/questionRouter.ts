@@ -15,6 +15,7 @@ import {
   createQuestionSchema,
   updateQuestionSchema,
 } from '../infrastructure/validation/schemas/questionSchemas';
+import { PaginationQuerySchema } from '../types/dto/question/pagination.dto';
 
 const router: Router = express.Router();
 const questionController = new QuestionController(
@@ -26,6 +27,11 @@ const auditMiddleware = new AuditMiddleware(
 );
 
 router.get('/', questionController.getAllQuestions);
+router.get(
+  '/paginated',
+  validator.validateQuery(PaginationQuerySchema) as any,
+  questionController.getQuestionsPaginated
+);
 router.get(
   '/:id',
   validator.validateParams!(IdParamSchema),

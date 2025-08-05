@@ -5,4 +5,5 @@ export interface IEnvironmentProvider {
   isDevelopment(): boolean;
   getEnvironmentVariable(key: string, defaultValue?: string): string;
   getEnvironmentVariableAsNumber(key: string, defaultValue?: number): number;
+  getEnvironmentVariableAsBoolean(key: string, defaultValue?: boolean): boolean;
 }

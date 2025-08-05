@@ -3,6 +3,7 @@ import { IEntityModel } from '../interfaces/IEntityModel';
 import { IUserRoleModel } from '../../models/interfaces/IUserRoleModel';
 import { IDataSource } from '../interfaces/IDataSource';
 import CustomError from '../../helpers/error/CustomError';
+import { RepositoryConstants } from '../constants/RepositoryMessages';
 
 @injectable()
 export class UserRoleMongooseDataSource implements IDataSource<IUserRoleModel> {
@@ -35,10 +36,7 @@ export class UserRoleMongooseDataSource implements IDataSource<IUserRoleModel> {
       const result = await this.model.create(rest);
       return this.toEntity(result);
     } catch (_err) {
-      throw new CustomError(
-        'Database error in UserRoleMongooseDataSource.create',
-        500
-      );
+      throw new CustomError(RepositoryConstants.USER_ROLE.CREATE_ERROR.en, 500);
     }
   }
 
@@ -48,7 +46,7 @@ export class UserRoleMongooseDataSource implements IDataSource<IUserRoleModel> {
       return result ? this.toEntity(result) : null;
     } catch (_err) {
       throw new CustomError(
-        'Database error in UserRoleMongooseDataSource.findById',
+        RepositoryConstants.USER_ROLE.FIND_BY_ID_ERROR.en,
         500
       );
     }
@@ -60,7 +58,7 @@ export class UserRoleMongooseDataSource implements IDataSource<IUserRoleModel> {
       return results.map((doc: any) => this.toEntity(doc));
     } catch (_err) {
       throw new CustomError(
-        'Database error in UserRoleMongooseDataSource.findAll',
+        RepositoryConstants.USER_ROLE.FIND_ALL_ERROR.en,
         500
       );
     }
@@ -78,7 +76,7 @@ export class UserRoleMongooseDataSource implements IDataSource<IUserRoleModel> {
       return result ? this.toEntity(result) : null;
     } catch (_err) {
       throw new CustomError(
-        'Database error in UserRoleMongooseDataSource.updateById',
+        RepositoryConstants.USER_ROLE.UPDATE_BY_ID_ERROR.en,
         500
       );
     }
@@ -90,7 +88,7 @@ export class UserRoleMongooseDataSource implements IDataSource<IUserRoleModel> {
       return result ? this.toEntity(result) : null;
     } catch (_err) {
       throw new CustomError(
-        'Database error in UserRoleMongooseDataSource.deleteById',
+        RepositoryConstants.USER_ROLE.DELETE_BY_ID_ERROR.en,
         500
       );
     }
@@ -101,7 +99,7 @@ export class UserRoleMongooseDataSource implements IDataSource<IUserRoleModel> {
       return this.model.countDocuments();
     } catch (_err) {
       throw new CustomError(
-        'Database error in UserRoleMongooseDataSource.countAll',
+        RepositoryConstants.USER_ROLE.COUNT_ALL_ERROR.en,
         500
       );
     }
@@ -112,7 +110,7 @@ export class UserRoleMongooseDataSource implements IDataSource<IUserRoleModel> {
       return this.model.deleteMany({});
     } catch (_err) {
       throw new CustomError(
-        'Database error in UserRoleMongooseDataSource.deleteAll',
+        RepositoryConstants.USER_ROLE.DELETE_ALL_ERROR.en,
         500
       );
     }

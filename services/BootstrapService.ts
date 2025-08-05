@@ -15,6 +15,7 @@ import { IQueueProvider } from './contracts/IQueueProvider';
 import { QueueBasedNotificationManager } from './managers/QueueBasedNotificationManager';
 import { MultiChannelNotificationManager } from './managers/MultiChannelNotificationManager';
 import { ILoggerProvider } from '../infrastructure/logging/ILoggerProvider';
+import { IExceptionTracker } from '../infrastructure/error/IExceptionTracker';
 import { container } from 'tsyringe';
 
 // Extended configuration with parsed numeric values
@@ -90,6 +91,9 @@ export class BootstrapService {
 
     // 6. Initialize queue-based services if needed
     await this.initializeQueueServices();
+
+    // 7. Initialize exception tracking
+    await this.initializeExceptionTracking();
 
     return this.config;
   }
@@ -186,6 +190,36 @@ export class BootstrapService {
 
   public isDocker(): boolean {
     return this.getEnvironment() === 'docker';
+  }
+
+  /**
+   * Exception tracking initialization - Soyutlama üzerinden
+   * Tüm exception tracking işlemleri IExceptionTracker üzerinden yapılıyor
+   */
+  private async initializeExceptionTracking(): Promise<void> {
+    try {
+      const exceptionTracker =
+        container.resolve<IExceptionTracker>('IExceptionTracker');
+      const logger = container.resolve<ILoggerProvider>('ILoggerProvider');
+
+      if (exceptionTracker.isEnabled()) {
+        logger.info('✅ Exception tracking system ready', {
+          provider: 'SentryTracker',
+          environment: this.config?.NODE_ENV,
+          features: ['error-capture', 'performance-monitoring', 'breadcrumbs'],
+        });
+      } else {
+        logger.warn('⚠️ Exception tracking not enabled', {
+          reason: 'No DSN configured or development mode',
+        });
+      }
+    } catch (error) {
+      const logger = container.resolve<ILoggerProvider>('ILoggerProvider');
+      logger.error('Failed to initialize exception tracking', {
+        error: (error as Error).message,
+      });
+      // Exception tracking başlatılamazsa uygulama çalışmaya devam eder
+    }
   }
 
   private async initializeQueueServices(): Promise<void> {

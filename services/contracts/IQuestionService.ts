@@ -1,9 +1,16 @@
 import { IQuestionModel } from '../../models/interfaces/IQuestionModel';
 import { EntityId } from '../../types/database';
+import {
+  PaginationQueryDTO,
+  PaginatedResponse,
+} from '../../types/dto/question/pagination.dto';
 
 export interface IQuestionService {
   createQuestion(questionData: any, userId: EntityId): Promise<IQuestionModel>;
   getAllQuestions(): Promise<IQuestionModel[]>;
+  getQuestionsPaginated(
+    filters: PaginationQueryDTO
+  ): Promise<PaginatedResponse<IQuestionModel>>;
   getQuestionById(questionId: EntityId): Promise<IQuestionModel>;
   updateQuestion(
     questionId: EntityId,

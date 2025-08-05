@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import { IDatabaseAdapter } from './IDatabaseAdapter';
 import { MongoDBIdAdapter } from '../../types/database';
 import CustomError from '../../helpers/error/CustomError';
+import { RepositoryConstants } from '../constants/RepositoryMessages';
 import { injectable, inject } from 'tsyringe';
 import { DatabaseConnectionConfig } from '../../services/contracts/IConfigurationService';
 
@@ -41,9 +42,22 @@ export class MongoDBAdapter implements IDatabaseAdapter {
 
       // MongoDB adapter handles its own logging with its own business logic
       const dbName = this.extractDatabaseName(mongoUri);
-      console.log(`🔗 MongoDB connected successfully to database: ${dbName}`);
-    } catch (_error) {
-      console.log('MongoDB connection failed');
+      console.log(
+        RepositoryConstants.DATABASE_ADAPTER.MONGODB.CONNECT_SUCCESS.en.replace(
+          '{dbName}',
+          dbName
+        )
+      );
+    } catch (error) {
+      console.error('❌ MongoDB connection failed:', error);
+      console.log(
+        RepositoryConstants.DATABASE_ADAPTER.MONGODB.CONNECT_FAILED.en
+      );
+      // Throw error to trigger application shutdown
+      throw new CustomError(
+        `Database connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        500
+      );
     }
   }
 
@@ -51,10 +65,15 @@ export class MongoDBAdapter implements IDatabaseAdapter {
     try {
       await mongoose.disconnect();
       this.isConnectedFlag = false;
-      console.log('MongoDB disconnected successfully');
+      console.log(
+        RepositoryConstants.DATABASE_ADAPTER.MONGODB.DISCONNECT_SUCCESS.en
+      );
     } catch (_error) {
       console.error('MongoDB disconnection error:', _error);
-      throw new CustomError('Database error in MongoDBAdapter.disconnect', 500);
+      throw new CustomError(
+        RepositoryConstants.DATABASE_ADAPTER.MONGODB.DISCONNECT_ERROR.en,
+        500
+      );
     }
   }
 

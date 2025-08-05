@@ -107,6 +107,8 @@ export class AnswerController {
       _next: NextFunction
     ): Promise<void> => {
       const { answer_id } = req.params;
+      const question_id = (req.params as any).question_id;
+
       const answer = await this.answerService.likeAnswer(
         answer_id,
         req.user!.id
@@ -122,6 +124,7 @@ export class AnswerController {
       _next: NextFunction
     ): Promise<void> => {
       const { answer_id } = req.params;
+      const question_id = (req.params as any).question_id;
       const answer = await this.answerService.undoLikeAnswer(
         answer_id,
         req.user!.id

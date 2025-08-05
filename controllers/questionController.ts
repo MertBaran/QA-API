@@ -8,6 +8,10 @@ import type { IQuestionModel } from '../models/interfaces/IQuestionModel';
 import type { IdParamDTO } from '../types/dto/common/id-param.dto';
 import type { CreateQuestionDTO } from '../types/dto/question/create-question.dto';
 import type { UpdateQuestionDTO } from '../types/dto/question/update-question.dto';
+import type {
+  PaginationQueryDTO,
+  PaginatedResponse,
+} from '../types/dto/question/pagination.dto';
 import { i18n } from '../types/i18n';
 
 type AuthenticatedRequest<P = any, B = any> = Request<P, any, B> & {
@@ -43,6 +47,18 @@ export class QuestionController {
     ): Promise<void> => {
       const questions = await this.questionService.getAllQuestions();
       res.status(200).json({ success: true, data: questions });
+    }
+  );
+
+  getQuestionsPaginated = asyncErrorWrapper(
+    async (
+      req: Request<{}, {}, {}, PaginationQueryDTO>,
+      res: Response<SuccessResponseDTO<PaginatedResponse<IQuestionModel>>>,
+      _next: NextFunction
+    ): Promise<void> => {
+      const filters = req.query;
+      const result = await this.questionService.getQuestionsPaginated(filters);
+      res.status(200).json({ success: true, data: result });
     }
   );
 

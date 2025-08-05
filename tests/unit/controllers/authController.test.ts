@@ -6,8 +6,10 @@ import { UserManager } from '../../../services/managers/UserManager';
 import { FakeUserDataSource } from '../../mocks/datasource/FakeUserDataSource';
 import { FakeRoleService } from '../../mocks/services/FakeRoleService';
 import { FakeUserRoleService } from '../../mocks/services/FakeUserRoleService';
+import { FakePermissionService } from '../../mocks/services/FakePermissionService';
 import { FakeNotificationService } from '../../mocks/email/FakeNotificationService';
 import { FakeLoggerProvider } from '../../mocks/logger/FakeLoggerProvider';
+import { FakeExceptionTracker } from '../../mocks/error/FakeExceptionTracker';
 
 describe('AuthController Unit Tests', () => {
   let authController: AuthController;
@@ -17,8 +19,10 @@ describe('AuthController Unit Tests', () => {
   let fakeUserDataSource: FakeUserDataSource;
   let fakeRoleService: FakeRoleService;
   let fakeUserRoleService: FakeUserRoleService;
+  let fakePermissionService: FakePermissionService;
   let fakeNotificationService: FakeNotificationService;
   let fakeLoggerProvider: FakeLoggerProvider;
+  let fakeExceptionTracker: FakeExceptionTracker;
 
   beforeEach(() => {
     fakeUserDataSource = new FakeUserDataSource();
@@ -26,8 +30,10 @@ describe('AuthController Unit Tests', () => {
     userService = new UserManager(userRepository);
     fakeRoleService = new FakeRoleService();
     fakeUserRoleService = new FakeUserRoleService();
+    fakePermissionService = new FakePermissionService();
     fakeNotificationService = new FakeNotificationService();
     fakeLoggerProvider = new FakeLoggerProvider();
+    fakeExceptionTracker = new FakeExceptionTracker();
 
     authService = new AuthManager(
       userRepository,
@@ -39,8 +45,12 @@ describe('AuthController Unit Tests', () => {
 
     authController = new AuthController(
       authService,
+      userService,
       fakeUserRoleService,
-      fakeLoggerProvider
+      fakeRoleService,
+      fakePermissionService,
+      fakeLoggerProvider,
+      fakeExceptionTracker
     );
   });
 

@@ -26,16 +26,27 @@ export const verifyToken = (token: string): UserWithJWT => {
   return jwt.verify(token, secret) as UserWithJWT;
 };
 
-export const sendJwtToClient = (token: string, user: any, res: Response) => {
+export const sendJwtToClient = (
+  token: string,
+  user: any,
+  res: Response,
+  rememberMe: boolean = false
+) => {
   const _JWT_COOKIE = process.env['JWT_COOKIE'] || 'token';
   const _NODE_ENV = process.env['NODE_ENV'] || 'development';
+
+  // Remember me durumuna göre cookie süresini ayarla
+  const cookieExpires = rememberMe
+    ? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 gün
+    : new Date(
+        Date.now() + parseInt(process.env['JWT_COOKIE'] || '60') * 1000 * 60
+      ); // 1 saat
+
   return res
     .status(200)
     .cookie('access_token', token, {
       httpOnly: true,
-      expires: new Date(
-        Date.now() + parseInt(process.env['JWT_COOKIE'] || '60') * 1000 * 60
-      ),
+      expires: cookieExpires,
       secure: process.env['NODE_ENV'] === 'development' ? false : true,
     })
     .json({

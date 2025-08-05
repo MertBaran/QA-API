@@ -45,21 +45,13 @@ router.get(
 
 router.get(
   '/:answer_id/like',
-  [
-    getAccessToRoute,
-    validator.validateParams(AnswerIdParamSchema),
-    checkQuestionAndAnswerExist,
-  ],
+  [getAccessToRoute, checkQuestionAndAnswerExist],
   answerController.likeAnswer
 );
 
 router.get(
   '/:answer_id/undo_like',
-  [
-    getAccessToRoute,
-    validator.validateParams(AnswerIdParamSchema),
-    checkQuestionAndAnswerExist,
-  ],
+  [getAccessToRoute, checkQuestionAndAnswerExist],
   answerController.undoLikeAnswer
 );
 

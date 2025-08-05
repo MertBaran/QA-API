@@ -26,6 +26,7 @@ const checkQuestionExist = asyncErrorWrapper(
   async (req: Request, res: Response, next: NextFunction) => {
     const question_id = req.params['id'] || req.params['question_id'];
     if (!question_id) throw new Error('question_id is required');
+
     const questionRepository = container.resolve<IQuestionRepository>(
       'IQuestionRepository'
     );
@@ -41,8 +42,13 @@ const checkQuestionExist = asyncErrorWrapper(
 
 const checkQuestionAndAnswerExist = asyncErrorWrapper(
   async (req: Request, res: Response, next: NextFunction) => {
-    const question_id = req.params['question_id'];
+    // question_id'yi farklı yerlerden almaya çalış
+    const question_id = req.params['question_id'] || req.baseUrl.split('/')[2];
     if (!question_id) throw new Error('question_id is required');
+
+    // question_id'yi req.params'a ekle ki validasyon çalışsın
+    (req.params as any).question_id = question_id;
+
     const answer_id = req.params['answer_id'];
     if (!answer_id) throw new Error('answer_id is required');
     const answerRepository =

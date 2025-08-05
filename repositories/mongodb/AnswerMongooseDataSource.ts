@@ -4,6 +4,7 @@ import { IAnswerModel } from '../../models/interfaces/IAnswerModel';
 import { IDataSource } from '../interfaces/IDataSource';
 import { IAnswerMongo } from '../../models/mongodb/AnswerMongoModel';
 import CustomError from '../../helpers/error/CustomError';
+import { RepositoryConstants } from '../constants/RepositoryMessages';
 
 @injectable()
 export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
@@ -17,13 +18,27 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
   }
 
   private toEntity(mongoDoc: any): IAnswerModel {
+    // User bilgisini kontrol et - populate edilmiş mi?
+    const userInfo =
+      mongoDoc.user && typeof mongoDoc.user === 'object'
+        ? {
+            _id: mongoDoc.user._id.toString(),
+            name: mongoDoc.user.name,
+            email: mongoDoc.user.email,
+            profile_image: mongoDoc.user.profile_image,
+          }
+        : {
+            _id: mongoDoc.user.toString(),
+            name: 'Anonim',
+            email: '',
+            profile_image: '',
+          };
+
     return {
       _id: mongoDoc._id.toString(),
       content: mongoDoc.content,
-      user:
-        mongoDoc.user && mongoDoc.user.name
-          ? { _id: mongoDoc.user._id.toString(), name: mongoDoc.user.name }
-          : mongoDoc.user.toString(),
+      user: userInfo._id,
+      userInfo,
       question:
         mongoDoc.question && mongoDoc.question.title
           ? {
@@ -47,10 +62,7 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
       const result = await this.model.create(rest as Partial<IAnswerMongo>);
       return this.toEntity(result);
     } catch (_err) {
-      throw new CustomError(
-        'Database error in AnswerMongooseDataSource.create',
-        500
-      );
+      throw new CustomError(RepositoryConstants.ANSWER.CREATE_ERROR.en, 500);
     }
   }
 
@@ -58,12 +70,12 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
     try {
       const result = await (this.model as any)
         .findById(id)
-        .populate('user', 'name')
+        .populate('user', 'name email profile_image')
         .populate('question', 'title');
       return result ? this.toEntity(result) : null;
     } catch (_err) {
       throw new CustomError(
-        'Database error in AnswerMongooseDataSource.findById',
+        RepositoryConstants.ANSWER.FIND_BY_ID_ERROR.en,
         500
       );
     }
@@ -71,13 +83,12 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
 
   async findAll(): Promise<IAnswerModel[]> {
     try {
-      const results = await this.model.find();
+      const results = await this.model
+        .find()
+        .populate('user', 'name email profile_image');
       return results.map((doc: any) => this.toEntity(doc));
     } catch (_err) {
-      throw new CustomError(
-        'Database error in AnswerMongooseDataSource.findAll',
-        500
-      );
+      throw new CustomError(RepositoryConstants.ANSWER.FIND_ALL_ERROR.en, 500);
     }
   }
 
@@ -96,7 +107,7 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
       return result ? this.toEntity(result) : null;
     } catch (_err) {
       throw new CustomError(
-        'Database error in AnswerMongooseDataSource.updateById',
+        RepositoryConstants.ANSWER.UPDATE_BY_ID_ERROR.en,
         500
       );
     }
@@ -108,7 +119,7 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
       return result ? this.toEntity(result) : null;
     } catch (_err) {
       throw new CustomError(
-        'Database error in AnswerMongooseDataSource.deleteById',
+        RepositoryConstants.ANSWER.DELETE_BY_ID_ERROR.en,
         500
       );
     }
@@ -118,10 +129,7 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
     try {
       return this.model.countDocuments();
     } catch (_err) {
-      throw new CustomError(
-        'Database error in AnswerMongooseDataSource.countAll',
-        500
-      );
+      throw new CustomError(RepositoryConstants.ANSWER.COUNT_ALL_ERROR.en, 500);
     }
   }
 
@@ -130,7 +138,7 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
       return this.model.deleteMany({});
     } catch (_err) {
       throw new CustomError(
-        'Database error in AnswerMongooseDataSource.deleteAll',
+        RepositoryConstants.ANSWER.DELETE_ALL_ERROR.en,
         500
       );
     }

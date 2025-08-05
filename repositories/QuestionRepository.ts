@@ -4,6 +4,10 @@ import { EntityId } from '../types/database';
 import { BaseRepository } from './base/BaseRepository';
 import { IQuestionRepository } from './interfaces/IQuestionRepository';
 import { IDataSource } from './interfaces/IDataSource';
+import {
+  PaginationQueryDTO,
+  PaginatedResponse,
+} from '../types/dto/question/pagination.dto';
 
 @injectable()
 export class QuestionRepository
@@ -66,5 +70,77 @@ export class QuestionRepository
   async searchByTitle(title: string): Promise<IQuestionModel[]> {
     const all = await this.dataSource.findAll();
     return all.filter(q => q.title.toLowerCase().includes(title.toLowerCase()));
+  }
+
+  async findPaginated(
+    filters: PaginationQueryDTO
+  ): Promise<PaginatedResponse<IQuestionModel>> {
+    // DataSource'da pagination metodu varsa onu kullan, yoksa fallback
+    if ('findPaginated' in this.dataSource) {
+      return (this.dataSource as any).findPaginated(filters);
+    }
+
+    // Fallback: Tüm verileri çek ve frontend'de pagination yap
+    const allQuestions = await this.dataSource.findAll();
+
+    // Apply filters
+    let filtered = [...allQuestions];
+
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      filtered = filtered.filter(
+        q =>
+          q.title.toLowerCase().includes(searchLower) ||
+          q.content.toLowerCase().includes(searchLower)
+      );
+    }
+
+    if (filters.category) {
+      filtered = filtered.filter(q => q.category === filters.category);
+    }
+
+    // Sort
+    filtered.sort((a, b) => {
+      let aValue: any, bValue: any;
+
+      switch (filters.sortBy) {
+        case 'likes':
+          aValue = a.likes.length;
+          bValue = b.likes.length;
+          break;
+        case 'answers':
+          aValue = a.answers.length;
+          bValue = b.answers.length;
+          break;
+        case 'views':
+          aValue = a.views || 0;
+          bValue = b.views || 0;
+          break;
+        default:
+          aValue = new Date(a.createdAt).getTime();
+          bValue = new Date(b.createdAt).getTime();
+      }
+
+      return filters.sortOrder === 'desc' ? bValue - aValue : aValue - bValue;
+    });
+
+    // Pagination
+    const totalItems = filtered.length;
+    const totalPages = Math.ceil(totalItems / filters.limit);
+    const startIndex = (filters.page - 1) * filters.limit;
+    const endIndex = startIndex + filters.limit;
+    const data = filtered.slice(startIndex, endIndex);
+
+    return {
+      data,
+      pagination: {
+        currentPage: filters.page,
+        totalPages,
+        totalItems,
+        itemsPerPage: filters.limit,
+        hasNextPage: filters.page < totalPages,
+        hasPreviousPage: filters.page > 1,
+      },
+    };
   }
 }

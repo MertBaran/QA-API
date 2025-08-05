@@ -38,4 +38,22 @@ export class ZodValidationProvider implements IValidationProvider {
       return next();
     };
   }
+
+  validateQuery(schema: z.ZodType<any>) {
+    return (req: Request, res: Response, next: NextFunction) => {
+      const result = schema.safeParse(req.query);
+      if (!result.success) {
+        return res.status(400).json({
+          success: false,
+          message: 'Validation error',
+          errors: result.error.issues.map(e => ({
+            path: e.path,
+            message: e.message,
+          })),
+        });
+      }
+      req.query = result.data;
+      return next();
+    };
+  }
 }

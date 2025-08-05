@@ -1,76 +1,230 @@
 import { Request, Response, NextFunction } from 'express';
-import asyncErrorWrapper from 'express-async-handler';
-import { injectable, inject } from 'tsyringe';
-import { IAdminService } from '../services/contracts/IAdminService';
-import { IUserRoleService } from '../services/contracts/IUserRoleService';
-import { AdminConstants } from './constants/ControllerMessages';
-import { IdParamDTO } from '../types/dto/common/id-param.dto';
-import type { SuccessResponseDTO } from '../types/dto/common/success-response.dto';
-// IUserModel kullanılmıyor, kaldırıldı
-import type { UserResponseDTO } from '../types/dto/user/user-response.dto';
-import { i18n } from '../types/i18n';
+import { container } from 'tsyringe';
+import { AdminManager } from '../services/managers/AdminManager';
+import { ILoggerProvider } from '../infrastructure/logging/ILoggerProvider';
+import { IExceptionTracker } from '../infrastructure/error/IExceptionTracker';
+import { ApplicationError } from '../helpers/error/ApplicationError';
+import { asyncErrorWrapper } from '../helpers/error/asyncErrorWrapper';
+import { AuthenticatedRequest } from '../types/auth';
 
-@injectable()
 export class AdminController {
-  constructor(
-    @inject('IAdminService') private adminService: IAdminService,
-    @inject('IUserRoleService') private userRoleService: IUserRoleService
-  ) {}
+  private adminManager: AdminManager;
+  private logger: ILoggerProvider;
+  private exceptionTracker: IExceptionTracker;
 
-  blockUser = asyncErrorWrapper(
+  constructor() {
+    this.adminManager = container.resolve<AdminManager>('IAdminService');
+    this.logger = container.resolve<ILoggerProvider>('ILoggerProvider');
+    this.exceptionTracker =
+      container.resolve<IExceptionTracker>('IExceptionTracker');
+  }
+
+  // Kullanıcıları getir
+  getUsers = asyncErrorWrapper(
     async (
-      req: Request<IdParamDTO>,
-      res: Response<SuccessResponseDTO<UserResponseDTO>>,
+      req: AuthenticatedRequest,
+      res: Response,
       _next: NextFunction
     ): Promise<void> => {
-      const { id } = req.params as { id: string };
-      const updatedUser = await this.adminService.blockUser(id);
-      const message = await i18n(AdminConstants.BlockToggleSuccess, req.locale);
+      if (!req.user) {
+        throw ApplicationError.authenticationError('User not authenticated');
+      }
 
-      // UserRole tablosundan role'leri çek
-      const userRoles = await this.userRoleService.getUserActiveRoles(
-        updatedUser._id
-      );
-      const roleIds = userRoles.map(userRole => userRole.roleId);
+      try {
+        const {
+          search,
+          status,
+          role,
+          dateFrom,
+          dateTo,
+          isOnline,
+          page = 1,
+          limit = 10,
+        } = req.query;
 
-      // Güvenli response - password ve diğer hassas bilgileri çıkar
-      const safeUser: UserResponseDTO = {
-        _id: updatedUser._id,
-        name: updatedUser.name,
-        email: updatedUser.email,
-        roles: roleIds,
-        title: updatedUser.title,
-        about: updatedUser.about,
-        place: updatedUser.place,
-        website: updatedUser.website,
-        profile_image: updatedUser.profile_image,
-        blocked: updatedUser.blocked,
-        createdAt: updatedUser.createdAt,
-        language: updatedUser.language,
-        notificationPreferences: updatedUser.notificationPreferences,
-      };
+        const filters = {
+          search: search as string,
+          status: status as string,
+          role: role as string,
+          dateFrom: dateFrom as string,
+          dateTo: dateTo as string,
+          isOnline: isOnline === 'true',
+        };
 
-      res.status(200).json({
-        success: true,
-        message,
-        data: safeUser,
-      });
+        const result = await this.adminManager.getUsersForAdmin(
+          filters,
+          Number(page),
+          Number(limit)
+        );
+
+        res.status(200).json({
+          success: true,
+          data: result,
+        });
+      } catch (error) {
+        if (error instanceof ApplicationError) {
+          throw error;
+        }
+        throw ApplicationError.systemError('Failed to fetch users', 500);
+      }
     }
   );
 
-  deleteUser = asyncErrorWrapper(
+  // Kullanıcı güncelle
+  updateUser = asyncErrorWrapper(
     async (
-      req: Request<IdParamDTO>,
-      res: Response<SuccessResponseDTO>,
+      req: AuthenticatedRequest,
+      res: Response,
       _next: NextFunction
     ): Promise<void> => {
-      const { id } = req.params;
-      await this.adminService.deleteUser(id);
-      const message = await i18n(AdminConstants.DeleteSuccess, req.locale);
-      res.status(200).json({
-        success: true,
-        message,
-      });
+      if (!req.user) {
+        throw ApplicationError.authenticationError('User not authenticated');
+      }
+
+      try {
+        const { userId } = req.params;
+        const userData = req.body;
+
+        const updatedUser = await this.adminManager.updateUserByAdmin(
+          userId as string,
+          userData
+        );
+
+        res.status(200).json({
+          success: true,
+          data: updatedUser,
+        });
+      } catch (error) {
+        if (error instanceof ApplicationError) {
+          throw error;
+        }
+        throw ApplicationError.systemError('Failed to update user', 500);
+      }
+    }
+  );
+
+  // Kullanıcı sil
+  deleteUser = asyncErrorWrapper(
+    async (
+      req: AuthenticatedRequest,
+      res: Response,
+      _next: NextFunction
+    ): Promise<void> => {
+      if (!req.user) {
+        throw ApplicationError.authenticationError('User not authenticated');
+      }
+
+      try {
+        const { userId } = req.params;
+
+        await this.adminManager.deleteUserByAdmin(userId as string);
+
+        res.status(200).json({
+          success: true,
+          message: 'User deleted successfully',
+        });
+      } catch (error) {
+        if (error instanceof ApplicationError) {
+          throw error;
+        }
+        throw ApplicationError.systemError('Failed to delete user', 500);
+      }
+    }
+  );
+
+  // Kullanıcı engelle/engel kaldır
+  toggleUserBlock = asyncErrorWrapper(
+    async (
+      req: AuthenticatedRequest,
+      res: Response,
+      _next: NextFunction
+    ): Promise<void> => {
+      if (!req.user) {
+        throw ApplicationError.authenticationError('User not authenticated');
+      }
+
+      try {
+        const { userId } = req.params;
+        const { blocked } = req.body;
+
+        const updatedUser = await this.adminManager.toggleUserBlock(
+          userId as string,
+          blocked
+        );
+
+        res.status(200).json({
+          success: true,
+          data: updatedUser,
+        });
+      } catch (error) {
+        if (error instanceof ApplicationError) {
+          throw error;
+        }
+        throw ApplicationError.systemError(
+          'Failed to toggle user block status',
+          500
+        );
+      }
+    }
+  );
+
+  // Kullanıcı rollerini güncelle
+  updateUserRoles = asyncErrorWrapper(
+    async (
+      req: AuthenticatedRequest,
+      res: Response,
+      _next: NextFunction
+    ): Promise<void> => {
+      if (!req.user) {
+        throw ApplicationError.authenticationError('User not authenticated');
+      }
+
+      try {
+        const { userId } = req.params;
+        const { roles } = req.body;
+
+        const updatedUser = await this.adminManager.updateUserRoles(
+          userId as string,
+          roles
+        );
+
+        res.status(200).json({
+          success: true,
+          data: updatedUser,
+        });
+      } catch (error) {
+        if (error instanceof ApplicationError) {
+          throw error;
+        }
+        throw ApplicationError.systemError('Failed to update user roles', 500);
+      }
+    }
+  );
+
+  // Kullanıcı istatistikleri
+  getUserStats = asyncErrorWrapper(
+    async (
+      req: AuthenticatedRequest,
+      res: Response,
+      _next: NextFunction
+    ): Promise<void> => {
+      if (!req.user) {
+        throw ApplicationError.authenticationError('User not authenticated');
+      }
+
+      try {
+        const stats = await this.adminManager.getUserStats();
+
+        res.status(200).json({
+          success: true,
+          data: stats,
+        });
+      } catch (error) {
+        if (error instanceof ApplicationError) {
+          throw error;
+        }
+        throw ApplicationError.systemError('Failed to fetch user stats', 500);
+      }
     }
   );
 }

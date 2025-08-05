@@ -2,6 +2,7 @@ export const TOKENS = {
   BootstrapService: 'BootstrapService',
   HealthCheckService: 'HealthCheckService',
   ILoggerProvider: 'ILoggerProvider',
+  IExceptionTracker: 'IExceptionTracker',
   ICacheProvider: 'ICacheProvider',
   IDatabaseAdapter: 'IDatabaseAdapter',
   IAuditProvider: 'IAuditProvider',

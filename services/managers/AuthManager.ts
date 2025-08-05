@@ -283,14 +283,22 @@ export class AuthManager implements IAuthService {
     }
   }
 
-  static generateJWTFromUser(user: {
-    id: string;
-    name: string;
-    lang: string;
-  }): string {
+  static generateJWTFromUser(
+    user: {
+      id: string;
+      name: string;
+      lang: string;
+    },
+    rememberMe: boolean = false
+  ): string {
     const secret = (process.env['JWT_SECRET_KEY'] ||
       'default_secret') as jwt.Secret;
-    const expires: string | number = process.env['JWT_EXPIRE'] ?? '1d';
+
+    // Remember me durumuna göre token süresini ayarla
+    const expires: string | number = rememberMe
+      ? '30d' // 30 gün
+      : (process.env['JWT_EXPIRE'] ?? '1d'); // 1 gün
+
     return jwt.sign(
       {
         id: user.id,

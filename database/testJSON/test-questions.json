@@ -1,0 +1,522 @@
+[
+  {
+    "title": "React Hooks kullanımı hakkında yardım",
+    "content": "useState ve useEffect hook'larını ne zaman kullanmalıyım? Aralarındaki farklar nelerdir?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2024-01-15T10:30:00.000Z"
+  },
+  {
+    "title": "TypeScript interface vs type farkı",
+    "content": "TypeScript'te interface ve type arasındaki farklar nelerdir? Hangi durumlarda hangisini kullanmalıyım?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2024-01-14T14:20:00.000Z"
+  },
+  {
+    "title": "Node.js async/await kullanımı",
+    "content": "Node.js'te async/await kullanırken hata yönetimi nasıl yapılır? Try-catch bloklarını nasıl kullanmalıyım?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2024-01-13T09:15:00.000Z"
+  },
+  {
+    "title": "MongoDB aggregation pipeline",
+    "content": "MongoDB'de aggregation pipeline kullanarak veri analizi nasıl yapılır? Örneklerle açıklayabilir misiniz?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2024-01-12T16:45:00.000Z"
+  },
+  {
+    "title": "Docker container yönetimi",
+    "content": "Docker container'ları nasıl yönetirim? Image ve container arasındaki farklar nelerdir?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2024-01-11T11:30:00.000Z"
+  },
+  {
+    "title": "Git branch stratejileri",
+    "content": "Git flow ve GitHub flow arasındaki farklar nelerdir? Hangi projelerde hangisini kullanmalıyım?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2024-01-10T13:20:00.000Z"
+  },
+  {
+    "title": "REST API tasarım prensipleri",
+    "content": "REST API tasarlarken hangi prensiplere dikkat etmeliyim? HTTP status kodları nasıl kullanılır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2024-01-09T08:55:00.000Z"
+  },
+  {
+    "title": "JavaScript closure kavramı",
+    "content": "JavaScript'te closure nedir? Ne zaman ve nasıl kullanılır? Pratik örneklerle açıklayabilir misiniz?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2024-01-08T15:40:00.000Z"
+  },
+  {
+    "title": "CSS Grid vs Flexbox",
+    "content": "CSS Grid ve Flexbox arasındaki farklar nelerdir? Hangi durumlarda hangisini kullanmalıyım?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2024-01-07T12:10:00.000Z"
+  },
+  {
+    "title": "JWT token güvenliği",
+    "content": "JWT token'ları nasıl güvenli bir şekilde kullanılır? Refresh token stratejileri nelerdir?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2024-01-06T17:25:00.000Z"
+  },
+  {
+    "title": "React performance optimization",
+    "content": "React uygulamalarında performance optimizasyonu nasıl yapılır? useMemo ve useCallback ne zaman kullanılır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2024-01-05T10:50:00.000Z"
+  },
+  {
+    "title": "SQL injection koruması",
+    "content": "SQL injection saldırılarından nasıl korunulur? Prepared statement'lar nasıl kullanılır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2024-01-04T14:35:00.000Z"
+  },
+  {
+    "title": "Microservices mimarisi",
+    "content": "Microservices mimarisinin avantajları ve dezavantajları nelerdir? Ne zaman kullanılmalıdır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2024-01-03T09:20:00.000Z"
+  },
+  {
+    "title": "Redis cache stratejileri",
+    "content": "Redis cache kullanırken hangi stratejileri uygulamalıyım? Cache invalidation nasıl yapılır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2024-01-02T16:15:00.000Z"
+  },
+  {
+    "title": "Linux komut satırı",
+    "content": "Linux'te temel komutlar nelerdir? Dosya yönetimi ve process yönetimi nasıl yapılır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2024-01-01T11:45:00.000Z"
+  },
+  {
+    "title": "AWS Lambda fonksiyonları",
+    "content": "AWS Lambda'da serverless fonksiyonlar nasıl yazılır? Cold start problemi nasıl çözülür?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-31T13:30:00.000Z"
+  },
+  {
+    "title": "GraphQL vs REST",
+    "content": "GraphQL ve REST API arasındaki farklar nelerdir? Hangi durumlarda hangisini tercih etmeliyim?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-30T08:55:00.000Z"
+  },
+  {
+    "title": "Docker Compose kullanımı",
+    "content": "Docker Compose ile multi-container uygulamalar nasıl yönetilir? docker-compose.yml dosyası nasıl yazılır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-29T15:20:00.000Z"
+  },
+  {
+    "title": "JavaScript Promise kullanımı",
+    "content": "JavaScript Promise'ler nasıl kullanılır? Promise.all ve Promise.race arasındaki farklar nelerdir?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-28T12:10:00.000Z"
+  },
+  {
+    "title": "CSS preprocessor kullanımı",
+    "content": "Sass ve Less arasındaki farklar nelerdir? CSS preprocessor'lar ne zaman kullanılmalıdır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-27T17:45:00.000Z"
+  },
+  {
+    "title": "MongoDB indexing stratejileri",
+    "content": "MongoDB'de index'ler nasıl oluşturulur? Hangi alanlara index eklenmelidir?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-26T10:30:00.000Z"
+  },
+  {
+    "title": "React testing kütüphaneleri",
+    "content": "Jest ve React Testing Library nasıl kullanılır? Unit test ve integration test arasındaki farklar nelerdir?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-25T14:15:00.000Z"
+  },
+  {
+    "title": "Nginx reverse proxy",
+    "content": "Nginx reverse proxy nasıl yapılandırılır? Load balancing nasıl yapılır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-24T09:40:00.000Z"
+  },
+  {
+    "title": "JavaScript ES6+ özellikleri",
+    "content": "ES6+ ile gelen yeni özellikler nelerdir? Destructuring ve spread operator nasıl kullanılır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-23T16:25:00.000Z"
+  },
+  {
+    "title": "Git merge conflict çözümü",
+    "content": "Git merge conflict'leri nasıl çözülür? Rebase ve merge arasındaki farklar nelerdir?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-22T11:50:00.000Z"
+  },
+  {
+    "title": "REST API authentication",
+    "content": "REST API'lerde authentication nasıl yapılır? OAuth 2.0 ve JWT nasıl kullanılır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-21T13:35:00.000Z"
+  },
+  {
+    "title": "React state management",
+    "content": "Redux ve Context API arasındaki farklar nelerdir? Hangi durumlarda hangisini kullanmalıyım?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-20T08:20:00.000Z"
+  },
+  {
+    "title": "Docker image optimization",
+    "content": "Docker image'ları nasıl optimize edilir? Multi-stage build nasıl kullanılır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-19T15:55:00.000Z"
+  },
+  {
+    "title": "JavaScript event loop",
+    "content": "JavaScript event loop nasıl çalışır? Callback, Promise ve async/await arasındaki farklar nelerdir?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-18T12:30:00.000Z"
+  },
+  {
+    "title": "CSS responsive design",
+    "content": "Responsive web tasarımı nasıl yapılır? Media query'ler nasıl kullanılır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-17T17:15:00.000Z"
+  },
+  {
+    "title": "MongoDB backup stratejileri",
+    "content": "MongoDB veritabanı nasıl yedeklenir? Backup ve restore işlemleri nasıl yapılır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-16T10:40:00.000Z"
+  },
+  {
+    "title": "React component lifecycle",
+    "content": "React component lifecycle metodları nelerdir? useEffect ile nasıl yönetilir?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-15T14:25:00.000Z"
+  },
+  {
+    "title": "Linux process yönetimi",
+    "content": "Linux'te process'ler nasıl yönetilir? ps, top ve htop komutları nasıl kullanılır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-14T09:50:00.000Z"
+  },
+  {
+    "title": "AWS S3 bucket yönetimi",
+    "content": "AWS S3 bucket'ları nasıl yönetilir? CORS yapılandırması nasıl yapılır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-13T16:35:00.000Z"
+  },
+  {
+    "title": "JavaScript module system",
+    "content": "ES6 modules ve CommonJS arasındaki farklar nelerdir? Import/export nasıl kullanılır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-12T11:20:00.000Z"
+  },
+  {
+    "title": "CSS animation ve transition",
+    "content": "CSS animation ve transition arasındaki farklar nelerdir? Keyframe'ler nasıl kullanılır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-11T13:45:00.000Z"
+  },
+  {
+    "title": "MongoDB sharding",
+    "content": "MongoDB sharding nasıl yapılandırılır? Horizontal scaling nasıl sağlanır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-10T08:30:00.000Z"
+  },
+  {
+    "title": "React error boundary",
+    "content": "React Error Boundary nedir? Hata yönetimi nasıl yapılır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-09T15:55:00.000Z"
+  },
+  {
+    "title": "Docker networking",
+    "content": "Docker container'ları arasında network nasıl kurulur? Bridge ve host network arasındaki farklar nelerdir?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-08T12:10:00.000Z"
+  },
+  {
+    "title": "JavaScript debugging teknikleri",
+    "content": "JavaScript kodunda debugging nasıl yapılır? Console metodları ve debugger nasıl kullanılır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-07T17:25:00.000Z"
+  },
+  {
+    "title": "CSS preprocessor mixin'leri",
+    "content": "Sass mixin'leri nasıl yazılır ve kullanılır? Parametreli mixin'ler nasıl oluşturulur?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-06T10:40:00.000Z"
+  },
+  {
+    "title": "MongoDB aggregation operators",
+    "content": "MongoDB aggregation pipeline'da hangi operator'lar kullanılır? $match, $group ve $project nasıl kullanılır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-05T14:15:00.000Z"
+  },
+  {
+    "title": "React custom hooks",
+    "content": "React custom hook'lar nasıl yazılır? Hangi durumlarda kullanılmalıdır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-04T09:30:00.000Z"
+  },
+  {
+    "title": "Linux log yönetimi",
+    "content": "Linux sistem log'ları nasıl yönetilir? journalctl ve logrotate nasıl kullanılır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-03T16:45:00.000Z"
+  },
+  {
+    "title": "AWS Lambda environment variables",
+    "content": "AWS Lambda fonksiyonlarında environment variable'lar nasıl kullanılır? Güvenli bir şekilde nasıl yönetilir?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-02T11:20:00.000Z"
+  },
+  {
+    "title": "JavaScript array metodları",
+    "content": "JavaScript array metodları nelerdir? map, filter, reduce nasıl kullanılır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-12-01T13:35:00.000Z"
+  },
+  {
+    "title": "CSS Grid layout",
+    "content": "CSS Grid layout nasıl kullanılır? Grid template areas nasıl tanımlanır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-11-30T08:50:00.000Z"
+  },
+  {
+    "title": "MongoDB replication",
+    "content": "MongoDB replication nasıl yapılandırılır? Primary ve secondary node'lar nasıl çalışır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-11-29T15:25:00.000Z"
+  },
+  {
+    "title": "React context API",
+    "content": "React Context API nasıl kullanılır? Provider ve Consumer pattern nasıl uygulanır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-11-28T12:10:00.000Z"
+  },
+  {
+    "title": "Docker volume yönetimi",
+    "content": "Docker volume'ları nasıl yönetilir? Named volume ve bind mount arasındaki farklar nelerdir?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-11-27T17:45:00.000Z"
+  },
+  {
+    "title": "JavaScript async programming",
+    "content": "JavaScript'te async programming nasıl yapılır? Callback hell nasıl önlenir?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-11-26T10:30:00.000Z"
+  },
+  {
+    "title": "CSS Flexbox layout",
+    "content": "CSS Flexbox layout nasıl kullanılır? Flex direction ve justify content nasıl ayarlanır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-11-25T14:15:00.000Z"
+  },
+  {
+    "title": "MongoDB data modeling",
+    "content": "MongoDB'de veri modelleme nasıl yapılır? Embedding vs referencing ne zaman kullanılır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-11-24T09:40:00.000Z"
+  },
+  {
+    "title": "React performance monitoring",
+    "content": "React uygulamalarında performance nasıl izlenir? React DevTools nasıl kullanılır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-11-23T16:25:00.000Z"
+  },
+  {
+    "title": "Linux user yönetimi",
+    "content": "Linux'te user ve group yönetimi nasıl yapılır? sudo ve su komutları nasıl kullanılır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-11-22T11:50:00.000Z"
+  },
+  {
+    "title": "AWS CloudFormation",
+    "content": "AWS CloudFormation ile infrastructure as code nasıl yazılır? Template yapısı nasıl oluşturulur?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-11-21T13:35:00.000Z"
+  },
+  {
+    "title": "JavaScript object destructuring",
+    "content": "JavaScript object destructuring nasıl kullanılır? Default value'lar nasıl atanır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-11-20T08:20:00.000Z"
+  },
+  {
+    "title": "CSS media queries",
+    "content": "CSS media query'ler nasıl yazılır? Responsive breakpoint'ler nasıl belirlenir?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-11-19T15:55:00.000Z"
+  },
+  {
+    "title": "MongoDB connection pooling",
+    "content": "MongoDB connection pooling nasıl yapılandırılır? Connection limit'leri nasıl ayarlanır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-11-18T12:30:00.000Z"
+  },
+  {
+    "title": "React router kullanımı",
+    "content": "React Router nasıl kullanılır? Dynamic routing ve nested routes nasıl yapılır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-11-17T17:15:00.000Z"
+  },
+  {
+    "title": "Docker security best practices",
+    "content": "Docker container'larında güvenlik nasıl sağlanır? Non-root user nasıl kullanılır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-11-16T10:40:00.000Z"
+  },
+  {
+    "title": "JavaScript error handling",
+    "content": "JavaScript'te hata yönetimi nasıl yapılır? Try-catch blokları nasıl kullanılır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-11-15T14:25:00.000Z"
+  },
+  {
+    "title": "CSS custom properties",
+    "content": "CSS custom properties (CSS variables) nasıl kullanılır? Theme switching nasıl yapılır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-11-14T09:50:00.000Z"
+  },
+  {
+    "title": "MongoDB change streams",
+    "content": "MongoDB change streams nasıl kullanılır? Real-time data monitoring nasıl yapılır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-11-13T16:35:00.000Z"
+  },
+  {
+    "title": "React memo optimization",
+    "content": "React.memo nasıl kullanılır? Component re-render optimizasyonu nasıl yapılır?",
+    "user": "687fdc53a6a4fc475293488e",
+    "likes": [],
+    "answers": [],
+    "createdAt": "2023-11-12T11:20:00.000Z"
+  }
+]

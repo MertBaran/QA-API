@@ -103,7 +103,11 @@ container.registerInstance(
 );
 container.registerInstance(
   'IAdminService',
-  new AdminManager(container.resolve('IUserRepository'))
+  new AdminManager(
+    container.resolve('IUserRepository'),
+    container.resolve('IUserRoleService'),
+    container.resolve('IRoleService')
+  )
 );
 container.registerInstance(
   'IQuestionService',
@@ -150,8 +154,12 @@ export function createTestApp(): Application {
   // Controller'ları oluştur
   const authController = new AuthController(
     container.resolve('IAuthService'),
+    container.resolve('IUserService'),
     container.resolve('IUserRoleService'),
-    container.resolve('ILoggerProvider')
+    container.resolve('IRoleService'),
+    container.resolve('IPermissionService'),
+    container.resolve('ILoggerProvider'),
+    container.resolve('IExceptionTracker')
   );
   const questionController = new QuestionController(
     container.resolve('IQuestionService')
@@ -163,10 +171,7 @@ export function createTestApp(): Application {
     container.resolve('IAdminService'),
     container.resolve('IUserRoleService')
   );
-  const _adminController = new AdminController(
-    container.resolve('IAdminService'),
-    container.resolve('IUserRoleService')
-  );
+  const _adminController = new AdminController();
   const _notificationController = new NotificationController(
     container.resolve('INotificationService')
   );

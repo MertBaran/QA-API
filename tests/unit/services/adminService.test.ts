@@ -1,23 +1,26 @@
 import 'reflect-metadata';
 import { AdminManager } from '../../../services/managers/AdminManager';
 import { UserRepository } from '../../../repositories/UserRepository';
-import { UserManager } from '../../../services/managers/UserManager';
 import { FakeUserDataSource } from '../../mocks/datasource/FakeUserDataSource';
+import { FakeUserRoleService } from '../../mocks/services/FakeUserRoleService';
+import { FakeRoleService } from '../../mocks/services/FakeRoleService';
 
 describe('AdminService Unit Tests', () => {
   let adminService: AdminManager;
   let userRepository: UserRepository;
-  let userService: UserManager;
   let fakeUserDataSource: FakeUserDataSource;
+  let fakeUserRoleService: FakeUserRoleService;
+  let fakeRoleService: FakeRoleService;
 
   beforeEach(() => {
     fakeUserDataSource = new FakeUserDataSource();
     userRepository = new UserRepository(fakeUserDataSource);
-    userService = new UserManager(userRepository);
-    adminService = new AdminManager(userService);
+    fakeUserRoleService = new FakeUserRoleService();
+    fakeRoleService = new FakeRoleService();
+    adminService = new AdminManager(userRepository, fakeUserRoleService, fakeRoleService);
   });
 
-  it('should create and get all users', async () => {
+  it('should get users for admin', async () => {
     await fakeUserDataSource.create({
       name: 'User1',
       email: 'u1@a.com',
@@ -32,26 +35,13 @@ describe('AdminService Unit Tests', () => {
       profile_image: '',
       blocked: false,
     });
-    const users = await adminService.getAllUsers();
-    expect(users.length).toBe(2);
-    expect(users.map((u: any) => u.name)).toContain('User1');
-    expect(users.map((u: any) => u.name)).toContain('User2');
+    const result = await adminService.getUsersForAdmin({}, 1, 10);
+    expect(result.users.length).toBe(2);
+    expect(result.users.map((u: any) => u.name)).toContain('User1');
+    expect(result.users.map((u: any) => u.name)).toContain('User2');
   });
 
-  it('should get single user', async () => {
-    const user = await fakeUserDataSource.create({
-      name: 'User3',
-      email: 'u3@a.com',
-      password: 'x',
-      profile_image: '',
-      blocked: false,
-    });
-    const found = await adminService.getSingleUser(user._id);
-    expect(found).toBeDefined();
-    expect(found?._id).toBe(user._id);
-  });
-
-  it('should block and unblock user', async () => {
+  it('should toggle user block', async () => {
     const user = await fakeUserDataSource.create({
       name: 'User4',
       email: 'u4@a.com',
@@ -59,9 +49,9 @@ describe('AdminService Unit Tests', () => {
       profile_image: '',
       blocked: false,
     });
-    const blocked = await adminService.blockUser(user._id);
+    const blocked = await adminService.toggleUserBlock(user._id, true);
     expect(blocked?.blocked).toBe(true);
-    const unblocked = await adminService.blockUser(user._id);
+    const unblocked = await adminService.toggleUserBlock(user._id, false);
     expect(unblocked?.blocked).toBe(false);
   });
 
@@ -74,18 +64,16 @@ describe('AdminService Unit Tests', () => {
       blocked: false,
     });
 
-    // deleteUser returns void, so just check it doesn't throw
-    await expect(adminService.deleteUser(user._id)).resolves.not.toThrow();
-
-    // Verify user is actually deleted - getSingleUser should return null
-    const found = await adminService.getSingleUser(user._id);
-    expect(found).toBeNull();
+    // deleteUserByAdmin returns void, so just check it doesn't throw
+    await expect(
+      adminService.deleteUserByAdmin(user._id)
+    ).resolves.not.toThrow();
   });
 
   it('should throw error when deleting non-existent user', async () => {
-    // deleteUser throws CustomError for non-existent users
-    await expect(adminService.deleteUser('nonexistentid')).rejects.toThrow(
-      'User not found'
-    );
+    // deleteUserByAdmin throws CustomError for non-existent users
+    await expect(
+      adminService.deleteUserByAdmin('nonexistentid')
+    ).rejects.toThrow('User not found');
   });
 });

@@ -6,6 +6,10 @@ import { EntityId } from '../../types/database';
 import { ICacheProvider } from '../../infrastructure/cache/ICacheProvider';
 import { IQuestionService } from '../contracts/IQuestionService';
 import { QuestionServiceMessages } from '../constants/ServiceMessages';
+import {
+  PaginationQueryDTO,
+  PaginatedResponse,
+} from '../../types/dto/question/pagination.dto';
 
 @injectable()
 export class QuestionManager implements IQuestionService {
@@ -45,6 +49,20 @@ export class QuestionManager implements IQuestionService {
       const questions = await this.questionRepository.findAll();
       await this.cacheProvider.set<IQuestionModel[]>(cacheKey, questions, 60);
       return questions;
+    } catch (_err) {
+      throw new CustomError(
+        QuestionServiceMessages.GetAllQuestionsDbError.en,
+        500
+      );
+    }
+  }
+
+  async getQuestionsPaginated(
+    filters: PaginationQueryDTO
+  ): Promise<PaginatedResponse<IQuestionModel>> {
+    try {
+      const result = await this.questionRepository.findPaginated(filters);
+      return result;
     } catch (_err) {
       throw new CustomError(
         QuestionServiceMessages.GetAllQuestionsDbError.en,

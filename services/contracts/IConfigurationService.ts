@@ -14,6 +14,21 @@ export interface EnvironmentConfig {
   };
   clientUrl: string;
   googleClientId: string;
+
+  exceptionTracking: {
+    dsn: string;
+    environment: string;
+    release: string;
+    tracesSampleRate: number;
+    profilesSampleRate: number;
+    sampleRate: number;
+  };
+  fileLogging: {
+    enabled: boolean;
+    basePath: string;
+    version: string;
+    environment: string;
+  };
 }
 
 export interface DatabaseConnectionConfig {
@@ -31,6 +46,8 @@ export interface IConfigurationService {
   getEnvironment(): string;
   getDatabaseConnectionConfig(): DatabaseConnectionConfig;
   getCacheConnectionConfig(): CacheConnectionConfig;
+  getExceptionTrackingConfig(): EnvironmentConfig['exceptionTracking'];
+  getFileLoggingConfig(): EnvironmentConfig['fileLogging'];
   isProduction(): boolean;
   isTest(): boolean;
   isDevelopment(): boolean;

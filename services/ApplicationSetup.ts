@@ -7,7 +7,7 @@ import { ApplicationState } from './ApplicationState';
 import { HealthCheckController } from '../controllers/healthController';
 import { WebSocketMonitorService } from './WebSocketMonitorService';
 import routers from '../routers';
-import customErrorHandler from '../middlewares/errors/customErrorHandler';
+import { appErrorHandler } from '../middlewares/errors/appErrorHandler';
 
 export class ApplicationSetup {
   private app: Application;
@@ -56,7 +56,7 @@ export class ApplicationSetup {
     this.app.use('/api', routers);
 
     // Error handler - MUST BE LAST
-    this.app.use(customErrorHandler);
+    this.app.use(appErrorHandler);
   }
 
   async initialize(): Promise<void> {
@@ -85,9 +85,18 @@ export class ApplicationSetup {
         useValue: cacheConfig,
       });
 
-      // Connect to database
-      const databaseAdapter = container.resolve<any>('IDatabaseAdapter');
-      await databaseAdapter.connect();
+      // Connect to database - CRITICAL: Exit if database connection fails
+      try {
+        const databaseAdapter = container.resolve<any>('IDatabaseAdapter');
+        await databaseAdapter.connect();
+        console.log('✅ Database connection established successfully');
+      } catch (dbError) {
+        console.error('❌ CRITICAL: Database connection failed:', dbError);
+        console.error(
+          '🛑 Application cannot start without database connection. Shutting down...'
+        );
+        process.exit(1);
+      }
 
       // Initialize cache provider (kullanılmıyor ama gerekli)
       const _cacheProvider = container.resolve<any>('ICacheProvider');
@@ -97,7 +106,8 @@ export class ApplicationSetup {
       console.log(`✅ Bootstrap completed successfully`);
     } catch (error) {
       console.error('❌ Failed to initialize application:', error);
-      throw error;
+      console.error('🛑 Application initialization failed. Shutting down...');
+      process.exit(1);
     }
   }
 

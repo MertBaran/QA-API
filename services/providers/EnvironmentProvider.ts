@@ -103,6 +103,17 @@ export class EnvironmentProvider implements IEnvironmentProvider {
     return value ? parseInt(value) : defaultValue;
   }
 
+  public getEnvironmentVariableAsBoolean(
+    key: string,
+    defaultValue: boolean = false
+  ): boolean {
+    const value = process.env[key];
+    if (!value) return defaultValue;
+
+    const lowerValue = value.toLowerCase();
+    return lowerValue === 'true' || lowerValue === '1' || lowerValue === 'yes';
+  }
+
   public isProduction(): boolean {
     return this.environment === 'production';
   }

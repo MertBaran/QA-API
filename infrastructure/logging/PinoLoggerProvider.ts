@@ -1,6 +1,6 @@
 import { injectable } from 'tsyringe';
 import pino, { Logger } from 'pino';
-import { ILoggerProvider } from './ILoggerProvider';
+import { ILoggerProvider, LogLevel } from './ILoggerProvider';
 
 @injectable()
 export class PinoLoggerProvider implements ILoggerProvider {
@@ -64,5 +64,26 @@ export class PinoLoggerProvider implements ILoggerProvider {
   }
   debug(message: string, meta?: any, context?: string) {
     this.logger.debug({ meta, context }, message);
+  }
+
+  trace(message: string, meta?: any, context?: string) {
+    this.logger.trace({ meta, context }, message);
+  }
+
+  fatal(message: string, meta?: any, context?: string) {
+    this.logger.fatal({ meta, context }, message);
+  }
+
+  isEnabled(): boolean {
+    return true; // Pino her zaman enabled
+  }
+
+  setLevel(level: LogLevel): void {
+    // Pino'da runtime'da level değiştirme desteklenmiyor
+    console.warn('setLevel is not supported in Pino at runtime');
+  }
+
+  getLevel(): LogLevel {
+    return 'debug'; // Constructor'da set edilen level
   }
 }

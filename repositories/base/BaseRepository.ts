@@ -1,6 +1,7 @@
 import { EntityId } from '../../types/database';
 import { IDataSource } from '../interfaces/IDataSource';
 import CustomError from '../../helpers/error/CustomError';
+import { RepositoryConstants } from '../constants/RepositoryMessages';
 
 export abstract class BaseRepository<TEntity> {
   protected readonly dataSource: IDataSource<TEntity>;
@@ -14,7 +15,7 @@ export abstract class BaseRepository<TEntity> {
       return await this.dataSource.create(data);
     } catch (_err) {
       console.error('BaseRepository create error:', _err);
-      throw new CustomError('Database error in BaseRepository.create', 500);
+      throw new CustomError(RepositoryConstants.BASE.CREATE_ERROR.en, 500);
     }
   }
 
@@ -23,7 +24,7 @@ export abstract class BaseRepository<TEntity> {
       return await this.dataSource.findById(id.toString());
     } catch (_err) {
       console.error('BaseRepository findById error:', _err);
-      throw new CustomError('Database error in BaseRepository.findById', 500);
+      throw new CustomError(RepositoryConstants.BASE.FIND_BY_ID_ERROR.en, 500);
     }
   }
 
@@ -31,7 +32,7 @@ export abstract class BaseRepository<TEntity> {
     try {
       return await this.dataSource.findAll();
     } catch (_err) {
-      throw new CustomError('Database error in BaseRepository.findAll', 500);
+      throw new CustomError(RepositoryConstants.BASE.FIND_ALL_ERROR.en, 500);
     }
   }
 
@@ -42,7 +43,10 @@ export abstract class BaseRepository<TEntity> {
     try {
       return await this.dataSource.updateById(id.toString(), data);
     } catch (_err) {
-      throw new CustomError('Database error in BaseRepository.updateById', 500);
+      throw new CustomError(
+        RepositoryConstants.BASE.UPDATE_BY_ID_ERROR.en,
+        500
+      );
     }
   }
 
@@ -50,7 +54,10 @@ export abstract class BaseRepository<TEntity> {
     try {
       return await this.dataSource.deleteById(id.toString());
     } catch (_err) {
-      throw new CustomError('Database error in BaseRepository.deleteById', 500);
+      throw new CustomError(
+        RepositoryConstants.BASE.DELETE_BY_ID_ERROR.en,
+        500
+      );
     }
   }
 
@@ -58,7 +65,7 @@ export abstract class BaseRepository<TEntity> {
     try {
       return await this.dataSource.countAll();
     } catch (_err) {
-      throw new CustomError('Database error in BaseRepository.countAll', 500);
+      throw new CustomError(RepositoryConstants.BASE.COUNT_ALL_ERROR.en, 500);
     }
   }
 
@@ -66,7 +73,7 @@ export abstract class BaseRepository<TEntity> {
     try {
       return await this.dataSource.deleteAll();
     } catch (_err) {
-      throw new CustomError('Database error in BaseRepository.deleteAll', 500);
+      throw new CustomError(RepositoryConstants.BASE.DELETE_ALL_ERROR.en, 500);
     }
   }
 }

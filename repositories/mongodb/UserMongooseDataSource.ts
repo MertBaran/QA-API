@@ -4,6 +4,7 @@ import { IUserModel } from '../../models/interfaces/IUserModel';
 import { IDataSource } from '../interfaces/IDataSource';
 import { IUserMongo } from '../../models/mongodb/UserMongoModel';
 import CustomError from '../../helpers/error/CustomError';
+import { RepositoryConstants } from '../constants/RepositoryMessages';
 
 @injectable()
 export class UserMongooseDataSource implements IDataSource<IUserModel> {
@@ -45,10 +46,7 @@ export class UserMongooseDataSource implements IDataSource<IUserModel> {
       const result = await this.model.create(rest as Partial<IUserMongo>);
       return this.toEntity(result);
     } catch (_err) {
-      throw new CustomError(
-        'Database error in UserMongooseDataSource.create',
-        500
-      );
+      throw new CustomError(RepositoryConstants.USER.CREATE_ERROR.en, 500);
     }
   }
 
@@ -57,10 +55,7 @@ export class UserMongooseDataSource implements IDataSource<IUserModel> {
       const result = await this.model.findById(id);
       return result ? this.toEntity(result) : null;
     } catch (_err) {
-      throw new CustomError(
-        'Database error in UserMongooseDataSource.findById',
-        500
-      );
+      throw new CustomError(RepositoryConstants.USER.FIND_BY_ID_ERROR.en, 500);
     }
   }
 
@@ -69,10 +64,7 @@ export class UserMongooseDataSource implements IDataSource<IUserModel> {
       const results = await this.model.find();
       return results.map((doc: any) => this.toEntity(doc));
     } catch (_err) {
-      throw new CustomError(
-        'Database error in UserMongooseDataSource.findAll',
-        500
-      );
+      throw new CustomError(RepositoryConstants.USER.FIND_ALL_ERROR.en, 500);
     }
   }
 
@@ -90,7 +82,7 @@ export class UserMongooseDataSource implements IDataSource<IUserModel> {
       return result ? this.toEntity(result) : null;
     } catch (_err) {
       throw new CustomError(
-        'Database error in UserMongooseDataSource.updateById',
+        RepositoryConstants.USER.UPDATE_BY_ID_ERROR.en,
         500
       );
     }
@@ -102,7 +94,7 @@ export class UserMongooseDataSource implements IDataSource<IUserModel> {
       return result ? this.toEntity(result) : null;
     } catch (_err) {
       throw new CustomError(
-        'Database error in UserMongooseDataSource.deleteById',
+        RepositoryConstants.USER.DELETE_BY_ID_ERROR.en,
         500
       );
     }
@@ -112,10 +104,7 @@ export class UserMongooseDataSource implements IDataSource<IUserModel> {
     try {
       return this.model.countDocuments();
     } catch (_err) {
-      throw new CustomError(
-        'Database error in UserMongooseDataSource.countAll',
-        500
-      );
+      throw new CustomError(RepositoryConstants.USER.COUNT_ALL_ERROR.en, 500);
     }
   }
 
@@ -123,10 +112,7 @@ export class UserMongooseDataSource implements IDataSource<IUserModel> {
     try {
       return this.model.deleteMany({});
     } catch (_err) {
-      throw new CustomError(
-        'Database error in UserMongooseDataSource.deleteAll',
-        500
-      );
+      throw new CustomError(RepositoryConstants.USER.DELETE_ALL_ERROR.en, 500);
     }
   }
 
@@ -137,7 +123,7 @@ export class UserMongooseDataSource implements IDataSource<IUserModel> {
       return result ? this.toEntity(result) : null;
     } catch (_err) {
       throw new CustomError(
-        'Database error in UserMongooseDataSource.findByEmailWithPassword',
+        RepositoryConstants.USER.FIND_BY_EMAIL_WITH_PASSWORD_ERROR.en,
         500
       );
     }
@@ -148,10 +134,7 @@ export class UserMongooseDataSource implements IDataSource<IUserModel> {
       const results = await this.model.find({ blocked: { $ne: true } });
       return results.map((doc: any) => this.toEntity(doc));
     } catch (_err) {
-      throw new CustomError(
-        'Database error in UserMongooseDataSource.findActive',
-        500
-      );
+      throw new CustomError(RepositoryConstants.USER.FIND_ACTIVE_ERROR.en, 500);
     }
   }
 }

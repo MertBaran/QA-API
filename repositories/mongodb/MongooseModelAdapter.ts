@@ -1,6 +1,7 @@
 import { Model } from 'mongoose';
 import { IEntityModel } from '../interfaces/IEntityModel';
 import CustomError from '../../helpers/error/CustomError';
+import { RepositoryConstants } from '../constants/RepositoryMessages';
 
 export class MongooseModelAdapter<T> implements IEntityModel<T> {
   constructor(private model: Model<T>) {}
@@ -10,7 +11,7 @@ export class MongooseModelAdapter<T> implements IEntityModel<T> {
       return await this.model.create(data);
     } catch (_err) {
       throw new CustomError(
-        'Database error in MongooseModelAdapter.create',
+        RepositoryConstants.MONGOOSE_ADAPTER.CREATE_ERROR.en,
         500
       );
     }
@@ -21,7 +22,7 @@ export class MongooseModelAdapter<T> implements IEntityModel<T> {
       return await this.model.findById(id);
     } catch (_err) {
       throw new CustomError(
-        'Database error in MongooseModelAdapter.findById',
+        RepositoryConstants.MONGOOSE_ADAPTER.FIND_BY_ID_ERROR.en,
         500
       );
     }
@@ -31,7 +32,7 @@ export class MongooseModelAdapter<T> implements IEntityModel<T> {
     try {
       return await this.model.find(query);
     } catch (_err) {
-      throw new CustomError('Database error in MongooseModelAdapter.find', 500);
+      throw new CustomError(RepositoryConstants.MONGOOSE_ADAPTER.FIND_ERROR.en, 500);
     }
   }
 
@@ -44,7 +45,7 @@ export class MongooseModelAdapter<T> implements IEntityModel<T> {
       return await this.model.findByIdAndUpdate(id, data, options);
     } catch (_err) {
       throw new CustomError(
-        'Database error in MongooseModelAdapter.findByIdAndUpdate',
+        RepositoryConstants.MONGOOSE_ADAPTER.UPDATE_BY_ID_ERROR.en,
         500
       );
     }
@@ -55,7 +56,7 @@ export class MongooseModelAdapter<T> implements IEntityModel<T> {
       return await this.model.findByIdAndDelete(id);
     } catch (_err) {
       throw new CustomError(
-        'Database error in MongooseModelAdapter.findByIdAndDelete',
+        RepositoryConstants.MONGOOSE_ADAPTER.DELETE_BY_ID_ERROR.en,
         500
       );
     }
@@ -66,7 +67,7 @@ export class MongooseModelAdapter<T> implements IEntityModel<T> {
       return await this.model.countDocuments();
     } catch (_err) {
       throw new CustomError(
-        'Database error in MongooseModelAdapter.countDocuments',
+        RepositoryConstants.MONGOOSE_ADAPTER.COUNT_ALL_ERROR.en,
         500
       );
     }
@@ -77,7 +78,7 @@ export class MongooseModelAdapter<T> implements IEntityModel<T> {
       return await this.model.deleteMany(filter);
     } catch (_err) {
       throw new CustomError(
-        'Database error in MongooseModelAdapter.deleteMany',
+        RepositoryConstants.MONGOOSE_ADAPTER.DELETE_ALL_ERROR.en,
         500
       );
     }
@@ -88,7 +89,7 @@ export class MongooseModelAdapter<T> implements IEntityModel<T> {
       return await this.model.findOne(query);
     } catch (_err) {
       throw new CustomError(
-        'Database error in MongooseModelAdapter.findOne',
+        RepositoryConstants.MONGOOSE_ADAPTER.FIND_ERROR.en,
         500
       );
     }
