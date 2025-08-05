@@ -4,10 +4,15 @@ import { sendJwtToClient } from '../helpers/authorization/tokenHelpers';
 import { injectable, inject } from 'tsyringe';
 import jwt from 'jsonwebtoken';
 import { IAuthService } from '../services/contracts/IAuthService';
+import { IUserService } from '../services/contracts/IUserService';
 import { IUserRoleService } from '../services/contracts/IUserRoleService';
+import { IRoleService } from '../services/contracts/IRoleService';
+import { IPermissionService } from '../services/contracts/IPermissionService';
 import { AuthConstants } from './constants/ControllerMessages';
 import { AuthManager } from '../services/managers/AuthManager';
 import { ILoggerProvider } from '../infrastructure/logging/ILoggerProvider';
+import { IExceptionTracker } from '../infrastructure/error/IExceptionTracker';
+import { ApplicationError } from '../helpers/error/ApplicationError';
 import type { RegisterDTO } from '../types/dto/auth/register.dto';
 import type { LoginDTO } from '../types/dto/auth/login.dto';
 import type { ForgotPasswordDTO } from '../types/dto/auth/forgot-password.dto';
@@ -33,8 +38,12 @@ interface AuthenticatedRequest<T = any> extends Request<{}, any, T> {
 export class AuthController {
   constructor(
     @inject('IAuthService') private authService: IAuthService,
+    @inject('IUserService') private userService: IUserService,
     @inject('IUserRoleService') private userRoleService: IUserRoleService,
-    @inject('ILoggerProvider') private logger: ILoggerProvider
+    @inject('IRoleService') private roleService: IRoleService,
+    @inject('IPermissionService') private permissionService: IPermissionService,
+    @inject('ILoggerProvider') private logger: ILoggerProvider,
+    @inject('IExceptionTracker') private exceptionTracker: IExceptionTracker
   ) {}
 
   googleLogin = asyncErrorWrapper(
@@ -55,6 +64,41 @@ export class AuthController {
         lang: locale,
       });
       sendJwtToClient(jwt, user, res);
+    }
+  );
+
+  // Test için özel hata endpoint'i
+  testError = asyncErrorWrapper(
+    async (req: Request, res: Response, _next: NextFunction): Promise<void> => {
+      const { errorType } = req.query;
+
+      switch (errorType) {
+        case 'user-error':
+          // Kullanıcı hatası - Pino'ya gidecek
+          throw ApplicationError.userError('Test user error', 400);
+
+        case 'system-error':
+          // Sistem hatası - Sentry'ye gidecek
+          throw ApplicationError.systemError('Test system error', 500);
+
+        case 'validation-error':
+          // Validation hatası - Pino'ya gidecek
+          throw ApplicationError.validationError('Test validation error');
+
+        case 'database-error':
+          // Database hatası - Sentry'ye gidecek
+          throw ApplicationError.databaseError('Test database error');
+
+        case 'unexpected-error':
+          // Beklenmeyen hata - Sentry'ye gidecek
+          throw new Error('Unexpected system error');
+
+        default:
+          res.json({
+            message:
+              'Use ?errorType=user-error|system-error|validation-error|database-error|unexpected-error',
+          });
+      }
     }
   );
 
@@ -89,16 +133,22 @@ export class AuthController {
       res: Response<AuthTokenResponseDTO>,
       _next: NextFunction
     ): Promise<void> => {
-      const { email, password } = req.body;
+      const { email, password, rememberMe = false } = req.body;
+
+      // Kullanıcı girişi denemesi
       const user = await this.authService.loginUser(email, password);
+
       const locale = normalizeLocale(
         req.headers['accept-language'] as string | undefined
       );
-      const jwt = AuthManager.generateJWTFromUser({
-        id: user._id,
-        name: user.name,
-        lang: locale,
-      });
+      const jwt = AuthManager.generateJWTFromUser(
+        {
+          id: user._id,
+          name: user.name,
+          lang: locale,
+        },
+        rememberMe
+      );
 
       // Audit middleware için kullanıcı bilgisini response'a ekle
       (res as any).locals = {
@@ -109,7 +159,15 @@ export class AuthController {
         },
       };
 
-      sendJwtToClient(jwt, user, res);
+      // Başarılı login log'u
+      this.logger.info('User login successful', {
+        userId: user._id,
+        email: user.email,
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+
+      sendJwtToClient(jwt, user, res, rememberMe);
     }
   );
 
@@ -196,15 +254,39 @@ export class AuthController {
   getUser = asyncErrorWrapper(
     async (
       req: AuthenticatedRequest<any>,
-      res: Response<SuccessResponseDTO<{ id: string; name: string }>>,
+      res: Response<SuccessResponseDTO<UserResponseDTO>>,
       _next: NextFunction
     ): Promise<void> => {
+      // Kullanıcının tam bilgilerini al
+      const user = await this.userService.findById(req.user!.id);
+      if (!user) {
+        throw ApplicationError.userError('User not found', 404);
+      }
+
+      // UserRole tablosundan role'leri çek
+      const userRoles = await this.userRoleService.getUserActiveRoles(user._id);
+      const roleIds = userRoles.map(userRole => userRole.roleId);
+
+      // Güvenli response - password ve diğer hassas bilgileri çıkar
+      const safeUser: UserResponseDTO = {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        roles: roleIds,
+        title: user.title,
+        about: user.about,
+        place: user.place,
+        website: user.website,
+        profile_image: user.profile_image,
+        blocked: user.blocked,
+        createdAt: user.createdAt,
+        language: user.language,
+        notificationPreferences: user.notificationPreferences,
+      };
+
       res.json({
         success: true,
-        data: {
-          id: req.user!.id,
-          name: req.user!.name,
-        },
+        data: safeUser,
       });
     }
   );
@@ -310,12 +392,96 @@ export class AuthController {
       await this.authService.resetPassword(token, newPassword);
       const message = await i18n(
         AuthConstants.PasswordResetSuccess,
-        req.locale ?? 'en'
+        req.locale
       );
       res.status(200).json({
         success: true,
         message,
       });
+    }
+  );
+
+  // Admin permission check endpoint'i
+  checkAdminPermissions = asyncErrorWrapper(
+    async (
+      req: AuthenticatedRequest,
+      res: Response<{
+        success: boolean;
+        hasAdminPermission: boolean;
+        permissions: string[];
+      }>,
+      _next: NextFunction
+    ): Promise<void> => {
+      if (!req.user) {
+        throw ApplicationError.authenticationError('User not authenticated');
+      }
+
+      try {
+        // Kullanıcının tüm permission'larını al
+        const userRoles = await this.userRoleService.getUserActiveRoles(
+          req.user.id
+        );
+
+        if (userRoles.length === 0) {
+          res.status(200).json({
+            success: true,
+            hasAdminPermission: false,
+            permissions: [],
+          });
+          return;
+        }
+
+        // Role'lerin permission'larını al
+        const roleIds = userRoles.map(userRole => userRole.roleId);
+        const roles = await Promise.all(
+          roleIds.map((roleId: string) => this.roleService.findById(roleId))
+        );
+
+        // Tüm permission ID'lerini topla
+        const permissionIds: string[] = [];
+        roles.forEach((role: any) => {
+          if (role && role.isActive && role.permissions) {
+            role.permissions.forEach((permission: any) => {
+              if (typeof permission === 'string') {
+                permissionIds.push(permission);
+              } else if (permission && permission._id) {
+                permissionIds.push(permission._id.toString());
+              }
+            });
+          }
+        });
+
+        // Permission'ları al
+        const permissions = await Promise.all(
+          permissionIds.map((permissionId: string) =>
+            this.permissionService.findById(permissionId)
+          )
+        );
+
+        // Aktif permission'ların name'lerini al
+        const activePermissions = permissions
+          .filter((permission: any) => permission && permission.isActive)
+          .map((permission: any) => permission!.name);
+
+        const hasAdminPermission = activePermissions.includes('system:admin');
+
+        res.status(200).json({
+          success: true,
+          hasAdminPermission,
+          permissions: activePermissions,
+        });
+      } catch (error) {
+        // Database veya service hatalarını system error olarak ele al
+        if (error instanceof ApplicationError) {
+          throw error; // Zaten ApplicationError ise direkt fırlat
+        }
+
+        // Diğer hataları system error'a çevir
+        throw ApplicationError.systemError(
+          'Failed to check admin permissions',
+          500
+        );
+      }
     }
   );
 }

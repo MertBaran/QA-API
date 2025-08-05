@@ -24,8 +24,12 @@ try {
 
 const authController = new AuthController(
   container.resolve('IAuthService'),
+  container.resolve('IUserService'),
   container.resolve('IUserRoleService'),
-  loggerProvider
+  container.resolve('IRoleService'),
+  container.resolve('IPermissionService'),
+  loggerProvider,
+  container.resolve('IExceptionTracker')
 );
 const validator = container.resolve<IValidationProvider>('IValidationProvider');
 const auditMiddleware = new AuditMiddleware(
@@ -70,5 +74,14 @@ router.post(
   authController.imageUpload
 );
 router.post('/loginGoogle', authController.googleLogin);
+
+router.get('/test-error', authController.testError);
+
+// Admin permission check endpoint'i
+router.get(
+  '/check-admin-permissions',
+  getAccessToRoute,
+  authController.checkAdminPermissions
+);
 
 export default router;
