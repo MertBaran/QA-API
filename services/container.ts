@@ -120,6 +120,7 @@ container.registerSingleton(TOKENS.IUserService, UserManager);
 container.registerSingleton(TOKENS.IQuestionService, QuestionManager);
 container.registerSingleton(TOKENS.IAnswerService, AnswerManager);
 container.registerSingleton(TOKENS.IAdminService, AdminManager);
+
 container.registerSingleton(TOKENS.IPermissionService, PermissionManager);
 container.registerSingleton(TOKENS.IRoleService, RoleManager);
 container.registerSingleton(TOKENS.IUserRoleService, UserRoleManager);

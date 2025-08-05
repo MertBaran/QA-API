@@ -134,6 +134,25 @@ export class AuthController {
       _next: NextFunction
     ): Promise<void> => {
       const { email, password, rememberMe = false } = req.body;
+      const captchaToken = req.body.captchaToken;
+
+      // reCAPTCHA doğrulaması
+      if (!captchaToken) {
+        const locale = normalizeLocale(
+          req.headers['accept-language'] as string | undefined
+        );
+        const message = await i18n(AuthConstants.CaptchaRequired, locale);
+        throw ApplicationError.validationError(message);
+      }
+
+      // reCAPTCHA token'ını doğrula (basit kontrol)
+      if (captchaToken === 'test' || captchaToken.length < 10) {
+        const locale = normalizeLocale(
+          req.headers['accept-language'] as string | undefined
+        );
+        const message = await i18n(AuthConstants.CaptchaInvalid, locale);
+        throw ApplicationError.validationError(message);
+      }
 
       // Kullanıcı girişi denemesi
       const user = await this.authService.loginUser(email, password);

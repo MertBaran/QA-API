@@ -88,6 +88,16 @@ export const AuthConstants = {
     tr: 'Şifre başarıyla sıfırlandı',
     de: 'Passwort erfolgreich zurückgesetzt',
   },
+  CaptchaRequired: {
+    en: 'reCAPTCHA verification required',
+    tr: 'reCAPTCHA doğrulaması gerekli',
+    de: 'reCAPTCHA-Verifizierung erforderlich',
+  },
+  CaptchaInvalid: {
+    en: 'Invalid reCAPTCHA token',
+    tr: 'Geçersiz reCAPTCHA token',
+    de: 'Ungültiger reCAPTCHA-Token',
+  },
 };
 
 export const NotificationConstants = {

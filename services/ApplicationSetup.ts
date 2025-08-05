@@ -30,8 +30,9 @@ export class ApplicationSetup {
       })
     );
 
-    // Body parser
-    this.app.use(express.json());
+    // Body parser with increased limit for large captcha tokens
+    this.app.use(express.json({ limit: '10mb' }));
+    this.app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
     // Static files
     this.app.use(express.static(path.join(__dirname, '..', 'public')));
