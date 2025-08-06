@@ -38,6 +38,21 @@ export class RoleMongooseDataSource implements IRoleDataSource {
     return result ? this.toEntity(result) : null;
   }
 
+  async findByField(
+    field: keyof IRoleModel,
+    value: any
+  ): Promise<IRoleModel[]> {
+    const roles = await RoleMongo.find({ [field]: value }).populate(
+      'permissions'
+    );
+    return roles.map(role => this.toEntity(role));
+  }
+
+  async findByFields(fields: Partial<IRoleModel>): Promise<IRoleModel[]> {
+    const roles = await RoleMongo.find(fields).populate('permissions');
+    return roles.map(role => this.toEntity(role));
+  }
+
   async findByName(name: string): Promise<IRoleModel | null> {
     const role = await RoleMongo.findOne({ name }).populate('permissions');
     return role ? this.toEntity(role) : null;

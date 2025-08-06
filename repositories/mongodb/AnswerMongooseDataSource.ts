@@ -125,6 +125,24 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
     }
   }
 
+  async findByField(field: keyof IAnswerModel, value: any): Promise<IAnswerModel[]> {
+    try {
+      const results = await this.model.find({ [field]: value });
+      return results.map((doc: any) => this.toEntity(doc));
+    } catch (_err) {
+      throw new CustomError(RepositoryConstants.ANSWER.FIND_ALL_ERROR.en, 500);
+    }
+  }
+
+  async findByFields(fields: Partial<IAnswerModel>): Promise<IAnswerModel[]> {
+    try {
+      const results = await this.model.find(fields);
+      return results.map((doc: any) => this.toEntity(doc));
+    } catch (_err) {
+      throw new CustomError(RepositoryConstants.ANSWER.FIND_ALL_ERROR.en, 500);
+    }
+  }
+
   async countAll(): Promise<number> {
     try {
       return this.model.countDocuments();

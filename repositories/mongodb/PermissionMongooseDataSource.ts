@@ -38,6 +38,21 @@ export class PermissionMongooseDataSource implements IPermissionDataSource {
     return result ? this.toEntity(result) : null;
   }
 
+  async findByField(
+    field: keyof IPermissionModel,
+    value: any
+  ): Promise<IPermissionModel[]> {
+    const permissions = await PermissionMongo.find({ [field]: value });
+    return permissions.map(permission => this.toEntity(permission));
+  }
+
+  async findByFields(
+    fields: Partial<IPermissionModel>
+  ): Promise<IPermissionModel[]> {
+    const permissions = await PermissionMongo.find(fields);
+    return permissions.map(permission => this.toEntity(permission));
+  }
+
   async findByName(name: string): Promise<IPermissionModel | null> {
     const permission = await PermissionMongo.findOne({ name });
     return permission ? this.toEntity(permission) : null;

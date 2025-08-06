@@ -59,6 +59,11 @@ import { UserRoleRepository } from '../repositories/UserRoleRepository';
 import { PermissionMongooseDataSource } from '../repositories/mongodb/PermissionMongooseDataSource';
 import { RoleMongooseDataSource } from '../repositories/mongodb/RoleMongooseDataSource';
 import { UserRoleMongooseDataSource } from '../repositories/mongodb/UserRoleMongooseDataSource';
+import { BookmarkManager } from './managers/BookmarkManager';
+import { BookmarkRepository } from '../repositories/BookmarkRepository';
+import { BookmarkMongooseDataSource } from '../repositories/mongodb/BookmarkMongooseDataSource';
+
+import { BookmarkController } from '../controllers/bookmarkController';
 
 // Register core services first
 container.registerSingleton(TOKENS.BootstrapService, BootstrapService);
@@ -101,6 +106,10 @@ container.registerSingleton(
   TOKENS.IUserRoleDataSource,
   UserRoleMongooseDataSource
 );
+container.registerSingleton(
+  TOKENS.IBookmarkDataSource,
+  BookmarkMongooseDataSource
+);
 
 // Register repositories
 container.registerSingleton(TOKENS.IUserRepository, UserRepository);
@@ -113,12 +122,14 @@ container.registerSingleton(
 container.registerSingleton(TOKENS.IPermissionRepository, PermissionRepository);
 container.registerSingleton(TOKENS.IRoleRepository, RoleRepository);
 container.registerSingleton(TOKENS.IUserRoleRepository, UserRoleRepository);
+container.registerSingleton(TOKENS.IBookmarkRepository, BookmarkRepository);
 
 // Register managers as services
 container.registerSingleton(TOKENS.IAuthService, AuthManager);
 container.registerSingleton(TOKENS.IUserService, UserManager);
 container.registerSingleton(TOKENS.IQuestionService, QuestionManager);
 container.registerSingleton(TOKENS.IAnswerService, AnswerManager);
+container.registerSingleton(TOKENS.IBookmarkService, BookmarkManager);
 container.registerSingleton(TOKENS.IAdminService, AdminManager);
 
 container.registerSingleton(TOKENS.IPermissionService, PermissionManager);
@@ -207,6 +218,7 @@ container.registerSingleton(TOKENS.UserController, UserController);
 container.registerSingleton(TOKENS.AdminController, AdminController);
 container.registerSingleton(TOKENS.QuestionController, QuestionController);
 container.registerSingleton(TOKENS.AnswerController, AnswerController);
+container.registerSingleton(TOKENS.BookmarkController, BookmarkController);
 container.registerSingleton(
   TOKENS.NotificationController,
   NotificationController

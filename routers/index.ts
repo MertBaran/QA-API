@@ -10,6 +10,7 @@ import answerRouter from './answerRouter';
 import notificationRouter from './notificationRouter';
 import monitoringRouter from './monitoringRouter';
 import permissionRouter from './permissionRouter';
+import bookmarkRouter from './bookmarkRouter';
 router.get('/', (req: Request, res: Response) => {
   res.send('Home Page');
 });
@@ -22,5 +23,6 @@ router.use('/questions/:question_id/answers', answerRouter);
 router.use('/notifications', notificationRouter);
 router.use('/monitoring', monitoringRouter);
 router.use('/permissions', permissionRouter);
+router.use('/bookmarks', bookmarkRouter);
 
 export default router;

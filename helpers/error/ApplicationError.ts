@@ -98,6 +98,15 @@ export class ApplicationError extends Error {
     );
   }
 
+  static forbiddenError(message: string = 'Access denied'): ApplicationError {
+    return new ApplicationError(
+      message,
+      403,
+      ErrorCategory.AUTHORIZATION_ERROR,
+      ErrorSeverity.LOW
+    );
+  }
+
   static authorizationError(
     message: string = 'Access denied'
   ): ApplicationError {

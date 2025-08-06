@@ -100,6 +100,27 @@ export class UserMongooseDataSource implements IDataSource<IUserModel> {
     }
   }
 
+  async findByField(
+    field: keyof IUserModel,
+    value: any
+  ): Promise<IUserModel[]> {
+    try {
+      const results = await this.model.find({ [field]: value });
+      return results.map((doc: any) => this.toEntity(doc));
+    } catch (_err) {
+      throw new CustomError(RepositoryConstants.USER.FIND_ALL_ERROR.en, 500);
+    }
+  }
+
+  async findByFields(fields: Partial<IUserModel>): Promise<IUserModel[]> {
+    try {
+      const results = await this.model.find(fields);
+      return results.map((doc: any) => this.toEntity(doc));
+    } catch (_err) {
+      throw new CustomError(RepositoryConstants.USER.FIND_ALL_ERROR.en, 500);
+    }
+  }
+
   async countAll(): Promise<number> {
     try {
       return this.model.countDocuments();

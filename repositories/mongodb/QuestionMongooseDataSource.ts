@@ -133,6 +133,35 @@ export class QuestionMongooseDataSource implements IDataSource<IQuestionModel> {
     }
   }
 
+  async findByField(
+    field: keyof IQuestionModel,
+    value: any
+  ): Promise<IQuestionModel[]> {
+    try {
+      const results = await this.model.find({ [field]: value });
+      return results.map((doc: any) => this.toEntity(doc));
+    } catch (_err) {
+      throw new CustomError(
+        RepositoryConstants.QUESTION.FIND_ALL_ERROR.en,
+        500
+      );
+    }
+  }
+
+  async findByFields(
+    fields: Partial<IQuestionModel>
+  ): Promise<IQuestionModel[]> {
+    try {
+      const results = await this.model.find(fields);
+      return results.map((doc: any) => this.toEntity(doc));
+    } catch (_err) {
+      throw new CustomError(
+        RepositoryConstants.QUESTION.FIND_ALL_ERROR.en,
+        500
+      );
+    }
+  }
+
   async countAll(): Promise<number> {
     try {
       return this.model.countDocuments();

@@ -98,7 +98,45 @@ export const AuthConstants = {
     tr: 'Geçersiz reCAPTCHA token',
     de: 'Ungültiger reCAPTCHA-Token',
   },
-};
+} satisfies Record<string, L10n>;
+
+export const BookmarkConstants = {
+  BookmarkAdded: {
+    en: 'Bookmark added successfully',
+    tr: 'Bookmark başarıyla eklendi',
+    de: 'Lesezeichen erfolgreich hinzugefügt',
+  },
+  BookmarkRemoved: {
+    en: 'Bookmark removed successfully',
+    tr: 'Bookmark başarıyla kaldırıldı',
+    de: 'Lesezeichen erfolgreich entfernt',
+  },
+  BookmarkNotFound: {
+    en: 'Bookmark not found',
+    tr: 'Bookmark bulunamadı',
+    de: 'Lesezeichen nicht gefunden',
+  },
+  CollectionCreated: {
+    en: 'Collection created successfully',
+    tr: 'Koleksiyon başarıyla oluşturuldu',
+    de: 'Sammlung erfolgreich erstellt',
+  },
+  CollectionDeleted: {
+    en: 'Collection deleted successfully',
+    tr: 'Koleksiyon başarıyla silindi',
+    de: 'Sammlung erfolgreich gelöscht',
+  },
+  BookmarkAddedToCollection: {
+    en: 'Bookmark added to collection successfully',
+    tr: 'Bookmark koleksiyona başarıyla eklendi',
+    de: 'Lesezeichen erfolgreich zur Sammlung hinzugefügt',
+  },
+  BookmarkRemovedFromCollection: {
+    en: 'Bookmark removed from collection successfully',
+    tr: 'Bookmark koleksiyondan başarıyla kaldırıldı',
+    de: 'Lesezeichen erfolgreich aus der Sammlung entfernt',
+  },
+} satisfies Record<string, L10n>;
 
 export const NotificationConstants = {
   NotificationSentSuccess: {

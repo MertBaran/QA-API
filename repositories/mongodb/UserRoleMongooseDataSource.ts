@@ -94,6 +94,35 @@ export class UserRoleMongooseDataSource implements IDataSource<IUserRoleModel> {
     }
   }
 
+  async findByField(
+    field: keyof IUserRoleModel,
+    value: any
+  ): Promise<IUserRoleModel[]> {
+    try {
+      const results = await this.model.find({ [field]: value });
+      return results.map((doc: any) => this.toEntity(doc));
+    } catch (_err) {
+      throw new CustomError(
+        RepositoryConstants.USER_ROLE.FIND_ALL_ERROR.en,
+        500
+      );
+    }
+  }
+
+  async findByFields(
+    fields: Partial<IUserRoleModel>
+  ): Promise<IUserRoleModel[]> {
+    try {
+      const results = await this.model.find(fields);
+      return results.map((doc: any) => this.toEntity(doc));
+    } catch (_err) {
+      throw new CustomError(
+        RepositoryConstants.USER_ROLE.FIND_ALL_ERROR.en,
+        500
+      );
+    }
+  }
+
   async countAll(): Promise<number> {
     try {
       return this.model.countDocuments();

@@ -65,6 +65,18 @@ export class FakeUserDataSource implements IDataSource<IUserModel> {
     return user;
   }
 
+  async findByField(field: keyof IUserModel, value: any): Promise<IUserModel[]> {
+    const users = Array.from(this.store.values());
+    return users.filter(user => user[field] === value);
+  }
+
+  async findByFields(fields: Partial<IUserModel>): Promise<IUserModel[]> {
+    const users = Array.from(this.store.values());
+    return users.filter(user => {
+      return Object.entries(fields).every(([key, value]) => user[key as keyof IUserModel] === value);
+    });
+  }
+
   async countAll(): Promise<number> {
     return this.store.size;
   }

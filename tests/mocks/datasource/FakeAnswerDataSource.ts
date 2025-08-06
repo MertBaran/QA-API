@@ -47,6 +47,18 @@ export class FakeAnswerDataSource implements IDataSource<IAnswerModel> {
     return answer;
   }
 
+  async findByField(field: keyof IAnswerModel, value: any): Promise<IAnswerModel[]> {
+    const answers = Array.from(this.store.values());
+    return answers.filter(answer => answer[field] === value);
+  }
+
+  async findByFields(fields: Partial<IAnswerModel>): Promise<IAnswerModel[]> {
+    const answers = Array.from(this.store.values());
+    return answers.filter(answer => {
+      return Object.entries(fields).every(([key, value]) => answer[key as keyof IAnswerModel] === value);
+    });
+  }
+
   async countAll(): Promise<number> {
     return this.store.size;
   }
