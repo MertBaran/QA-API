@@ -24,7 +24,7 @@ export class WebhookChannel extends NotificationChannel {
       to: payload.to,
       message: payload.message,
       subject: payload.subject,
-      channel: this.type
+      channel: this.type,
     });
 
     try {
@@ -44,18 +44,21 @@ export class WebhookChannel extends NotificationChannel {
       // });
 
       await new Promise(resolve => setTimeout(resolve, 200));
-      
+
       this.logger.debug(`Webhook notification completed successfully`, {
         to: payload.to,
-        duration: '200ms'
+        duration: '200ms',
       });
     } catch (error) {
-      this.logger.error(`Webhook sending failed: ${error instanceof Error ? error.message : 'Unknown error'}`, {
-        to: payload.to,
-        message: payload.message,
-        channel: this.type,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
+      this.logger.error(
+        `Webhook sending failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        {
+          to: payload.to,
+          message: payload.message,
+          channel: this.type,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        }
+      );
       throw error;
     }
   }

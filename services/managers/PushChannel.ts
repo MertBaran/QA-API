@@ -24,24 +24,27 @@ export class PushChannel extends NotificationChannel {
       to: payload.to,
       message: payload.message,
       subject: payload.subject,
-      channel: this.type
+      channel: this.type,
     });
 
     try {
       // Simüle edilmiş push notification gönderimi
       await new Promise(resolve => setTimeout(resolve, 50));
-      
+
       this.logger.debug(`Push notification completed successfully`, {
         to: payload.to,
-        duration: '50ms'
+        duration: '50ms',
       });
     } catch (error) {
-      this.logger.error(`Push notification failed: ${error instanceof Error ? error.message : 'Unknown error'}`, {
-        to: payload.to,
-        message: payload.message,
-        channel: this.type,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
+      this.logger.error(
+        `Push notification failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        {
+          to: payload.to,
+          message: payload.message,
+          channel: this.type,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        }
+      );
       throw error;
     }
   }
