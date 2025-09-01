@@ -2,16 +2,29 @@ import { injectable } from 'tsyringe';
 import { NotificationChannel } from '../contracts/NotificationChannel';
 import { NotificationPayload } from '../contracts/NotificationPayload';
 import { createSMTPTransporter } from '../../helpers/smtp/smtpConfig';
+import { ILoggerProvider } from '../../infrastructure/logging/ILoggerProvider';
 
 @injectable()
 export class EmailChannel extends NotificationChannel {
   readonly type = 'email';
+  private logger: ILoggerProvider;
+
+  constructor(logger: ILoggerProvider) {
+    super();
+    this.logger = logger;
+  }
 
   displayName() {
     return 'E-posta';
   }
 
   async send(payload: NotificationPayload): Promise<void> {
+    this.logger.info(`Email notification sent`, {
+      to: payload.to,
+      subject: payload.subject,
+      channel: this.type,
+    });
+
     const transporter = createSMTPTransporter();
 
     try {
@@ -23,7 +36,22 @@ export class EmailChannel extends NotificationChannel {
       };
 
       const _info = await transporter.sendMail(mailOptions);
+
+      this.logger.debug(`Email notification completed successfully`, {
+        to: payload.to,
+        subject: payload.subject,
+        channel: this.type,
+      });
     } catch (_error) {
+      this.logger.error(
+        `Email sending failed: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
+        {
+          to: payload.to,
+          subject: payload.subject,
+          channel: this.type,
+          error: _error instanceof Error ? _error.message : 'Unknown error',
+        }
+      );
       throw new Error('Email sending failed');
     }
   }
@@ -34,6 +62,13 @@ export class EmailChannel extends NotificationChannel {
     to: string,
     subject: string
   ): Promise<void> {
+    this.logger.info(`Email template notification sent`, {
+      to,
+      subject,
+      template: templateName,
+      channel: this.type,
+    });
+
     const html = this.generateTemplate(templateName, templateData);
 
     await this.send({
