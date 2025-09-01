@@ -1,6 +1,6 @@
 {
   "name": "qa-api",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "description": "Questions and Answers Rest API",
   "main": "APP.js",
   "scripts": {
