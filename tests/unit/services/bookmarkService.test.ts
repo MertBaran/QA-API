@@ -9,11 +9,13 @@ import {
 import { ApplicationError } from '../../../helpers/error/ApplicationError';
 import { FakeBookmarkRepository } from '../../mocks/repositories/FakeBookmarkRepository';
 import { FakeLoggerProvider } from '../../mocks/logger/FakeLoggerProvider';
+import { FakeCacheProvider } from '../../mocks/cache/FakeCacheProvider';
 
 describe('BookmarkService', () => {
   let bookmarkService: IBookmarkService;
   let bookmarkRepository: IBookmarkRepository;
   let fakeLogger: FakeLoggerProvider;
+  let fakeCache: FakeCacheProvider;
 
   beforeEach(() => {
     // Clear container and register fake dependencies
@@ -21,6 +23,9 @@ describe('BookmarkService', () => {
 
     fakeLogger = new FakeLoggerProvider();
     container.registerInstance('ILoggerProvider', fakeLogger);
+
+    fakeCache = new FakeCacheProvider();
+    container.registerInstance('ICacheProvider', fakeCache);
 
     bookmarkRepository = new FakeBookmarkRepository();
     container.registerInstance('IBookmarkRepository', bookmarkRepository);
@@ -108,13 +113,13 @@ describe('BookmarkService', () => {
       expect(result).toBe(true);
     });
 
-    it('should return false if bookmark does not exist', async () => {
+    it('should throw error if bookmark does not exist', async () => {
       const userId = '507f1f77bcf86cd799439012';
       const bookmarkId = '507f1f77bcf86cd799439014';
 
-      const result = await bookmarkService.removeBookmark(userId, bookmarkId);
-
-      expect(result).toBe(false);
+      await expect(
+        bookmarkService.removeBookmark(userId, bookmarkId)
+      ).rejects.toThrow(ApplicationError);
     });
   });
 
@@ -328,15 +333,15 @@ describe('BookmarkService', () => {
       expect(updatedBookmark?.is_public).toBe(true);
     });
 
-    it('should return null if bookmark does not exist', async () => {
+    it('should throw error if bookmark does not exist', async () => {
       const userId = '507f1f77bcf86cd799439012';
       const bookmarkId = '507f1f77bcf86cd799439014';
 
-      const result = await bookmarkService.updateBookmark(userId, bookmarkId, {
-        notes: 'Updated notes',
-      });
-
-      expect(result).toBeNull();
+      await expect(
+        bookmarkService.updateBookmark(userId, bookmarkId, {
+          notes: 'Updated notes',
+        })
+      ).rejects.toThrow(ApplicationError);
     });
   });
 });

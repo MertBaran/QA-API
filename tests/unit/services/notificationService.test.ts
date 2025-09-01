@@ -10,6 +10,11 @@ import { IUserService } from '../../../services/contracts/IUserService';
 import { INotificationRepository } from '../../../repositories/interfaces/INotificationRepository';
 import { IEnvironmentProvider } from '../../../services/contracts/IEnvironmentProvider';
 import { ILoggerProvider } from '../../../infrastructure/logging/ILoggerProvider';
+import { container } from 'tsyringe';
+import { FakeMultiChannelNotificationManager } from '../../mocks/managers/FakeMultiChannelNotificationManager';
+import { FakeQueueBasedNotificationManager } from '../../mocks/managers/FakeQueueBasedNotificationManager';
+import { MultiChannelNotificationManager } from '../../../services/managers/MultiChannelNotificationManager';
+import { QueueBasedNotificationManager } from '../../../services/managers/QueueBasedNotificationManager';
 
 describe('SmartNotificationManager Unit Tests', () => {
   let notificationManager: SmartNotificationManager;
@@ -23,6 +28,17 @@ describe('SmartNotificationManager Unit Tests', () => {
   beforeEach(() => {
     fakeStrategy = {
       getStrategy: jest.fn().mockReturnValue('direct'),
+      createContext: jest.fn().mockReturnValue({
+        userId: '123',
+        userType: 'standard',
+        notificationType: 'NORMAL',
+        priority: 'NORMAL',
+        channel: 'email',
+        template: 'default',
+        language: 'en',
+        timezone: 'UTC',
+        preferences: {},
+      }),
     } as any;
 
     fakeMetricsCollector = {
@@ -45,6 +61,34 @@ describe('SmartNotificationManager Unit Tests', () => {
       findActive: jest.fn(),
       countAll: jest.fn(),
     } as any;
+
+    // Create fake managers AFTER fakeUserService is defined
+    const fakeMultiChannelManager = new FakeMultiChannelNotificationManager(
+      {} as any, // channelRegistry
+      fakeUserService // Use the same fakeUserService instance
+    );
+
+    const fakeQueueManager = new FakeQueueBasedNotificationManager(
+      {} as any, // queueProvider
+      fakeUserService, // Use the same fakeUserService instance
+      {} as any // logger
+    );
+
+    jest.spyOn(container, 'resolve').mockImplementation((token: any) => {
+      if (
+        token === 'QueueBasedNotificationManager' ||
+        token === QueueBasedNotificationManager
+      ) {
+        return fakeQueueManager;
+      }
+      if (
+        token === 'MultiChannelNotificationManager' ||
+        token === MultiChannelNotificationManager
+      ) {
+        return fakeMultiChannelManager;
+      }
+      throw new Error(`Unknown token: ${token}`);
+    });
 
     fakeNotificationRepository = {
       createNotification: jest.fn().mockResolvedValue({

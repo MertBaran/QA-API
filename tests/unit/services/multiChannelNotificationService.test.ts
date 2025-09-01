@@ -7,6 +7,11 @@ import {
 import { INotificationChannelRegistry } from '../../../services/contracts/INotificationChannelRegistry';
 import { IUserService } from '../../../services/contracts/IUserService';
 import { NotificationChannel } from '../../../services/contracts/NotificationChannel';
+import { container } from 'tsyringe';
+import { FakeEmailChannel } from '../../mocks/channels/FakeEmailChannel';
+import { FakeSMSChannel } from '../../mocks/channels/FakeSMSChannel';
+import { FakePushChannel } from '../../mocks/channels/FakePushChannel';
+import { FakeWebhookChannel } from '../../mocks/channels/FakeWebhookChannel';
 
 describe('MultiChannelNotificationManager Unit Tests', () => {
   let multiChannelNotificationManager: MultiChannelNotificationManager;
@@ -18,6 +23,12 @@ describe('MultiChannelNotificationManager Unit Tests', () => {
   let fakeWebhookChannel: NotificationChannel;
 
   beforeEach(() => {
+    // Register fake channels in the container
+    container.registerInstance('IEmailChannel', new FakeEmailChannel());
+    container.registerInstance('ISMSChannel', new FakeSMSChannel());
+    container.registerInstance('IPushChannel', new FakePushChannel());
+    container.registerInstance('IWebhookChannel', new FakeWebhookChannel());
+
     fakeEmailChannel = {
       type: 'email',
       displayName: () => 'Email',

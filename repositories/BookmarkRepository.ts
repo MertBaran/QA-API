@@ -34,8 +34,8 @@ export class BookmarkRepository implements IBookmarkRepository {
       });
       return bookmark;
     } catch (error) {
-      // Minimal logging - detailed logging will be handled by appErrorHandler
-      throw ApplicationError.databaseError('Bookmark oluşturulamadı');
+      // Orijinal hatayı üst katmana ilet (manager doğru sınıflandıracak)
+      throw error;
     }
   }
 
@@ -285,7 +285,7 @@ export class BookmarkRepository implements IBookmarkRepository {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      
+
       this.logger.info('Bookmark collection created successfully', {
         collectionId: newCollection._id,
       });

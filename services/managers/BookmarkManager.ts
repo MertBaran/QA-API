@@ -36,6 +36,22 @@ export class BookmarkManager implements IBookmarkService {
     bookmarkData: AddBookmarkDTO
   ): Promise<IBookmarkModel> {
     try {
+      // Validate and sanitize to avoid Mongoose Validation/Cast errors
+      const isValidObjectId = (val: any) =>
+        typeof val === 'string' && /^[0-9a-fA-F]{24}$/.test(val);
+
+      if (!isValidObjectId(bookmarkData.targetId)) {
+        throw ApplicationError.validationError('Geçersiz hedef kimliği');
+      }
+
+      const sanitizedTargetData = {
+        ...bookmarkData.targetData,
+        authorId:
+          bookmarkData.targetData.authorId &&
+          isValidObjectId(bookmarkData.targetData.authorId)
+            ? bookmarkData.targetData.authorId
+            : undefined,
+      } as any;
       // Check if bookmark already exists
       const existingBookmark =
         await this.bookmarkRepository.findByUserAndTarget(
@@ -54,7 +70,7 @@ export class BookmarkManager implements IBookmarkService {
         user_id: userId,
         target_type: bookmarkData.targetType,
         target_id: bookmarkData.targetId,
-        target_data: bookmarkData.targetData,
+        target_data: sanitizedTargetData,
         tags: bookmarkData.tags || [],
         notes: bookmarkData.notes || '',
         is_public: bookmarkData.isPublic || false,
@@ -72,7 +88,25 @@ export class BookmarkManager implements IBookmarkService {
       });
 
       return bookmark;
-    } catch (error) {
+    } catch (error: any) {
+      // Duplicate key (11000) -> unique index violation
+      if (
+        error &&
+        (error.code === 11000 ||
+          (error?.name === 'MongoServerError' && error?.code === 11000))
+      ) {
+        throw ApplicationError.validationError(
+          "Bu öğe zaten bookmark'larınızda mevcut"
+        );
+      }
+      if (error?.name === 'ValidationError') {
+        throw ApplicationError.validationError(
+          error.message || 'Geçersiz bookmark verisi'
+        );
+      }
+      if (error?.name === 'CastError') {
+        throw ApplicationError.validationError('Geçersiz veri türü');
+      }
       if (error instanceof ApplicationError) {
         throw error;
       }

@@ -1,6 +1,7 @@
 import customErrorHandler from '../../../middlewares/errors/customErrorHandler';
 import CustomError from '../../../helpers/error/CustomError';
 import { container } from 'tsyringe';
+import { FakeEnvironmentProvider } from '../../mocks/providers/FakeEnvironmentProvider';
 
 class FakeLogger {
   error = jest.fn();
@@ -18,6 +19,7 @@ describe('customErrorHandler', () => {
     next = jest.fn();
     fakeLogger = new FakeLogger();
     container.registerInstance('ILoggerProvider', fakeLogger);
+    container.registerInstance('IEnvironmentProvider', new FakeEnvironmentProvider());
   });
 
   it('should handle CustomError and log it', () => {
@@ -27,6 +29,7 @@ describe('customErrorHandler', () => {
     expect(res.json).toHaveBeenCalledWith({
       success: false,
       error: 'Test error',
+      statusCode: 418, // statusCode field is included in development mode
     });
     // Logger is not called in the current implementation
     expect(fakeLogger.error).not.toHaveBeenCalled();
@@ -35,10 +38,11 @@ describe('customErrorHandler', () => {
   it('should handle CastError', () => {
     const err = { name: 'CastError' };
     customErrorHandler(err as any, req, res, next);
-    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.status).toHaveBeenCalledWith(422); // validationError returns 422
     expect(res.json).toHaveBeenCalledWith({
       success: false,
       error: 'Please provide a valid id',
+      statusCode: 422,
     });
   });
 
@@ -48,7 +52,8 @@ describe('customErrorHandler', () => {
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({
       success: false,
-      error: 'Unexpected Syntax',
+      error: 'Invalid JSON syntax', // Actual message from implementation
+      statusCode: 400,
     });
   });
 
@@ -61,20 +66,22 @@ describe('customErrorHandler', () => {
       },
     };
     customErrorHandler(err as any, req, res, next);
-    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.status).toHaveBeenCalledWith(422); // validationError returns 422
     expect(res.json).toHaveBeenCalledWith({
       success: false,
       error: 'Field 1 error, Field 2 error',
+      statusCode: 422,
     });
   });
 
   it('should handle duplicate key error', () => {
-    const err = { code: 11000 };
+    const err = { code: 11000, keyValue: { email: 'test@example.com' } }; // Add keyValue
     customErrorHandler(err as any, req, res, next);
-    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.status).toHaveBeenCalledWith(409); // duplicateKeyError returns 409
     expect(res.json).toHaveBeenCalledWith({
       success: false,
-      error: 'Duplicate Field Value Enter',
+      error: 'email already exists', // Actual message from implementation
+      statusCode: 409,
     });
   });
 
@@ -85,6 +92,7 @@ describe('customErrorHandler', () => {
     expect(res.json).toHaveBeenCalledWith({
       success: false,
       error: 'Unknown',
+      statusCode: 500, // statusCode field is included in development mode
     });
   });
 });

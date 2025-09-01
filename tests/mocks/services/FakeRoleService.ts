@@ -3,175 +3,191 @@ import { IRoleModel } from '../../../models/interfaces/IRoleModel';
 import { EntityId } from '../../../types/database';
 
 export class FakeRoleService implements IRoleService {
-  private roles: IRoleModel[] = [
-    {
-      _id: 'role1',
-      name: 'admin',
-      description: 'Administrator role',
-      permissions: [],
-      isSystem: true,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      _id: 'role2',
-      name: 'moderator',
-      description: 'Moderator role',
-      permissions: [],
-      isSystem: true,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-    {
-      _id: 'role3',
-      name: 'user',
-      description: 'User role',
-      permissions: [],
-      isSystem: true,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    },
-  ];
+  private roles: IRoleModel[] = [];
 
-  async findById(roleId: EntityId): Promise<IRoleModel | null> {
-    return this.roles.find(role => role._id === roleId) || null;
+  addRole(role: IRoleModel): void {
+    this.roles.push(role);
   }
 
-  async findByName(name: string): Promise<IRoleModel | null> {
-    return this.roles.find(role => role.name === name) || null;
+  async create(roleData: Partial<IRoleModel>): Promise<IRoleModel> {
+    const role: IRoleModel = {
+      _id: `role_${Date.now()}`,
+      name: roleData.name || 'Test Role',
+      description: roleData.description || 'Test description',
+      permissions: roleData.permissions || [],
+      isActive: roleData.isActive !== undefined ? roleData.isActive : true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as IRoleModel;
+
+    this.roles.push(role);
+    return role;
+  }
+
+  async findById(roleId: EntityId): Promise<IRoleModel | null> {
+    const role = this.roles.find(r => r._id === roleId);
+    return role || null;
   }
 
   async findAll(): Promise<IRoleModel[]> {
     return this.roles;
   }
 
+  async updateById(
+    roleId: EntityId,
+    updateData: Partial<IRoleModel>
+  ): Promise<IRoleModel | null> {
+    const index = this.roles.findIndex(r => r._id === roleId);
+    if (index === -1) return null;
+
+    const existingRole = this.roles[index];
+    if (!existingRole) return null;
+
+    this.roles[index] = {
+      ...existingRole,
+      ...updateData,
+      updatedAt: new Date(),
+    } as IRoleModel;
+
+    return this.roles[index];
+  }
+
+  async deleteById(roleId: EntityId): Promise<boolean> {
+    const index = this.roles.findIndex(r => r._id === roleId);
+    if (index === -1) return false;
+
+    this.roles.splice(index, 1);
+    return true;
+  }
+
+  async findByName(name: string): Promise<IRoleModel | null> {
+    const role = this.roles.find(r => r.name === name);
+    return role || null;
+  }
+
+  async findActiveRoles(): Promise<IRoleModel[]> {
+    return this.roles.filter(r => r.isActive);
+  }
+
+  async getAllPermissions(): Promise<string[]> {
+    const allPermissions = new Set<string>();
+    this.roles.forEach(role => {
+      role.permissions.forEach(permission => allPermissions.add(permission));
+    });
+    return Array.from(allPermissions);
+  }
+
+  async addPermissionsToRole(
+    roleId: EntityId,
+    permissions: string[]
+  ): Promise<IRoleModel | null> {
+    const role = await this.findById(roleId);
+    if (!role) return null;
+
+    const updatedPermissions = [
+      ...new Set([...role.permissions, ...permissions]),
+    ];
+    return this.updateById(roleId, { permissions: updatedPermissions });
+  }
+
+  async removePermissionsFromRole(
+    roleId: EntityId,
+    permissions: string[]
+  ): Promise<IRoleModel | null> {
+    const role = await this.findById(roleId);
+    if (!role) return null;
+
+    const updatedPermissions = role.permissions.filter(
+      p => !permissions.includes(p)
+    );
+    return this.updateById(roleId, { permissions: updatedPermissions });
+  }
+
+  async getRolePermissions(roleId: EntityId): Promise<string[]> {
+    const role = await this.findById(roleId);
+    return role ? role.permissions : [];
+  }
+
+  async isPermissionInRole(
+    roleId: EntityId,
+    permission: string
+  ): Promise<boolean> {
+    const role = await this.findById(roleId);
+    return role ? role.permissions.includes(permission) : false;
+  }
+
+  async getRolesByPermission(permission: string): Promise<IRoleModel[]> {
+    return this.roles.filter(role => role.permissions.includes(permission));
+  }
+
+  async getRoleStatistics(): Promise<{
+    totalRoles: number;
+    activeRoles: number;
+    inactiveRoles: number;
+    totalPermissions: number;
+  }> {
+    const totalRoles = this.roles.length;
+    const activeRoles = this.roles.filter(r => r.isActive).length;
+    const inactiveRoles = totalRoles - activeRoles;
+    const allPermissions = new Set<string>();
+
+    this.roles.forEach(role => {
+      role.permissions.forEach(permission => allPermissions.add(permission));
+    });
+
+    return {
+      totalRoles,
+      activeRoles,
+      inactiveRoles,
+      totalPermissions: allPermissions.size,
+    };
+  }
+
+  // IRoleService interface'den eksik metodlar
   async getDefaultRole(): Promise<IRoleModel> {
-    const defaultRole = this.roles.find(role => role.name === 'user');
+    const defaultRole =
+      this.roles.find(r => r.name === 'user') || this.roles[0];
     if (!defaultRole) {
-      throw new Error('Default role not found');
+      throw new Error('No default role found');
     }
     return defaultRole;
   }
 
   async getSystemRoles(): Promise<IRoleModel[]> {
-    return this.roles.filter(role => role.isSystem);
+    return this.roles.filter(r => r.isSystem === true);
   }
 
   async getActiveRoles(): Promise<IRoleModel[]> {
-    return this.roles.filter(role => role.isActive);
-  }
-
-  async create(roleData: Partial<IRoleModel>): Promise<IRoleModel> {
-    const newRole: IRoleModel = {
-      _id: `role${Date.now()}`,
-      name: roleData.name || 'new-role',
-      description: roleData.description || '',
-      permissions: roleData.permissions || [],
-      isSystem: roleData.isSystem || false,
-      isActive: roleData.isActive ?? true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.roles.push(newRole);
-    return newRole;
-  }
-
-  async updateById(
-    roleId: EntityId,
-    data: Partial<IRoleModel>
-  ): Promise<IRoleModel | null> {
-    const roleIndex = this.roles.findIndex(role => role._id === roleId);
-    if (roleIndex === -1) return null;
-
-    this.roles[roleIndex] = {
-      ...this.roles[roleIndex],
-      ...data,
-      updatedAt: new Date(),
-    } as IRoleModel;
-    return this.roles[roleIndex];
-  }
-
-  async deleteById(roleId: EntityId): Promise<boolean> {
-    const roleIndex = this.roles.findIndex(role => role._id === roleId);
-    if (roleIndex === -1) return false;
-
-    this.roles.splice(roleIndex, 1);
-    return true;
+    return this.roles.filter(r => r.isActive);
   }
 
   async assignPermissionToRole(
     roleId: EntityId,
     permissionId: EntityId
   ): Promise<IRoleModel | null> {
-    const role = this.roles.find(r => r._id === roleId);
+    const role = await this.findById(roleId);
     if (!role) return null;
 
     if (!role.permissions.includes(permissionId)) {
       role.permissions.push(permissionId);
-      role.updatedAt = new Date();
+      return this.updateById(roleId, { permissions: role.permissions });
     }
-    return role || null;
+    return role;
   }
 
   async removePermissionFromRole(
     roleId: EntityId,
     permissionId: EntityId
   ): Promise<IRoleModel | null> {
-    const role = this.roles.find(r => r._id === roleId);
+    const role = await this.findById(roleId);
     if (!role) return null;
 
-    const index = role.permissions.indexOf(permissionId);
-    if (index > -1) {
-      role.permissions.splice(index, 1);
-      role.updatedAt = new Date();
-    }
-    return role || null;
+    const updatedPermissions = role.permissions.filter(p => p !== permissionId);
+    return this.updateById(roleId, { permissions: updatedPermissions });
   }
 
   async getPermissionById(permissionId: EntityId): Promise<any> {
+    // Test ortamında basit bir permission objesi döndür
     return { _id: permissionId, name: 'test-permission' };
-  }
-
-  async getAllPermissions(): Promise<any[]> {
-    return [
-      { _id: 'perm1', name: 'test-permission-1' },
-      { _id: 'perm2', name: 'test-permission-2' },
-    ];
-  }
-
-  async addPermissionsToRole(
-    roleId: EntityId,
-    permissionIds: EntityId[]
-  ): Promise<IRoleModel | null> {
-    const role = this.roles.find(r => r._id === roleId);
-    if (!role) return null;
-
-    permissionIds.forEach(permissionId => {
-      if (!role.permissions.includes(permissionId)) {
-        role.permissions.push(permissionId);
-      }
-    });
-    role.updatedAt = new Date();
-    return role || null;
-  }
-
-  async removePermissionsFromRole(
-    roleId: EntityId,
-    permissionIds: EntityId[]
-  ): Promise<IRoleModel | null> {
-    const role = this.roles.find(r => r._id === roleId);
-    if (!role) return null;
-
-    permissionIds.forEach(permissionId => {
-      const index = role.permissions.indexOf(permissionId);
-      if (index > -1) {
-        role.permissions.splice(index, 1);
-      }
-    });
-    role.updatedAt = new Date();
-    return role || null;
   }
 }

@@ -1,3 +1,26 @@
+// Mock mongoose completely BEFORE any other imports
+jest.mock('mongoose', () => ({
+  connect: jest.fn(),
+  connection: {
+    close: jest.fn(),
+    readyState: 1,
+  },
+  model: jest.fn(() => ({
+    find: jest.fn(() => Promise.resolve([])),
+    findById: jest.fn(() => Promise.resolve(null)),
+    findOne: jest.fn(() => Promise.resolve(null)),
+    create: jest.fn(() => Promise.resolve({})),
+    findByIdAndUpdate: jest.fn(() => Promise.resolve(null)),
+    findByIdAndDelete: jest.fn(() => Promise.resolve(null)),
+    countDocuments: jest.fn(() => Promise.resolve(0)),
+    aggregate: jest.fn(() => Promise.resolve([])),
+  })),
+  Schema: jest.fn(),
+  Types: {
+    ObjectId: jest.fn(() => 'mock-id'),
+  },
+}));
+
 import 'reflect-metadata';
 import express, { Application } from 'express';
 import cors from 'cors';
@@ -8,25 +31,32 @@ import { container } from 'tsyringe';
 container.reset();
 
 // Sadece fake/mock import'ları
-import { FakeUserDataSource } from './mocks/datasource/FakeUserDataSource';
-import { FakeQuestionDataSource } from './mocks/datasource/FakeQuestionDataSource';
-import { FakeAnswerDataSource } from './mocks/datasource/FakeAnswerDataSource';
 import { FakeCacheProvider } from './mocks/cache/FakeCacheProvider';
 import { FakeNotificationProvider } from './mocks/notification/FakeNotificationProvider';
 import { FakeLoggerProvider } from './mocks/logger/FakeLoggerProvider';
 import { FakeAuditProvider } from './mocks/audit/FakeAuditProvider';
 import { ZodValidationProvider } from '../infrastructure/validation/ZodValidationProvider';
 
-// Repository'ler
-import { UserRepository } from '../repositories/UserRepository';
-import { QuestionRepository } from '../repositories/QuestionRepository';
-import { AnswerRepository } from '../repositories/AnswerRepository';
+// Fake service'ler
+import { FakeUserService } from './mocks/services/FakeUserService';
+import { FakeRoleService } from './mocks/services/FakeRoleService';
+import { FakeUserRoleService } from './mocks/services/FakeUserRoleService';
+import { FakePermissionService } from './mocks/services/FakePermissionService';
+import { FakeExceptionTracker } from './mocks/error/FakeExceptionTracker';
+import { FakeQuestionService } from './mocks/services/FakeQuestionService';
+import { FakeAnswerService } from './mocks/services/FakeAnswerService';
+import { FakeAdminService } from './mocks/services/FakeAdminService';
 
-// Manager'lar
-import { AuthManager } from '../services/managers/AuthManager';
-import { AdminManager } from '../services/managers/AdminManager';
-import { QuestionManager } from '../services/managers/QuestionManager';
-import { AnswerManager } from '../services/managers/AnswerManager';
+// Fake Repository'ler
+import { FakeUserRepository } from './mocks/repositories/FakeUserRepository';
+import { FakeQuestionRepository } from './mocks/repositories/FakeQuestionRepository';
+import { FakeAnswerRepository } from './mocks/repositories/FakeAnswerRepository';
+
+// Fake DataSource'ler
+import { FakeUserDataSource } from './mocks/datasource/FakeUserDataSource';
+
+// Manager'lar - Fake'ler kullanılıyor
+import { FakeAuthManager } from './mocks/managers/FakeAuthManager';
 
 // Controller'lar
 import { AuthController } from '../controllers/authController';
@@ -60,69 +90,48 @@ import {
 } from '../infrastructure/validation/schemas/answerSchemas';
 
 // Test ortamı için fake instance'lar oluştur
-const fakeUserDS = new FakeUserDataSource();
-const fakeQuestionDS = new FakeQuestionDataSource();
-const fakeAnswerDS = new FakeAnswerDataSource();
 const fakeCache = new FakeCacheProvider();
 const fakeNotification = new FakeNotificationProvider();
 const fakeLogger = new FakeLoggerProvider();
 const fakeAudit = new FakeAuditProvider();
 const validator = new ZodValidationProvider();
 
+const fakeUserService = new FakeUserService();
+const fakeRoleService = new FakeRoleService();
+const fakeUserRoleService = new FakeUserRoleService();
+const fakePermissionService = new FakePermissionService();
+const fakeExceptionTracker = new FakeExceptionTracker();
+const fakeQuestionService = new FakeQuestionService();
+const fakeAnswerService = new FakeAnswerService();
+const fakeAdminService = new FakeAdminService();
+
 // Container'a fake'leri register et
-container.registerInstance('IUserDataSource', fakeUserDS);
-container.registerInstance('IQuestionDataSource', fakeQuestionDS);
-container.registerInstance('IAnswerDataSource', fakeAnswerDS);
 container.registerInstance('ICacheProvider', fakeCache);
 container.registerInstance('INotificationService', fakeNotification);
 container.registerInstance('ILoggerProvider', fakeLogger);
 container.registerInstance('IAuditProvider', fakeAudit);
 container.registerInstance('IValidationProvider', validator);
 
-// Repository'leri register et
-container.registerInstance('IUserRepository', new UserRepository(fakeUserDS));
-container.registerInstance(
-  'IQuestionRepository',
-  new QuestionRepository(fakeQuestionDS)
-);
-container.registerInstance(
-  'IAnswerRepository',
-  new AnswerRepository(fakeAnswerDS)
-);
+// Fake service'leri register et
+container.registerInstance('IUserService', fakeUserService);
+container.registerInstance('IRoleService', fakeRoleService);
+container.registerInstance('IUserRoleService', fakeUserRoleService);
+container.registerInstance('IPermissionService', fakePermissionService);
+container.registerInstance('IExceptionTracker', fakeExceptionTracker);
 
-// Manager'ları register et
-container.registerInstance(
-  'IAuthService',
-  new AuthManager(
-    container.resolve('IUserRepository'),
-    container.resolve('IUserService'),
-    container.resolve('IRoleService'),
-    container.resolve('IUserRoleService'),
-    container.resolve('INotificationService')
-  )
-);
-container.registerInstance(
-  'IAdminService',
-  new AdminManager(
-    container.resolve('IUserRepository'),
-    container.resolve('IUserRoleService'),
-    container.resolve('IRoleService')
-  )
-);
-container.registerInstance(
-  'IQuestionService',
-  new QuestionManager(
-    container.resolve('IQuestionRepository'),
-    container.resolve('ICacheProvider')
-  )
-);
-container.registerInstance(
-  'IAnswerService',
-  new AnswerManager(
-    container.resolve('IAnswerRepository'),
-    container.resolve('ICacheProvider')
-  )
-);
+// Repository'leri register et - Fake'ler kullanılıyor
+container.registerInstance('IUserRepository', new FakeUserRepository());
+container.registerInstance('IQuestionRepository', new FakeQuestionRepository());
+container.registerInstance('IAnswerRepository', new FakeAnswerRepository());
+
+// DataSource'ları register et - Fake'ler kullanılıyor
+container.registerInstance('IUserDataSource', new FakeUserDataSource());
+
+// Manager'ları register et - Fake'ler kullanılıyor
+container.registerInstance('IAuthService', new FakeAuthManager());
+container.registerInstance('IAdminService', fakeAdminService);
+container.registerInstance('IQuestionService', fakeQuestionService);
+container.registerInstance('IAnswerService', fakeAnswerService);
 
 // Test app oluştur
 export function createTestApp(): Application {
@@ -151,30 +160,24 @@ export function createTestApp(): Application {
     res.send('QA API Test Server is running');
   });
 
-  // Controller'ları oluştur
+  // Controller'ları doğrudan fake instance'larla oluştur
   const authController = new AuthController(
-    container.resolve('IAuthService'),
-    container.resolve('IUserService'),
-    container.resolve('IUserRoleService'),
-    container.resolve('IRoleService'),
-    container.resolve('IPermissionService'),
-    container.resolve('ILoggerProvider'),
-    container.resolve('IExceptionTracker')
+    new FakeAuthManager(),
+    fakeUserService,
+    fakeUserRoleService,
+    fakeRoleService,
+    fakePermissionService,
+    fakeLogger,
+    fakeExceptionTracker
   );
-  const questionController = new QuestionController(
-    container.resolve('IQuestionService')
-  );
-  const answerController = new AnswerController(
-    container.resolve('IAnswerService')
-  );
+  const questionController = new QuestionController(fakeQuestionService);
+  const answerController = new AnswerController(fakeAnswerService);
   const _userController = new UserController(
-    container.resolve('IAdminService'),
-    container.resolve('IUserRoleService')
+    fakeAdminService,
+    fakeUserRoleService
   );
   const _adminController = new AdminController();
-  const _notificationController = new NotificationController(
-    container.resolve('INotificationService')
-  );
+  const _notificationController = new NotificationController(fakeNotification);
   const monitoringController = new MonitoringController();
 
   // API routes - Audit middleware'leri devre dışı

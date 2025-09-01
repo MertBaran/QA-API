@@ -1,85 +1,38 @@
-import { IUserRoleService } from '../../../services/contracts/IUserRoleService';
+import { IDataSource } from '../../../repositories/interfaces/IDataSource';
 import { IUserRoleModel } from '../../../models/interfaces/IUserRoleModel';
 import { EntityId } from '../../../types/database';
 
-export class FakeUserRoleService implements IUserRoleService {
+export class FakeUserRoleDataSource implements IDataSource<IUserRoleModel> {
   private userRoles: IUserRoleModel[] = [];
 
-  addUserRole(userId: string, roleId: string, assignedBy: string): void {
-    this.userRoles.push({
-      _id: `ur_${Date.now()}_${Math.random()}`,
-      userId,
-      roleId,
-      assignedAt: new Date(),
-      assignedBy,
-      expiresAt: undefined,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
+  addUserRole(userRole: IUserRoleModel): void {
+    this.userRoles.push(userRole);
   }
 
-  async assignRoleToUser(
-    userId: EntityId,
-    roleId: EntityId,
-    assignedBy: EntityId
-  ): Promise<IUserRoleModel> {
+  async create(data: Partial<IUserRoleModel>): Promise<IUserRoleModel> {
     const userRole: IUserRoleModel = {
       _id: `ur_${Date.now()}_${Math.random()}`,
-      userId,
-      roleId,
-      assignedAt: new Date(),
-      assignedBy,
-      expiresAt: undefined,
-      isActive: true,
+      userId: data.userId!,
+      roleId: data.roleId!,
+      assignedAt: data.assignedAt || new Date(),
+      assignedBy: data.assignedBy,
+      expiresAt: data.expiresAt,
+      isActive: data.isActive !== undefined ? data.isActive : true,
       createdAt: new Date(),
       updatedAt: new Date(),
-    };
+    } as IUserRoleModel;
 
     this.userRoles.push(userRole);
     return userRole;
   }
 
-  async removeRoleFromUser(
-    userId: EntityId,
-    roleId: EntityId
-  ): Promise<IUserRoleModel | null> {
-    const index = this.userRoles.findIndex(
-      ur => ur.userId === userId && ur.roleId === roleId && ur.isActive
-    );
-    if (index === -1) return null;
-
-    const userRole = this.userRoles[index];
-    if (!userRole) return null;
-
-    userRole.isActive = false;
-    userRole.updatedAt = new Date();
-    return userRole;
+  async findById(id: EntityId): Promise<IUserRoleModel | null> {
+    const userRole = this.userRoles.find(ur => ur._id === id);
+    return userRole || null;
   }
 
-  async getUserActiveRoles(userId: EntityId): Promise<IUserRoleModel[]> {
-    return this.userRoles.filter(
-      ur => ur.userId === userId && ur.isActive
-    );
-  }
-
-  async getUserRoles(userId: EntityId): Promise<IUserRoleModel[]> {
-    return this.userRoles.filter(ur => ur.userId === userId);
-  }
-
-  async getRoleUsers(roleId: EntityId): Promise<IUserRoleModel[]> {
-    return this.userRoles.filter(
-      ur => ur.roleId === roleId && ur.isActive
-    );
-  }
-
-  async isUserAssignedToRole(
-    userId: EntityId,
-    roleId: EntityId
-  ): Promise<boolean> {
-    return this.userRoles.some(
-      ur => ur.userId === userId && ur.roleId === roleId && ur.isActive
-    );
+  async findAll(): Promise<IUserRoleModel[]> {
+    return this.userRoles;
   }
 
   async updateById(
@@ -99,6 +52,42 @@ export class FakeUserRoleService implements IUserRoleService {
     } as IUserRoleModel;
 
     return this.userRoles[index];
+  }
+
+  async deleteById(id: EntityId): Promise<IUserRoleModel | null> {
+    const index = this.userRoles.findIndex(ur => ur._id === id);
+    if (index === -1) return null;
+
+    const deletedUserRole = this.userRoles[index];
+    if (!deletedUserRole) return null;
+
+    this.userRoles.splice(index, 1);
+    return deletedUserRole;
+  }
+
+  async findByUserId(userId: EntityId): Promise<IUserRoleModel[]> {
+    return this.userRoles.filter(ur => ur.userId === userId);
+  }
+
+  async findByRoleId(roleId: EntityId): Promise<IUserRoleModel[]> {
+    return this.userRoles.filter(ur => ur.roleId === roleId);
+  }
+
+  async findActiveByUserId(userId: EntityId): Promise<IUserRoleModel[]> {
+    return this.userRoles.filter(ur => ur.userId === userId && ur.isActive);
+  }
+
+  async findActiveByRoleId(roleId: EntityId): Promise<IUserRoleModel[]> {
+    return this.userRoles.filter(ur => ur.roleId === roleId && ur.isActive);
+  }
+
+  async isUserAssignedToRole(
+    userId: EntityId,
+    roleId: EntityId
+  ): Promise<boolean> {
+    return this.userRoles.some(
+      ur => ur.userId === userId && ur.roleId === roleId && ur.isActive
+    );
   }
 
   async deactivateUserRole(
@@ -132,7 +121,7 @@ export class FakeUserRoleService implements IUserRoleService {
     return true;
   }
 
-  async getExpiredUserRoles(): Promise<IUserRoleModel[]> {
+  async findExpiredUserRoles(): Promise<IUserRoleModel[]> {
     const now = new Date();
     return this.userRoles.filter(
       ur => ur.expiresAt && ur.expiresAt < now && ur.isActive
@@ -178,7 +167,11 @@ export class FakeUserRoleService implements IUserRoleService {
     const userRoles: IUserRoleModel[] = [];
 
     for (const roleId of roleIds) {
-      const userRole = await this.assignRoleToUser(userId, roleId, assignedBy);
+      const userRole = await this.create({
+        userId,
+        roleId,
+        assignedBy,
+      });
       userRoles.push(userRole);
     }
 
@@ -192,7 +185,7 @@ export class FakeUserRoleService implements IUserRoleService {
     let allRemoved = true;
 
     for (const roleId of roleIds) {
-      const removed = await this.removeRoleFromUser(userId, roleId);
+      const removed = await this.deactivateUserRole(userId, roleId);
       if (!removed) {
         allRemoved = false;
       }
@@ -219,40 +212,31 @@ export class FakeUserRoleService implements IUserRoleService {
     };
   }
 
-  // IUserRoleService interface'den eksik metodlar
-  async hasRole(userId: EntityId, roleId: EntityId): Promise<boolean> {
-    return this.userRoles.some(
-      ur => ur.userId === userId && ur.roleId === roleId && ur.isActive
-    );
+  // IDataSource interface'den eksik metodlar
+  async findByField(
+    field: keyof IUserRoleModel,
+    value: any
+  ): Promise<IUserRoleModel[]> {
+    return this.userRoles.filter(ur => (ur as any)[field] === value);
   }
 
-  async hasAnyRole(userId: EntityId, roleIds: EntityId[]): Promise<boolean> {
-    return this.userRoles.some(
-      ur => ur.userId === userId && roleIds.includes(ur.roleId) && ur.isActive
-    );
+  async findByFields(
+    fields: Partial<IUserRoleModel>
+  ): Promise<IUserRoleModel[]> {
+    return this.userRoles.filter(ur => {
+      return Object.entries(fields).every(
+        ([key, value]) => (ur as any)[key] === value
+      );
+    });
   }
 
-  async hasAllRoles(userId: EntityId, roleIds: EntityId[]): Promise<boolean> {
-    const userRoles = this.userRoles.filter(
-      ur => ur.userId === userId && ur.isActive
-    );
-    const userRoleIds = userRoles.map(ur => ur.roleId);
-    return roleIds.every(roleId => userRoleIds.includes(roleId));
+  async countAll(): Promise<number> {
+    return this.userRoles.length;
   }
 
-  async deactivateExpiredRoles(): Promise<number> {
-    const now = new Date();
-    let deactivatedCount = 0;
-
-    for (let i = 0; i < this.userRoles.length; i++) {
-      const userRole = this.userRoles[i];
-      if (userRole && userRole.expiresAt && userRole.expiresAt < now && userRole.isActive) {
-        userRole.isActive = false;
-        userRole.updatedAt = new Date();
-        deactivatedCount++;
-      }
-    }
-
-    return deactivatedCount;
+  async deleteAll(): Promise<number> {
+    const count = this.userRoles.length;
+    this.userRoles = [];
+    return count;
   }
 }

@@ -8,9 +8,9 @@ import { ApplicationError } from '../helpers/error/ApplicationError';
 
 interface AuthenticatedRequest<T = any> extends Request<{}, any, T> {
   user?: {
-    _id: string;
-    email: string;
-    roles: string[];
+    id: string; // authMiddleware sets 'id'
+    email?: string;
+    roles?: string[];
   };
 }
 import { normalizeLocale, i18n } from '../types/i18n';
@@ -20,7 +20,7 @@ import type {
   UpdateBookmarkDTO,
   CreateCollectionDTO,
   UpdateCollectionDTO,
-} from '../services/contracts/IBookmarkService';
+} from '../types/dto/bookmark/bookmark.dto';
 import type {
   BookmarkResponseDTO,
   CollectionResponseDTO,
@@ -40,7 +40,7 @@ export class BookmarkController {
   // Add bookmark
   addBookmark = asyncErrorWrapper(
     async (
-      req: AuthenticatedRequest,
+      req: AuthenticatedRequest<AddBookmarkDTO>,
       res: Response<BookmarkResponseDTO>,
       _next: NextFunction
     ): Promise<void> => {
@@ -51,7 +51,7 @@ export class BookmarkController {
       const bookmarkData = req.body;
 
       const bookmark = await this.bookmarkService.addBookmark(
-        user._id,
+        user.id,
         bookmarkData
       );
 
@@ -88,7 +88,7 @@ export class BookmarkController {
       }
       const { id } = req.params as { id: string };
 
-      const deleted = await this.bookmarkService.removeBookmark(user._id, id);
+      const deleted = await this.bookmarkService.removeBookmark(user.id, id);
 
       const locale = normalizeLocale(
         req.headers['accept-language'] as string | undefined
@@ -106,7 +106,7 @@ export class BookmarkController {
   // Update bookmark
   updateBookmark = asyncErrorWrapper(
     async (
-      req: AuthenticatedRequest,
+      req: AuthenticatedRequest<UpdateBookmarkDTO>,
       res: Response<BookmarkResponseDTO>,
       _next: NextFunction
     ): Promise<void> => {
@@ -118,7 +118,7 @@ export class BookmarkController {
       const updates = req.body;
 
       const bookmark = await this.bookmarkService.updateBookmark(
-        user._id,
+        user.id,
         id,
         updates
       );
@@ -154,7 +154,7 @@ export class BookmarkController {
         throw ApplicationError.authenticationError('User not authenticated');
       }
 
-      const bookmarks = await this.bookmarkService.getUserBookmarks(user._id);
+      const bookmarks = await this.bookmarkService.getUserBookmarks(user.id);
 
       const response = bookmarks.map(bookmark => ({
         _id: bookmark._id,
@@ -190,7 +190,7 @@ export class BookmarkController {
       };
 
       const exists = await this.bookmarkService.checkBookmarkExists(
-        user._id,
+        user.id,
         targetType as any,
         targetId
       );
@@ -218,7 +218,7 @@ export class BookmarkController {
       };
 
       const bookmarks = await this.bookmarkService.searchBookmarks(
-        user._id,
+        user.id,
         q as string,
         filters
       );
@@ -263,7 +263,7 @@ export class BookmarkController {
       };
 
       const result = await this.bookmarkService.getPaginatedBookmarks(
-        user._id,
+        user.id,
         filters
       );
 
@@ -290,7 +290,7 @@ export class BookmarkController {
   // Create collection
   createCollection = asyncErrorWrapper(
     async (
-      req: AuthenticatedRequest,
+      req: AuthenticatedRequest<CreateCollectionDTO>,
       res: Response<CollectionResponseDTO>,
       _next: NextFunction
     ): Promise<void> => {
@@ -301,7 +301,7 @@ export class BookmarkController {
       const collectionData = req.body;
 
       const collection = await this.bookmarkService.createCollection(
-        user._id,
+        user.id,
         collectionData
       );
 
@@ -331,7 +331,7 @@ export class BookmarkController {
       }
 
       const collections = await this.bookmarkService.getUserCollections(
-        user._id
+        user.id
       );
 
       const response = collections.map(collection => ({
@@ -352,7 +352,7 @@ export class BookmarkController {
   // Update collection
   updateCollection = asyncErrorWrapper(
     async (
-      req: AuthenticatedRequest,
+      req: AuthenticatedRequest<UpdateCollectionDTO>,
       res: Response<CollectionResponseDTO>,
       _next: NextFunction
     ): Promise<void> => {
@@ -364,7 +364,7 @@ export class BookmarkController {
       const updates = req.body;
 
       const collection = await this.bookmarkService.updateCollection(
-        user._id,
+        user.id,
         id,
         updates
       );
@@ -399,7 +399,7 @@ export class BookmarkController {
       }
       const { id } = req.params as { id: string };
 
-      const deleted = await this.bookmarkService.deleteCollection(user._id, id);
+      const deleted = await this.bookmarkService.deleteCollection(user.id, id);
 
       const locale = normalizeLocale(
         req.headers['accept-language'] as string | undefined
@@ -431,7 +431,7 @@ export class BookmarkController {
       };
 
       const added = await this.bookmarkService.addToCollection(
-        user._id,
+        user.id,
         bookmarkId,
         collectionId
       );
@@ -469,7 +469,7 @@ export class BookmarkController {
       };
 
       const removed = await this.bookmarkService.removeFromCollection(
-        user._id,
+        user.id,
         bookmarkId,
         collectionId
       );
@@ -504,7 +504,7 @@ export class BookmarkController {
       const { id } = req.params as { id: string };
 
       const bookmarks = await this.bookmarkService.getCollectionItems(
-        user._id,
+        user.id,
         id
       );
 
@@ -537,7 +537,7 @@ export class BookmarkController {
         throw ApplicationError.authenticationError('User not authenticated');
       }
 
-      const stats = await this.bookmarkService.getBookmarkStats(user._id);
+      const stats = await this.bookmarkService.getBookmarkStats(user.id);
 
       const response: BookmarkStatsResponseDTO = {
         total: stats.total,

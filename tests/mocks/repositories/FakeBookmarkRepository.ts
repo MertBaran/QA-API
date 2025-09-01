@@ -44,9 +44,27 @@ export class FakeBookmarkRepository implements IBookmarkRepository {
     const index = this.bookmarks.findIndex(b => b._id === id);
     if (index === -1) return null;
 
+    // Field mapping for camelCase to snake_case
+    const mappedData: any = {
+      _id: data._id || `bookmark_${Date.now()}`,
+      user_id: data.user_id,
+      target_type: data.target_type || 'question',
+      target_id: data.target_id,
+      target_data: data.target_data || {
+        title: 'Test Bookmark',
+        content: 'Test content',
+        created_at: new Date().toISOString(),
+      },
+      tags: data.tags || [],
+      notes: data.notes,
+      is_public: data.is_public,
+      createdAt: data.createdAt || new Date(),
+      updatedAt: data.updatedAt || new Date(),
+    };
+
     this.bookmarks[index] = {
       ...this.bookmarks[index],
-      ...data,
+      ...mappedData,
       updatedAt: new Date(),
     } as IBookmarkModel;
     return this.bookmarks[index];

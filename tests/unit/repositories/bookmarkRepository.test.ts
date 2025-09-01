@@ -360,7 +360,8 @@ describe('BookmarkRepository', () => {
       const created = await bookmarkRepository.create(bookmarkData);
       const deleted = await bookmarkRepository.deleteById(created._id);
 
-      expect(deleted).toBe(true);
+      expect(deleted).toBeDefined();
+      expect(deleted?._id).toBe(created._id);
 
       const found = await bookmarkRepository.findById(created._id);
       expect(found).toBeNull();
@@ -371,7 +372,7 @@ describe('BookmarkRepository', () => {
         '507f1f77bcf86cd799439014'
       );
 
-      expect(result).toBe(false);
+      expect(result).toBeNull();
     });
   });
 

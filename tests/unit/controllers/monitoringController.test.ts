@@ -1,0 +1,405 @@
+import 'reflect-metadata';
+import { MonitoringController } from '../../../controllers/monitoringController';
+import { Request, Response } from 'express';
+import { container } from 'tsyringe';
+import { WebSocketMonitorService } from '../../../services/WebSocketMonitorService';
+
+// Mock the container
+jest.mock('../../../services/container', () => ({
+  container: {
+    resolve: jest.fn(),
+  },
+}));
+
+describe('MonitoringController Unit Tests', () => {
+  let monitoringController: MonitoringController;
+  let mockRequest: Partial<Request>;
+  let mockResponse: Partial<Response>;
+  let mockWebSocketMonitorService: any;
+
+  beforeEach(() => {
+    // Reset mocks
+    jest.clearAllMocks();
+
+    // Create mock response
+    mockResponse = {
+      json: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+    };
+
+    // Create mock request
+    mockRequest = {
+      query: {},
+      body: {},
+    };
+
+    // Create mock WebSocket monitor service
+    mockWebSocketMonitorService = {
+      initialize: jest.fn(),
+      getConnectionStatus: jest.fn().mockReturnValue(
+        new Map([
+          [
+            'user1',
+            { userId: 'user1', status: 'connected', lastSeen: new Date() },
+          ],
+          [
+            'user2',
+            { userId: 'user2', status: 'disconnected', lastSeen: new Date() },
+          ],
+        ])
+      ),
+      isMonitoringActive: jest.fn().mockReturnValue(true),
+      getRecentAlerts: jest.fn().mockReturnValue([
+        { id: 'alert1', message: 'Connection lost', timestamp: new Date() },
+        { id: 'alert2', message: 'Connection restored', timestamp: new Date() },
+      ]),
+      getAlertHistory: jest.fn().mockReturnValue([
+        { id: 'alert1', message: 'Connection lost', timestamp: new Date() },
+        { id: 'alert2', message: 'Connection restored', timestamp: new Date() },
+        { id: 'alert3', message: 'High latency', timestamp: new Date() },
+      ]),
+      getMonitoringStats: jest.fn().mockReturnValue({
+        totalConnections: 2,
+        activeConnections: 1,
+        totalAlerts: 3,
+        monitoringActive: true,
+        lastUpdate: new Date(),
+      }),
+      startMonitoring: jest.fn(),
+      stopMonitoring: jest.fn(),
+      getConnectedClientsCount: jest.fn().mockReturnValue(1),
+    };
+
+    // Mock container.resolve
+    (container.resolve as jest.Mock).mockImplementation((token: string) => {
+      if (token === 'WebSocketMonitorService') {
+        return mockWebSocketMonitorService;
+      }
+      throw new Error(`Unknown token: ${token}`);
+    });
+
+    // Create controller instance
+    monitoringController = new MonitoringController();
+  });
+
+  describe('getConnectionStatus', () => {
+    it('should return connection status successfully', () => {
+      // Act
+      monitoringController.getConnectionStatus(
+        mockRequest as Request,
+        mockResponse as Response
+      );
+
+      // Assert
+      expect(
+        mockWebSocketMonitorService.getConnectionStatus
+      ).toHaveBeenCalled();
+      expect(mockWebSocketMonitorService.isMonitoringActive).toHaveBeenCalled();
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: true,
+        data: {
+          connections: [
+            {
+              userId: 'user1',
+              status: 'connected',
+              lastSeen: expect.any(Date),
+            },
+            {
+              userId: 'user2',
+              status: 'disconnected',
+              lastSeen: expect.any(Date),
+            },
+          ],
+          monitoring: true,
+          lastUpdate: expect.any(String),
+        },
+      });
+    });
+
+    it('should handle errors and return 500 status', () => {
+      // Arrange
+      mockWebSocketMonitorService.getConnectionStatus.mockImplementation(() => {
+        throw new Error('Service unavailable');
+      });
+
+      // Act
+      monitoringController.getConnectionStatus(
+        mockRequest as Request,
+        mockResponse as Response
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        error: 'Failed to get connection status',
+        message: 'Service unavailable',
+      });
+    });
+
+    it('should handle unknown errors', () => {
+      // Arrange
+      mockWebSocketMonitorService.getConnectionStatus.mockImplementation(() => {
+        throw 'Unknown error';
+      });
+
+      // Act
+      monitoringController.getConnectionStatus(
+        mockRequest as Request,
+        mockResponse as Response
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        error: 'Failed to get connection status',
+        message: 'Unknown error',
+      });
+    });
+  });
+
+  describe('getAlertHistory', () => {
+    it('should return alert history with default limit', () => {
+      // Act
+      monitoringController.getAlertHistory(
+        mockRequest as Request,
+        mockResponse as Response
+      );
+
+      // Assert
+      expect(mockWebSocketMonitorService.getRecentAlerts).toHaveBeenCalledWith(
+        50
+      );
+      expect(mockWebSocketMonitorService.getAlertHistory).toHaveBeenCalled();
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: true,
+        data: {
+          alerts: [
+            {
+              id: 'alert1',
+              message: 'Connection lost',
+              timestamp: expect.any(Date),
+            },
+            {
+              id: 'alert2',
+              message: 'Connection restored',
+              timestamp: expect.any(Date),
+            },
+          ],
+          total: 3,
+          limit: 50,
+        },
+      });
+    });
+
+    it('should return alert history with custom limit', () => {
+      // Arrange
+      mockRequest.query = { limit: '10' };
+
+      // Act
+      monitoringController.getAlertHistory(
+        mockRequest as Request,
+        mockResponse as Response
+      );
+
+      // Assert
+      expect(mockWebSocketMonitorService.getRecentAlerts).toHaveBeenCalledWith(
+        10
+      );
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: true,
+        data: {
+          alerts: [
+            {
+              id: 'alert1',
+              message: 'Connection lost',
+              timestamp: expect.any(Date),
+            },
+            {
+              id: 'alert2',
+              message: 'Connection restored',
+              timestamp: expect.any(Date),
+            },
+          ],
+          total: 3,
+          limit: 10,
+        },
+      });
+    });
+
+    it('should handle errors and return 500 status', () => {
+      // Arrange
+      mockWebSocketMonitorService.getRecentAlerts.mockImplementation(() => {
+        throw new Error('Service unavailable');
+      });
+
+      // Act
+      monitoringController.getAlertHistory(
+        mockRequest as Request,
+        mockResponse as Response
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        error: 'Failed to get alert history',
+        message: 'Service unavailable',
+      });
+    });
+  });
+
+  describe('getMonitoringStats', () => {
+    it('should return monitoring stats successfully', () => {
+      // Act
+      monitoringController.getMonitoringStats(
+        mockRequest as Request,
+        mockResponse as Response
+      );
+
+      // Assert
+      expect(mockWebSocketMonitorService.getMonitoringStats).toHaveBeenCalled();
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: true,
+        data: {
+          totalConnections: 2,
+          activeConnections: 1,
+          totalAlerts: 3,
+          monitoringActive: true,
+          lastUpdate: expect.any(Date),
+        },
+      });
+    });
+
+    it('should handle errors and return 500 status', () => {
+      // Arrange
+      mockWebSocketMonitorService.getMonitoringStats.mockImplementation(() => {
+        throw new Error('Service unavailable');
+      });
+
+      // Act
+      monitoringController.getMonitoringStats(
+        mockRequest as Request,
+        mockResponse as Response
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        error: 'Failed to get monitoring stats',
+        message: 'Service unavailable',
+      });
+    });
+  });
+
+  describe('startMonitoring', () => {
+    it('should start monitoring with default interval', () => {
+      // Act
+      monitoringController.startMonitoring(
+        mockRequest as Request,
+        mockResponse as Response
+      );
+
+      // Assert
+      expect(mockWebSocketMonitorService.startMonitoring).toHaveBeenCalledWith(
+        30000
+      );
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: true,
+        message: 'Connection monitoring started',
+        data: {
+          interval: 30000,
+          isActive: true,
+        },
+      });
+    });
+
+    it('should start monitoring with custom interval', () => {
+      // Arrange
+      mockRequest.body = { interval: 60000 };
+
+      // Act
+      monitoringController.startMonitoring(
+        mockRequest as Request,
+        mockResponse as Response
+      );
+
+      // Assert
+      expect(mockWebSocketMonitorService.startMonitoring).toHaveBeenCalledWith(
+        60000
+      );
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: true,
+        message: 'Connection monitoring started',
+        data: {
+          interval: 60000,
+          isActive: true,
+        },
+      });
+    });
+
+    it('should handle errors and return 500 status', () => {
+      // Arrange
+      mockWebSocketMonitorService.startMonitoring.mockImplementation(() => {
+        throw new Error('Service unavailable');
+      });
+
+      // Act
+      monitoringController.startMonitoring(
+        mockRequest as Request,
+        mockResponse as Response
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        error: 'Failed to start monitoring',
+        message: 'Service unavailable',
+      });
+    });
+  });
+
+  describe('stopMonitoring', () => {
+    it('should stop monitoring successfully', () => {
+      // Act
+      monitoringController.stopMonitoring(
+        mockRequest as Request,
+        mockResponse as Response
+      );
+
+      // Assert
+      expect(mockWebSocketMonitorService.stopMonitoring).toHaveBeenCalled();
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: true,
+        message: 'Connection monitoring stopped',
+        data: {
+          isActive: false,
+        },
+      });
+    });
+
+    it('should handle errors and return 500 status', () => {
+      // Arrange
+      mockWebSocketMonitorService.stopMonitoring.mockImplementation(() => {
+        throw new Error('Service unavailable');
+      });
+
+      // Act
+      monitoringController.stopMonitoring(
+        mockRequest as Request,
+        mockResponse as Response
+      );
+
+      // Assert
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        success: false,
+        error: 'Failed to stop monitoring',
+        message: 'Service unavailable',
+      });
+    });
+  });
+});
