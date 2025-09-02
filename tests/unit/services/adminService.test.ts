@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { AdminManager } from '../../../services/managers/AdminManager';
 import { UserRepository } from '../../../repositories/UserRepository';
-import { FakeUserDataSource } from '../../mocks/datasource/FakeUserDataSource';
+import { FakeUserDataSource } from '../../mocks/datasources/FakeUserDataSource';
 import { FakeUserRoleService } from '../../mocks/services/FakeUserRoleService';
 import { FakeRoleService } from '../../mocks/services/FakeRoleService';
 
