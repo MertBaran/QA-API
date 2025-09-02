@@ -2,6 +2,7 @@ import customErrorHandler from '../../../middlewares/errors/customErrorHandler';
 import CustomError from '../../../helpers/error/CustomError';
 import { container } from 'tsyringe';
 import { FakeEnvironmentProvider } from '../../mocks/providers/FakeEnvironmentProvider';
+import { FakeExceptionTracker } from '../../mocks/error/FakeExceptionTracker';
 
 class FakeLogger {
   error = jest.fn();
@@ -19,7 +20,11 @@ describe('customErrorHandler', () => {
     next = jest.fn();
     fakeLogger = new FakeLogger();
     container.registerInstance('ILoggerProvider', fakeLogger);
-    container.registerInstance('IEnvironmentProvider', new FakeEnvironmentProvider());
+    container.registerInstance(
+      'IEnvironmentProvider',
+      new FakeEnvironmentProvider()
+    );
+    container.registerInstance('IExceptionTracker', new FakeExceptionTracker());
   });
 
   it('should handle CustomError and log it', () => {
@@ -30,6 +35,7 @@ describe('customErrorHandler', () => {
       success: false,
       error: 'Test error',
       statusCode: 418, // statusCode field is included in development mode
+      debug: expect.any(Object),
     });
     // Logger is not called in the current implementation
     expect(fakeLogger.error).not.toHaveBeenCalled();
@@ -43,6 +49,7 @@ describe('customErrorHandler', () => {
       success: false,
       error: 'Please provide a valid id',
       statusCode: 422,
+      debug: expect.any(Object),
     });
   });
 
@@ -54,6 +61,7 @@ describe('customErrorHandler', () => {
       success: false,
       error: 'Invalid JSON syntax', // Actual message from implementation
       statusCode: 400,
+      debug: expect.any(Object),
     });
   });
 
@@ -71,6 +79,7 @@ describe('customErrorHandler', () => {
       success: false,
       error: 'Field 1 error, Field 2 error',
       statusCode: 422,
+      debug: expect.any(Object),
     });
   });
 
@@ -82,6 +91,7 @@ describe('customErrorHandler', () => {
       success: false,
       error: 'email already exists', // Actual message from implementation
       statusCode: 409,
+      debug: expect.any(Object),
     });
   });
 
@@ -93,6 +103,7 @@ describe('customErrorHandler', () => {
       success: false,
       error: 'Unknown',
       statusCode: 500, // statusCode field is included in development mode
+      debug: expect.any(Object),
     });
   });
 });

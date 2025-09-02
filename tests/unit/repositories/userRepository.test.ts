@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { UserRepository } from '../../../repositories/UserRepository';
-import { FakeUserDataSource } from '../../mocks/datasource/FakeUserDataSource';
+import { FakeUserDataSource } from '../../mocks/datasources/FakeUserDataSource';
 
 describe('UserRepository Unit Tests', () => {
   let userRepository: UserRepository;
