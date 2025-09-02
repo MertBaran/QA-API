@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import { QuestionManager } from '../../../services/managers/QuestionManager';
 import { QuestionRepository } from '../../../repositories/QuestionRepository';
-import { FakeQuestionDataSource } from '../../mocks/datasource/FakeQuestionDataSource';
+import { FakeQuestionDataSource } from '../../mocks/datasources/FakeQuestionDataSource';
 import { FakeCacheProvider } from '../../mocks/cache/FakeCacheProvider';
 
 describe('QuestionService Unit Tests', () => {

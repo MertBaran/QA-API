@@ -31,7 +31,12 @@ describe('UserManager Unit Tests', () => {
       blocked: false,
       createdAt: new Date(),
       language: 'en' as SupportedLanguage,
-      notificationPreferences: { email: true, push: false, sms: false, webhook: false },
+      notificationPreferences: {
+        email: true,
+        push: false,
+        sms: false,
+        webhook: false,
+      },
     });
 
     fakeUserRepository.create({
@@ -47,7 +52,12 @@ describe('UserManager Unit Tests', () => {
       blocked: false,
       createdAt: new Date(),
       language: 'tr' as SupportedLanguage,
-      notificationPreferences: { email: true, push: true, sms: false, webhook: false },
+      notificationPreferences: {
+        email: true,
+        push: true,
+        sms: false,
+        webhook: false,
+      },
     });
   });
 
@@ -105,7 +115,12 @@ describe('UserManager Unit Tests', () => {
         profile_image: 'newprofile.jpg',
         blocked: false,
         language: 'en' as SupportedLanguage,
-        notificationPreferences: { email: true, push: false, sms: false, webhook: false },
+        notificationPreferences: {
+          email: true,
+          push: false,
+          sms: false,
+          webhook: false,
+        },
       };
 
       // Act
@@ -131,15 +146,14 @@ describe('UserManager Unit Tests', () => {
       expect(result?.title).toBe('Senior Developer');
     });
 
-    it('should return null when user not found', async () => {
+    it('should throw error when user not found', async () => {
       // Arrange
       const updateData = { title: 'Senior Developer' };
 
-      // Act
-      const result = await userManager.updateById('nonexistent', updateData);
-
-      // Assert
-      expect(result).toBeNull();
+      // Act & Assert
+      await expect(
+        userManager.updateById('nonexistent', updateData)
+      ).rejects.toThrow('User not found');
     });
   });
 
@@ -152,12 +166,11 @@ describe('UserManager Unit Tests', () => {
       expect(result).toBe(true);
     });
 
-    it('should return false when user not found', async () => {
-      // Act
-      const result = await userManager.deleteById('nonexistent');
-
-      // Assert
-      expect(result).toBe(false);
+    it('should throw error when user not found', async () => {
+      // Act & Assert
+      await expect(userManager.deleteById('nonexistent')).rejects.toThrow(
+        'User not found'
+      );
     });
   });
 

@@ -24,14 +24,14 @@ export class FakeRoleService implements IRoleService {
     return role;
   }
 
-  async findById(roleId: EntityId): Promise<IRoleModel | null> {
+  findById = jest.fn().mockImplementation(async (roleId: EntityId): Promise<IRoleModel | null> => {
     const role = this.roles.find(r => r._id === roleId);
     return role || null;
-  }
+  });
 
-  async findAll(): Promise<IRoleModel[]> {
+  findAll = jest.fn().mockImplementation(async (): Promise<IRoleModel[]> => {
     return this.roles;
-  }
+  });
 
   async updateById(
     roleId: EntityId,
@@ -69,13 +69,13 @@ export class FakeRoleService implements IRoleService {
     return this.roles.filter(r => r.isActive);
   }
 
-  async getAllPermissions(): Promise<string[]> {
+  getAllPermissions = jest.fn().mockImplementation(async (): Promise<string[]> => {
     const allPermissions = new Set<string>();
     this.roles.forEach(role => {
       role.permissions.forEach(permission => allPermissions.add(permission));
     });
     return Array.from(allPermissions);
-  }
+  });
 
   async addPermissionsToRole(
     roleId: EntityId,
@@ -98,7 +98,7 @@ export class FakeRoleService implements IRoleService {
     if (!role) return null;
 
     const updatedPermissions = role.permissions.filter(
-      p => !permissions.includes(p)
+      (p: string) => !permissions.includes(p)
     );
     return this.updateById(roleId, { permissions: updatedPermissions });
   }
@@ -182,7 +182,7 @@ export class FakeRoleService implements IRoleService {
     const role = await this.findById(roleId);
     if (!role) return null;
 
-    const updatedPermissions = role.permissions.filter(p => p !== permissionId);
+    const updatedPermissions = role.permissions.filter((p: string) => p !== permissionId);
     return this.updateById(roleId, { permissions: updatedPermissions });
   }
 
