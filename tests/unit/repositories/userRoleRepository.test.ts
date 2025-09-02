@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { UserRoleRepository } from '../../../repositories/UserRoleRepository';
-import { FakeUserRoleDataSource } from '../../mocks/datasource/FakeUserRoleDataSource';
+import { FakeUserRoleDataSource } from '../../mocks/datasources/FakeUserRoleDataSource';
 import { IUserRoleModel } from '../../../models/interfaces/IUserRoleModel';
 import { EntityId } from '../../../types/database';
 

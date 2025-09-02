@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { QuestionRepository } from '../../../repositories/QuestionRepository';
-import { FakeQuestionDataSource } from '../../mocks/datasource/FakeQuestionDataSource';
+import { FakeQuestionDataSource } from '../../mocks/datasources/FakeQuestionDataSource';
 
 describe('QuestionRepository Unit Tests', () => {
   let questionRepository: QuestionRepository;

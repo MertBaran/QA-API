@@ -3,7 +3,7 @@ import { AuthController } from '../../../controllers/authController';
 import { AuthManager } from '../../../services/managers/AuthManager';
 import { UserRepository } from '../../../repositories/UserRepository';
 import { UserManager } from '../../../services/managers/UserManager';
-import { FakeUserDataSource } from '../../mocks/datasource/FakeUserDataSource';
+import { FakeUserDataSource } from '../../mocks/datasources/FakeUserDataSource';
 import { FakeRoleService } from '../../mocks/services/FakeRoleService';
 import { FakeUserRoleService } from '../../mocks/services/FakeUserRoleService';
 import { FakePermissionService } from '../../mocks/services/FakePermissionService';

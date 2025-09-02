@@ -70,7 +70,7 @@ describe('Auth API Tests', () => {
 
       const response = await request(app)
         .post('/api/auth/login')
-        .send({ email, password });
+        .send({ email, password, captchaToken: 'test-captcha-token-12345' });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -82,6 +82,7 @@ describe('Auth API Tests', () => {
       const response = await request(app).post('/api/auth/login').send({
         email: testUser.email,
         password: 'wrongpassword',
+        captchaToken: 'test-captcha-token-12345',
       });
 
       expect([400, 401]).toContain(response.status);
@@ -197,7 +198,9 @@ describe('Auth API Tests', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.data.id).toBe(testUser._id);
+      const returnedId =
+        response.body.data._id ?? response.body.data.id ?? undefined;
+      expect(returnedId).toBe(testUser._id);
       expect(response.body.data.name).toBe(testUser.name);
     });
 
@@ -244,7 +247,7 @@ describe('Auth API Tests', () => {
       const response = await request(app)
         .post('/api/auth/login')
         .set('Accept-Language', 'tr')
-        .send({ email, password });
+        .send({ email, password, captchaToken: 'test-captcha-token-12345' });
 
       expect(response.status).toBe(200);
       expect(response.body.access_token).toBeDefined();

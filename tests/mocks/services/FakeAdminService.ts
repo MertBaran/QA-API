@@ -55,7 +55,14 @@ export class FakeAdminService implements IAdminService {
     .fn()
     .mockImplementation(
       async (userId: EntityId, updateData: any): Promise<IUserModel | null> => {
-        return this.getUserById(userId);
+        const user = this.users.find(u => u._id === userId);
+        if (!user) {
+          return null;
+        }
+
+        // User'ı güncelle
+        Object.assign(user, updateData);
+        return user;
       }
     );
 
@@ -142,4 +149,13 @@ export class FakeAdminService implements IAdminService {
         return user;
       }
     );
+
+  deleteUserByAdmin = jest
+    .fn()
+    .mockImplementation(async (userId: EntityId): Promise<void> => {
+      const index = this.users.findIndex(u => u._id === userId);
+      if (index !== -1) {
+        this.users.splice(index, 1);
+      }
+    });
 }
