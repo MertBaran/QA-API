@@ -14,61 +14,45 @@ export class BookmarkMongooseDataSource implements IDataSource<IBookmarkModel> {
   async create(
     data: Omit<IBookmarkModel, '_id' | 'createdAt' | 'updatedAt'>
   ): Promise<IBookmarkModel> {
-    try {
-      const bookmark = new BookmarkMongo(data);
-      const savedBookmark = await bookmark.save();
+    const bookmark = new BookmarkMongo(data);
+    const savedBookmark = await bookmark.save();
 
-      this.logger.info('Bookmark created in MongoDB', {
-        bookmarkId: savedBookmark._id.toString(),
-        userId: data.user_id,
-        targetType: data.target_type,
-      });
+    this.logger.info('Bookmark created in MongoDB', {
+      bookmarkId: savedBookmark._id.toString(),
+      userId: data.user_id,
+      targetType: data.target_type,
+    });
 
-      return this.mapToModel(savedBookmark);
-    } catch (error) {
-      throw error;
-    }
+    return this.mapToModel(savedBookmark);
   }
 
   async findById(id: EntityId): Promise<IBookmarkModel | null> {
-    try {
-      const bookmark = await BookmarkMongo.findById(id);
-      return bookmark ? this.mapToModel(bookmark) : null;
-    } catch (error) {
-      throw error;
-    }
+    const bookmark = await BookmarkMongo.findById(id);
+    return bookmark ? this.mapToModel(bookmark) : null;
   }
 
   async findAll(): Promise<IBookmarkModel[]> {
-    try {
-      const bookmarks = await BookmarkMongo.find().sort({ createdAt: -1 });
-      return bookmarks.map(this.mapToModel);
-    } catch (error) {
-      throw error;
-    }
+    const bookmarks = await BookmarkMongo.find().sort({ createdAt: -1 });
+    return bookmarks.map(this.mapToModel);
   }
 
   async update(
     id: EntityId,
     data: Partial<IBookmarkModel>
   ): Promise<IBookmarkModel | null> {
-    try {
-      const updatedBookmark = await BookmarkMongo.findByIdAndUpdate(
-        id,
-        { ...data, updatedAt: new Date() },
-        { new: true }
-      );
+    const updatedBookmark = await BookmarkMongo.findByIdAndUpdate(
+      id,
+      { ...data, updatedAt: new Date() },
+      { new: true }
+    );
 
-      if (updatedBookmark) {
-        this.logger.info('Bookmark updated in MongoDB', {
-          bookmarkId: id.toString(),
-        });
-      }
-
-      return updatedBookmark ? this.mapToModel(updatedBookmark) : null;
-    } catch (error) {
-      throw error;
+    if (updatedBookmark) {
+      this.logger.info('Bookmark updated in MongoDB', {
+        bookmarkId: id.toString(),
+      });
     }
+
+    return updatedBookmark ? this.mapToModel(updatedBookmark) : null;
   }
 
   async updateById(
@@ -79,91 +63,63 @@ export class BookmarkMongooseDataSource implements IDataSource<IBookmarkModel> {
   }
 
   async deleteById(id: EntityId): Promise<IBookmarkModel | null> {
-    try {
-      const bookmark = await BookmarkMongo.findByIdAndDelete(id);
-      const deleted = !!bookmark;
+    const bookmark = await BookmarkMongo.findByIdAndDelete(id);
+    const deleted = !!bookmark;
 
-      if (deleted) {
-        this.logger.info('Bookmark deleted from MongoDB', { bookmarkId: id });
-      }
-
-      return bookmark ? this.mapToModel(bookmark) : null;
-    } catch (error) {
-      throw error;
+    if (deleted) {
+      this.logger.info('Bookmark deleted from MongoDB', { bookmarkId: id });
     }
+
+    return bookmark ? this.mapToModel(bookmark) : null;
   }
 
   async findByField(
     field: keyof IBookmarkModel,
     value: any
   ): Promise<IBookmarkModel[]> {
-    try {
-      const bookmarks = await BookmarkMongo.find({ [field]: value }).sort({
-        createdAt: -1,
-      });
-      return bookmarks.map(this.mapToModel);
-    } catch (error) {
-      throw error;
-    }
+    const bookmarks = await BookmarkMongo.find({ [field]: value }).sort({
+      createdAt: -1,
+    });
+    return bookmarks.map(this.mapToModel);
   }
 
   async findByFields(
     fields: Partial<IBookmarkModel>
   ): Promise<IBookmarkModel[]> {
-    try {
-      const bookmarks = await BookmarkMongo.find(fields).sort({
-        createdAt: -1,
-      });
-      return bookmarks.map(this.mapToModel);
-    } catch (error) {
-      throw error;
-    }
+    const bookmarks = await BookmarkMongo.find(fields).sort({
+      createdAt: -1,
+    });
+    return bookmarks.map(this.mapToModel);
   }
 
   async delete(id: EntityId): Promise<boolean> {
-    try {
-      const result = await BookmarkMongo.findByIdAndDelete(id);
-      const deleted = !!result;
+    const result = await BookmarkMongo.findByIdAndDelete(id);
+    const deleted = !!result;
 
-      if (deleted) {
-        this.logger.info('Bookmark deleted from MongoDB', { bookmarkId: id });
-      }
-
-      return deleted;
-    } catch (error) {
-      throw error;
+    if (deleted) {
+      this.logger.info('Bookmark deleted from MongoDB', { bookmarkId: id });
     }
+
+    return deleted;
   }
 
   async countAll(): Promise<number> {
-    try {
-      return await BookmarkMongo.countDocuments();
-    } catch (error) {
-      throw error;
-    }
+    return await BookmarkMongo.countDocuments();
   }
 
   async deleteAll(): Promise<number> {
-    try {
-      const result = await BookmarkMongo.deleteMany({});
-      this.logger.info('All bookmarks deleted from MongoDB', {
-        deletedCount: result.deletedCount,
-      });
-      return result.deletedCount || 0;
-    } catch (error) {
-      throw error;
-    }
+    const result = await BookmarkMongo.deleteMany({});
+    this.logger.info('All bookmarks deleted from MongoDB', {
+      deletedCount: result.deletedCount,
+    });
+    return result.deletedCount || 0;
   }
 
   async findOneByFields(
     fields: Partial<IBookmarkModel>
   ): Promise<IBookmarkModel | null> {
-    try {
-      const bookmark = await BookmarkMongo.findOne(fields);
-      return bookmark ? this.mapToModel(bookmark) : null;
-    } catch (error) {
-      throw error;
-    }
+    const bookmark = await BookmarkMongo.findOne(fields);
+    return bookmark ? this.mapToModel(bookmark) : null;
   }
 
   private mapToModel(mongoBookmark: IBookmarkMongo): IBookmarkModel {

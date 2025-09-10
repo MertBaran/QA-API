@@ -13,98 +13,53 @@ export class UserManager implements IUserService {
   ) {}
 
   async findById(userId: EntityId): Promise<IUserModel | null> {
-    try {
-      return await this.userRepository.findById(userId);
-    } catch (error) {
-      throw new CustomError(UserServiceMessages.UserNotFound.en, 404);
-    }
+    return await this.userRepository.findById(userId);
   }
 
   async findByEmail(email: string): Promise<IUserModel | null> {
-    try {
-      return await this.userRepository.findByEmail(email);
-    } catch (error) {
-      throw new CustomError(UserServiceMessages.UserNotFound.en, 404);
-    }
+    return await this.userRepository.findByEmail(email);
   }
 
   async findByEmailWithPassword(email: string): Promise<IUserModel | null> {
-    try {
-      return await this.userRepository.findByEmailWithPassword(email);
-    } catch (error) {
-      throw new CustomError(UserServiceMessages.UserNotFound.en, 404);
-    }
+    return await this.userRepository.findByEmailWithPassword(email);
   }
 
   async create(userData: Partial<IUserModel>): Promise<IUserModel> {
-    try {
-      const user = await this.userRepository.create(userData);
-      if (!user) {
-        throw new CustomError(UserServiceMessages.UserCreateError.en, 500);
-      }
-      return user;
-    } catch (error) {
-      if (error instanceof CustomError) {
-        throw error;
-      }
+    const user = await this.userRepository.create(userData);
+    if (!user) {
       throw new CustomError(UserServiceMessages.UserCreateError.en, 500);
     }
+    return user;
   }
 
   async updateById(
     userId: EntityId,
     data: Partial<IUserModel>
   ): Promise<IUserModel | null> {
-    try {
-      const user = await this.userRepository.updateById(userId, data);
-      if (!user) {
-        throw new CustomError(UserServiceMessages.UserNotFound.en, 404);
-      }
-      return user;
-    } catch (error) {
-      if (error instanceof CustomError) {
-        throw error;
-      }
-      throw new CustomError(UserServiceMessages.UserUpdateError.en, 500);
+    const user = await this.userRepository.updateById(userId, data);
+    if (!user) {
+      throw new CustomError(UserServiceMessages.UserNotFound.en, 404);
     }
+    return user;
   }
 
   async deleteById(userId: EntityId): Promise<boolean> {
-    try {
-      const deleted = await this.userRepository.deleteById(userId);
-      if (!deleted) {
-        throw new CustomError(UserServiceMessages.UserNotFound.en, 404);
-      }
-      return true;
-    } catch (error) {
-      if (error instanceof CustomError) {
-        throw error;
-      }
-      throw new CustomError(UserServiceMessages.UserDeleteError.en, 500);
+    const deleted = await this.userRepository.deleteById(userId);
+    if (!deleted) {
+      throw new CustomError(UserServiceMessages.UserNotFound.en, 404);
     }
+    return true;
   }
 
   async findAll(): Promise<IUserModel[]> {
-    try {
-      return await this.userRepository.findAll();
-    } catch (error) {
-      throw new CustomError(UserServiceMessages.UserListError.en, 500);
-    }
+    return await this.userRepository.findAll();
   }
 
   async findActive(): Promise<IUserModel[]> {
-    try {
-      return await this.userRepository.findActive();
-    } catch (error) {
-      throw new CustomError(UserServiceMessages.UserListError.en, 500);
-    }
+    return await this.userRepository.findActive();
   }
 
   async countAll(): Promise<number> {
-    try {
-      return await this.userRepository.countAll();
-    } catch (error) {
-      throw new CustomError(UserServiceMessages.UserCountError.en, 500);
-    }
+    return await this.userRepository.countAll();
   }
 }

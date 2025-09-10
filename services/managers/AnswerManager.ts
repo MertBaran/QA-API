@@ -20,106 +20,75 @@ export class AnswerManager implements IAnswerService {
     questionId: EntityId,
     userId: EntityId
   ): Promise<IAnswerModel> {
-    try {
-      const answer = await this.answerRepository.create({
-        ...answerData,
-        question: questionId,
-        user: userId,
-      });
-      return answer;
-    } catch (_err) {
-      throw new CustomError(
-        AnswerServiceMessages.AnswerCreationDbError.en,
-        500
-      );
-    }
+    const answer = await this.answerRepository.create({
+      ...answerData,
+      question: questionId,
+      user: userId,
+    });
+    return answer;
   }
 
   async getAnswersByQuestion(questionId: EntityId): Promise<IAnswerModel[]> {
-    try {
-      return await this.answerRepository.findByQuestion(questionId);
-    } catch (_err) {
-      throw new CustomError(AnswerServiceMessages.GetAnswersDbError.en, 500);
-    }
+    return await this.answerRepository.findByQuestion(questionId);
   }
 
   async getAnswerById(answerId: string): Promise<IAnswerModel> {
-    try {
-      const answer = await this.answerRepository.findByIdWithPopulate(answerId);
-      if (!answer) {
-        throw new CustomError(AnswerServiceMessages.AnswerNotFound.en, 404);
-      }
-      return answer;
-    } catch (_err) {
-      throw new CustomError(AnswerServiceMessages.GetAnswerDbError.en, 500);
+    const answer = await this.answerRepository.findByIdWithPopulate(answerId);
+    if (!answer) {
+      throw new CustomError(AnswerServiceMessages.AnswerNotFound.en, 404);
     }
+    return answer;
   }
 
   async updateAnswer(answerId: string, content: string): Promise<IAnswerModel> {
     if (!content) {
       throw new CustomError(AnswerServiceMessages.ContentRequired.en, 400);
     }
-    try {
-      const answer = await this.answerRepository.updateById(answerId, {
-        content,
-      });
-      if (!answer) {
-        throw new CustomError(AnswerServiceMessages.AnswerNotFound.en, 404);
-      }
-      return answer;
-    } catch (_err) {
-      throw new CustomError(AnswerServiceMessages.UpdateAnswerDbError.en, 500);
+    const answer = await this.answerRepository.updateById(answerId, {
+      content,
+    });
+    if (!answer) {
+      throw new CustomError(AnswerServiceMessages.AnswerNotFound.en, 404);
     }
+    return answer;
   }
 
   async deleteAnswer(answerId: string, questionId: string): Promise<void> {
-    try {
-      await this.answerRepository.deleteById(answerId);
-      const question = await this.questionRepository.findById(questionId);
-      if (question) {
-        question.answers = question.answers.filter(
-          (id: any) => id.toString() !== answerId.toString()
-        );
-        await this.questionRepository.updateById(questionId, {
-          answers: question.answers,
-        });
-      }
-    } catch (_err) {
-      throw new CustomError(AnswerServiceMessages.DeleteAnswerDbError.en, 500);
+    await this.answerRepository.deleteById(answerId);
+    const question = await this.questionRepository.findById(questionId);
+    if (question) {
+      question.answers = question.answers.filter(
+        (id: any) => id.toString() !== answerId.toString()
+      );
+      await this.questionRepository.updateById(questionId, {
+        answers: question.answers,
+      });
     }
   }
 
   async likeAnswer(answerId: string, userId: EntityId): Promise<IAnswerModel> {
-    try {
-      const answer = await this.answerRepository.likeAnswer(answerId, userId);
-      if (!answer) {
-        const exists = await this.answerRepository.findById(answerId);
-        if (!exists)
-          throw new CustomError(AnswerServiceMessages.AnswerNotFound.en, 404);
-        throw new CustomError(AnswerServiceMessages.AlreadyLiked.en, 400);
-      }
-      return answer;
-    } catch (_err) {
-      throw new CustomError(AnswerServiceMessages.LikeAnswerDbError.en, 500);
+    const answer = await this.answerRepository.likeAnswer(answerId, userId);
+    if (!answer) {
+      const exists = await this.answerRepository.findById(answerId);
+      if (!exists)
+        throw new CustomError(AnswerServiceMessages.AnswerNotFound.en, 404);
+      throw new CustomError(AnswerServiceMessages.AlreadyLiked.en, 400);
     }
+    return answer;
   }
 
   async undoLikeAnswer(
     answerId: string,
     userId: EntityId
   ): Promise<IAnswerModel> {
-    try {
-      const answer = await this.answerRepository.unlikeAnswer(answerId, userId);
-      if (!answer) {
-        const exists = await this.answerRepository.findById(answerId);
-        if (!exists)
-          throw new CustomError(AnswerServiceMessages.AnswerNotFound.en, 404);
-        throw new CustomError(AnswerServiceMessages.CannotUndoLike.en, 400);
-      }
-      return answer;
-    } catch (_err) {
-      throw new CustomError(AnswerServiceMessages.UndoLikeDbError.en, 500);
+    const answer = await this.answerRepository.unlikeAnswer(answerId, userId);
+    if (!answer) {
+      const exists = await this.answerRepository.findById(answerId);
+      if (!exists)
+        throw new CustomError(AnswerServiceMessages.AnswerNotFound.en, 404);
+      throw new CustomError(AnswerServiceMessages.CannotUndoLike.en, 400);
     }
+    return answer;
   }
 
   async getAnswersByUser(userId: EntityId): Promise<IAnswerModel[]> {

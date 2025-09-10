@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import asyncErrorWrapper from 'express-async-handler';
 import { container } from '../services/container';
 import { WebSocketMonitorService } from '../services/WebSocketMonitorService';
 
@@ -8,8 +9,8 @@ export class MonitoringController {
   );
 
   // Connection status endpoint
-  getConnectionStatus(req: Request, res: Response): void {
-    try {
+  getConnectionStatus = asyncErrorWrapper(
+    async (req: Request, res: Response): Promise<void> => {
       const status = this.connectionMonitor.getConnectionStatus();
       const statusArray = Array.from(status.values());
 
@@ -21,18 +22,12 @@ export class MonitoringController {
           lastUpdate: new Date().toISOString(),
         },
       });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: 'Failed to get connection status',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      });
     }
-  }
+  );
 
   // Alert history endpoint
-  getAlertHistory(req: Request, res: Response): void {
-    try {
+  getAlertHistory = asyncErrorWrapper(
+    async (req: Request, res: Response): Promise<void> => {
       const limit = parseInt(req.query['limit'] as string) || 50;
       const alerts = this.connectionMonitor.getRecentAlerts(limit);
 
@@ -44,36 +39,24 @@ export class MonitoringController {
           limit,
         },
       });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: 'Failed to get alert history',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      });
     }
-  }
+  );
 
   // Monitoring stats endpoint
-  getMonitoringStats(req: Request, res: Response): void {
-    try {
+  getMonitoringStats = asyncErrorWrapper(
+    async (req: Request, res: Response): Promise<void> => {
       const stats = this.connectionMonitor.getMonitoringStats();
 
       res.json({
         success: true,
         data: stats,
       });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: 'Failed to get monitoring stats',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      });
     }
-  }
+  );
 
   // Start monitoring endpoint
-  startMonitoring(req: Request, res: Response): void {
-    try {
+  startMonitoring = asyncErrorWrapper(
+    async (req: Request, res: Response): Promise<void> => {
       const interval = parseInt(req.body.interval) || 30000;
       this.connectionMonitor.startMonitoring(interval);
 
@@ -85,18 +68,12 @@ export class MonitoringController {
           isActive: this.connectionMonitor.isMonitoringActive(),
         },
       });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: 'Failed to start monitoring',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      });
     }
-  }
+  );
 
   // Stop monitoring endpoint
-  stopMonitoring(req: Request, res: Response): void {
-    try {
+  stopMonitoring = asyncErrorWrapper(
+    async (req: Request, res: Response): Promise<void> => {
       this.connectionMonitor.stopMonitoring();
 
       res.json({
@@ -106,12 +83,6 @@ export class MonitoringController {
           isActive: this.connectionMonitor.isMonitoringActive(),
         },
       });
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        error: 'Failed to stop monitoring',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      });
     }
-  }
+  );
 }
