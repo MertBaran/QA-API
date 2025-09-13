@@ -115,7 +115,8 @@ describe('HealthCheckController Unit Tests', () => {
       // Act
       healthController.quickHealthCheck(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        jest.fn()
       );
 
       // Assert
@@ -148,7 +149,8 @@ describe('HealthCheckController Unit Tests', () => {
       // Act
       healthController.quickHealthCheck(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        jest.fn()
       );
 
       // Assert
@@ -197,17 +199,22 @@ describe('HealthCheckController Unit Tests', () => {
 
       jest.isolateModules(async () => {
         const cMod = require('../../../services/container');
-        (cMod.container.resolve as jest.Mock).mockImplementation((token: any) => {
-          if (token === 'HealthCheckService') return mockHealthCheckService;
-          throw new Error(`Unknown token: ${token}`);
-        });
+        (cMod.container.resolve as jest.Mock).mockImplementation(
+          (token: any) => {
+            if (token === 'HealthCheckService') return mockHealthCheckService;
+            throw new Error(`Unknown token: ${token}`);
+          }
+        );
 
-        const { HealthCheckController: Ctl } = require('../../../controllers/healthController');
+        const {
+          HealthCheckController: Ctl,
+        } = require('../../../controllers/healthController');
         const ctl = new Ctl();
 
         await ctl.fullHealthCheck(
           mockRequest as Request,
-          mockResponse as Response
+          mockResponse as Response,
+          jest.fn()
         );
 
         expect(mockResponse.json).toHaveBeenCalledWith(
@@ -241,7 +248,8 @@ describe('HealthCheckController Unit Tests', () => {
       // Act
       await healthController.fullHealthCheck(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        jest.fn()
       );
 
       // Assert
@@ -284,20 +292,17 @@ describe('HealthCheckController Unit Tests', () => {
         new Error('Service unavailable')
       );
 
+      const mockNext = jest.fn();
+
       // Act
       await healthController.fullHealthCheck(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        mockNext
       );
 
-      // Assert
-      expect(mockResponse.status).toHaveBeenCalledWith(500);
-      expect(mockResponse.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          status: 'error',
-          message: 'Health check failed',
-        })
-      );
+      // Assert - asyncErrorWrapper passes errors to next()
+      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
     });
 
     it('should handle unknown errors', async () => {
@@ -316,20 +321,17 @@ describe('HealthCheckController Unit Tests', () => {
       (ApplicationState.getInstance as jest.Mock).mockReturnValue(mockAppState);
       mockHealthCheckService.checkHealth.mockRejectedValue('Unknown error');
 
+      const mockNext = jest.fn();
+
       // Act
       await healthController.fullHealthCheck(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        mockNext
       );
 
-      // Assert
-      expect(mockResponse.status).toHaveBeenCalledWith(500);
-      expect(mockResponse.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          status: 'error',
-          message: 'Health check failed',
-        })
-      );
+      // Assert - asyncErrorWrapper passes errors to next()
+      expect(mockNext).toHaveBeenCalledWith(expect.any(Error));
     });
   });
 });

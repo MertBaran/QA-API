@@ -92,7 +92,8 @@ describe('MonitoringController Unit Tests', () => {
       // Act
       monitoringController.getConnectionStatus(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        jest.fn()
       );
 
       // Assert
@@ -130,7 +131,8 @@ describe('MonitoringController Unit Tests', () => {
       // Act
       monitoringController.getConnectionStatus(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        jest.fn()
       );
 
       // Assert
@@ -151,7 +153,8 @@ describe('MonitoringController Unit Tests', () => {
       // Act
       monitoringController.getConnectionStatus(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        jest.fn()
       );
 
       // Assert
@@ -169,7 +172,8 @@ describe('MonitoringController Unit Tests', () => {
       // Act
       monitoringController.getAlertHistory(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        jest.fn()
       );
 
       // Assert
@@ -205,7 +209,8 @@ describe('MonitoringController Unit Tests', () => {
       // Act
       monitoringController.getAlertHistory(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        jest.fn()
       );
 
       // Assert
@@ -242,7 +247,8 @@ describe('MonitoringController Unit Tests', () => {
       // Act
       monitoringController.getAlertHistory(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        jest.fn()
       );
 
       // Assert
@@ -260,7 +266,8 @@ describe('MonitoringController Unit Tests', () => {
       // Act
       monitoringController.getMonitoringStats(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        jest.fn()
       );
 
       // Assert
@@ -286,7 +293,8 @@ describe('MonitoringController Unit Tests', () => {
       // Act
       monitoringController.getMonitoringStats(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        jest.fn()
       );
 
       // Assert
@@ -304,7 +312,8 @@ describe('MonitoringController Unit Tests', () => {
       // Act
       monitoringController.startMonitoring(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        jest.fn()
       );
 
       // Assert
@@ -328,7 +337,8 @@ describe('MonitoringController Unit Tests', () => {
       // Act
       monitoringController.startMonitoring(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        jest.fn()
       );
 
       // Assert
@@ -354,7 +364,8 @@ describe('MonitoringController Unit Tests', () => {
       // Act
       monitoringController.startMonitoring(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        jest.fn()
       );
 
       // Assert
@@ -372,7 +383,8 @@ describe('MonitoringController Unit Tests', () => {
       // Act
       monitoringController.stopMonitoring(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        jest.fn()
       );
 
       // Assert
@@ -395,7 +407,8 @@ describe('MonitoringController Unit Tests', () => {
       // Act
       monitoringController.stopMonitoring(
         mockRequest as Request,
-        mockResponse as Response
+        mockResponse as Response,
+        jest.fn()
       );
 
       // Assert
