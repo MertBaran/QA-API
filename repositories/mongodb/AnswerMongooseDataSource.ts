@@ -56,109 +56,64 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
   }
 
   async create(data: Partial<IAnswerModel>): Promise<IAnswerModel> {
-    try {
-      // Omit _id to avoid type conflict
-      const { _id, ...rest } = data;
-      const result = await this.model.create(rest as Partial<IAnswerMongo>);
-      return this.toEntity(result);
-    } catch (_err) {
-      throw new CustomError(RepositoryConstants.ANSWER.CREATE_ERROR.en, 500);
-    }
+    // Omit _id to avoid type conflict
+    const { _id, ...rest } = data;
+    const result = await this.model.create(rest as Partial<IAnswerMongo>);
+    return this.toEntity(result);
   }
 
   async findById(id: string): Promise<IAnswerModel | null> {
-    try {
-      const result = await (this.model as any)
-        .findById(id)
-        .populate('user', 'name email profile_image')
-        .populate('question', 'title');
-      return result ? this.toEntity(result) : null;
-    } catch (_err) {
-      throw new CustomError(
-        RepositoryConstants.ANSWER.FIND_BY_ID_ERROR.en,
-        500
-      );
-    }
+    const result = await (this.model as any)
+      .findById(id)
+      .populate('user', 'name email profile_image')
+      .populate('question', 'title');
+    return result ? this.toEntity(result) : null;
   }
 
   async findAll(): Promise<IAnswerModel[]> {
-    try {
-      const results = await this.model
-        .find()
-        .populate('user', 'name email profile_image');
-      return results.map((doc: any) => this.toEntity(doc));
-    } catch (_err) {
-      throw new CustomError(RepositoryConstants.ANSWER.FIND_ALL_ERROR.en, 500);
-    }
+    const results = await this.model
+      .find()
+      .populate('user', 'name email profile_image');
+    return results.map((doc: any) => this.toEntity(doc));
   }
 
   async updateById(
     id: string,
     data: Partial<IAnswerModel>
   ): Promise<IAnswerModel | null> {
-    try {
-      // Omit _id to avoid type conflict
-      const { _id, ...rest } = data;
-      const result = await this.model.findByIdAndUpdate(
-        id,
-        rest as Partial<IAnswerMongo>,
-        { new: true }
-      );
-      return result ? this.toEntity(result) : null;
-    } catch (_err) {
-      throw new CustomError(
-        RepositoryConstants.ANSWER.UPDATE_BY_ID_ERROR.en,
-        500
-      );
-    }
+    // Omit _id to avoid type conflict
+    const { _id, ...rest } = data;
+    const result = await this.model.findByIdAndUpdate(
+      id,
+      rest as Partial<IAnswerMongo>,
+      { new: true }
+    );
+    return result ? this.toEntity(result) : null;
   }
 
   async deleteById(id: string): Promise<IAnswerModel | null> {
-    try {
-      const result = await this.model.findByIdAndDelete(id);
-      return result ? this.toEntity(result) : null;
-    } catch (_err) {
-      throw new CustomError(
-        RepositoryConstants.ANSWER.DELETE_BY_ID_ERROR.en,
-        500
-      );
-    }
+    const result = await this.model.findByIdAndDelete(id);
+    return result ? this.toEntity(result) : null;
   }
 
-  async findByField(field: keyof IAnswerModel, value: any): Promise<IAnswerModel[]> {
-    try {
-      const results = await this.model.find({ [field]: value });
-      return results.map((doc: any) => this.toEntity(doc));
-    } catch (_err) {
-      throw new CustomError(RepositoryConstants.ANSWER.FIND_ALL_ERROR.en, 500);
-    }
+  async findByField(
+    field: keyof IAnswerModel,
+    value: any
+  ): Promise<IAnswerModel[]> {
+    const results = await this.model.find({ [field]: value });
+    return results.map((doc: any) => this.toEntity(doc));
   }
 
   async findByFields(fields: Partial<IAnswerModel>): Promise<IAnswerModel[]> {
-    try {
-      const results = await this.model.find(fields);
-      return results.map((doc: any) => this.toEntity(doc));
-    } catch (_err) {
-      throw new CustomError(RepositoryConstants.ANSWER.FIND_ALL_ERROR.en, 500);
-    }
+    const results = await this.model.find(fields);
+    return results.map((doc: any) => this.toEntity(doc));
   }
 
   async countAll(): Promise<number> {
-    try {
-      return this.model.countDocuments();
-    } catch (_err) {
-      throw new CustomError(RepositoryConstants.ANSWER.COUNT_ALL_ERROR.en, 500);
-    }
+    return this.model.countDocuments();
   }
 
   async deleteAll(): Promise<any> {
-    try {
-      return this.model.deleteMany({});
-    } catch (_err) {
-      throw new CustomError(
-        RepositoryConstants.ANSWER.DELETE_ALL_ERROR.en,
-        500
-      );
-    }
+    return this.model.deleteMany({});
   }
 }

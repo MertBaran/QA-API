@@ -27,28 +27,20 @@ export class NotificationController {
   // Queue durumunu kontrol et
   getQueueStatus = asyncErrorWrapper(
     async (req: Request, res: Response): Promise<void> => {
-      try {
-        if (!this.notificationService.getQueueStatus) {
-          res.status(400).json({
-            success: false,
-            message: 'Queue status not available',
-            error: 'getQueueStatus method not implemented',
-          });
-          return;
-        }
-
-        const status = await this.notificationService.getQueueStatus();
-        res.status(200).json({
-          success: true,
-          data: status,
-        });
-      } catch (error) {
+      if (!this.notificationService.getQueueStatus) {
         res.status(400).json({
           success: false,
           message: 'Queue status not available',
-          error: error instanceof Error ? error.message : 'Unknown error',
+          error: 'getQueueStatus method not implemented',
         });
+        return;
       }
+
+      const status = await this.notificationService.getQueueStatus();
+      res.status(200).json({
+        success: true,
+        data: status,
+      });
     }
   );
 

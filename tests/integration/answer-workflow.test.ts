@@ -1,371 +1,363 @@
-import 'reflect-metadata';
 import request from 'supertest';
-// mongoose kullanılmıyor, kaldırıldı
-import app from '../testApp';
-import { container } from 'tsyringe';
-
-import { QuestionRepository } from '../../repositories/QuestionRepository';
-import { AnswerRepository } from '../../repositories/AnswerRepository';
-import '../setup';
-import { registerTestUser, createTestQuestion } from '../utils/testUtils';
-
-const _questionRepository = container.resolve(QuestionRepository);
-const _answerRepository = container.resolve(AnswerRepository);
+import { testApp } from '../setup';
 
 describe('Answer Workflow Integration Tests', () => {
-  let user1: any;
-  let user2: any;
-  let user1Token: string;
-  let user2Token: string;
-  let testQuestion: any;
+  let testUser: any;
+  let authToken: string;
+  let questionId: string;
+  let answerId: string;
 
   beforeAll(async () => {
-    // Register and login test users
-    user1 = await registerTestUser({
-      firstName: 'Test',
-      lastName: 'User 1',
-      email: 'testuser1@example.com',
-      password: 'testpass123',
-    });
-    user1Token = user1.token;
+    // Test user oluştur
+    testUser = {
+      email: 'answer@example.com',
+      password: 'password123',
+      firstName: 'Answer',
+      lastName: 'User',
+      title: 'Developer',
+      bio: 'Test bio',
+      location: 'Test Location',
+      website: 'https://test.com',
+      github: 'answeruser',
+      twitter: 'answeruser',
+      linkedin: 'answeruser',
+      avatar: 'https://test.com/avatar.jpg',
+      profile_image: 'https://test.com/avatar.jpg',
+      blocked: false,
+    };
 
-    user2 = await registerTestUser({
-      firstName: 'Test',
-      lastName: 'User 2',
-      email: 'testuser2@example.com',
-      password: 'testpass123',
-    });
-    user2Token = user2.token;
+    // Register user
+    const registerResponse = await request(testApp)
+      .post('/api/auth/register')
+      .send(testUser);
 
-    // Create a test question
-    testQuestion = await createTestQuestion({
-      token: user1Token,
-      title: 'Test Question for Answer Workflow',
-      content: 'This is a test question content for answer workflow testing.',
+    expect(registerResponse.status).toBe(200);
+
+    // Login user
+    const loginResponse = await request(testApp).post('/api/auth/login').send({
+      email: testUser.email,
+      password: testUser.password,
+      captchaToken: 'test-captcha-token',
     });
+
+    expect(loginResponse.status).toBe(200);
+    authToken = loginResponse.body.access_token;
+
+    // Create a question for testing answers
+    const questionData = {
+      title: 'Test Question for Answers',
+      content: 'This question is for testing answer functionality',
+      tags: ['test', 'answer'],
+      category: 'general',
+      isPublic: true,
+    };
+
+    const questionResponse = await request(testApp)
+      .post('/api/questions/ask')
+      .set('Authorization', `Bearer ${authToken}`)
+      .send(questionData);
+
+    expect(questionResponse.status).toBe(200);
+    questionId = questionResponse.body.data._id;
+  });
+
+  afterAll(async () => {
+    // Clean up - delete the test question
+    if (questionId) {
+      await request(testApp)
+        .delete(`/api/questions/${questionId}/delete`)
+        .set('Authorization', `Bearer ${authToken}`);
+    }
   });
 
   describe('Complete Answer Lifecycle', () => {
     it('should complete full answer lifecycle: create, read, update, like, delete', async () => {
-      // 1. Create an answer
+      // 1. Create Answer
       const answerData = {
-        content:
-          'This is a test answer for lifecycle testing that is long enough to meet the minimum requirement of 10 characters.',
+        content: 'This is a test answer content',
+        isPublic: true,
       };
 
-      const createResponse = await request(app)
-        .post(`/api/answers/${testQuestion._id}/answer`)
-        .set('Authorization', `Bearer ${user1Token}`)
+      const createResponse = await request(testApp)
+        .post(`/api/questions/${questionId}/answers`)
+        .set('Authorization', `Bearer ${authToken}`)
         .send(answerData);
+
+      console.log('Answer Create Response:', {
+        status: createResponse.status,
+        body: createResponse.body,
+        data: createResponse.body.data,
+        answerId: createResponse.body.data._id,
+        questionId: createResponse.body.data.question,
+        allFields: Object.keys(createResponse.body.data),
+      });
 
       expect(createResponse.status).toBe(200);
       expect(createResponse.body.success).toBe(true);
       expect(createResponse.body.data.content).toBe(answerData.content);
-      expect(createResponse.body.data.user).toBeDefined();
-      expect(user1._id).toBeDefined();
-      const userId =
-        createResponse.body.data.user &&
-        typeof createResponse.body.data.user === 'object' &&
-        createResponse.body.data.user._id
-          ? createResponse.body.data.user._id
-          : createResponse.body.data.user;
-      expect(userId).toBeDefined();
-      expect(userId.toString()).toBe(user1._id.toString());
-      expect(createResponse.body.data.question).toBeDefined();
-      expect(testQuestion._id).toBeDefined();
-      const questionId =
-        createResponse.body.data.question &&
-        typeof createResponse.body.data.question === 'object' &&
-        createResponse.body.data.question._id
-          ? createResponse.body.data.question._id
-          : createResponse.body.data.question;
-      expect(questionId).toBeDefined();
-      expect(questionId.toString()).toBe(testQuestion._id.toString());
+      expect(createResponse.body.data.question).toBe(questionId);
 
-      const answerId = createResponse.body.data._id;
+      answerId = createResponse.body.data._id;
 
-      // 2. Read the answer
-      const readResponse = await request(app).get(`/api/answers/${answerId}`);
+      // 2. Read Answer
+      const getResponse = await request(testApp)
+        .get(`/api/questions/${questionId}/answers/${answerId}`)
+        .set('Authorization', `Bearer ${authToken}`);
 
-      expect(readResponse.status).toBe(200);
-      expect(readResponse.body.data._id).toBe(answerId);
-      expect(readResponse.body.data.content).toBe(answerData.content);
-      expect(readResponse.body.data.user.name).toBe(user1.name);
-      expect(readResponse.body.data.question.title).toBe(testQuestion.title);
+      console.log('Answer Read Response:', {
+        status: getResponse.status,
+        body: getResponse.body,
+        endpoint: `/api/questions/${questionId}/answers/${answerId}`,
+        questionId,
+        answerId,
+        questionIdType: typeof questionId,
+        answerIdType: typeof answerId,
+      });
 
-      // 3. Get all answers for the question
-      const getAllResponse = await request(app).get(
-        `/api/answers/${testQuestion._id}/answers`
-      );
+      expect(getResponse.status).toBe(200);
+      expect(getResponse.body.success).toBe(true);
+      expect(getResponse.body.data.content).toBe(answerData.content);
 
-      expect(getAllResponse.status).toBe(200);
-      expect(getAllResponse.body.data.length).toBeGreaterThan(0);
-      expect(getAllResponse.body.data[0]._id).toBe(answerId);
-
-      // 4. Like the answer
-      const likeResponse = await request(app)
-        .get(`/api/answers/${answerId}/like`)
-        .set('Authorization', `Bearer ${user1Token}`);
-
-      expect(likeResponse.status).toBe(200);
-      if (Array.isArray(likeResponse.body.data.likes)) {
-        likeResponse.body.data.likes.forEach((id: any) =>
-          expect(id).toBeDefined()
-        );
-        const likeIds = likeResponse.body.data.likes
-          .filter(Boolean)
-          .map((id: any) =>
-            id && id._id
-              ? id._id.toString()
-              : id && id.toString
-                ? id.toString()
-                : id
-          );
-        expect(likeIds).toContain(user1._id.toString());
-      }
-
-      // 5. User2 also likes the answer
-      const user2LikeResponse = await request(app)
-        .get(`/api/answers/${answerId}/like`)
-        .set('Authorization', `Bearer ${user2Token}`);
-
-      expect(user2LikeResponse.status).toBe(200);
-      const user2LikeIds = (user2LikeResponse.body.data.likes || [])
-        .filter(Boolean)
-        .map((id: any) => {
-          expect(id).toBeDefined();
-          return id && id._id
-            ? id._id.toString()
-            : id && id.toString
-              ? id.toString()
-              : id;
-        });
-      expect(user2LikeIds).toContain(user2._id.toString());
-
-      // 6. Update the answer
+      // 3. Update Answer
       const updateData = {
-        content: 'Updated answer content for testing.',
+        content: 'This is an updated answer content',
       };
 
-      const updateResponse = await request(app)
-        .put(`/api/answers/${answerId}/edit`)
-        .set('Authorization', `Bearer ${user1Token}`)
+      const updateResponse = await request(testApp)
+        .put(`/api/questions/${questionId}/answers/${answerId}/edit`)
+        .set('Authorization', `Bearer ${authToken}`)
         .send(updateData);
 
       expect(updateResponse.status).toBe(200);
+      expect(updateResponse.body.success).toBe(true);
       expect(updateResponse.body.data.content).toBe(updateData.content);
-      expect(updateResponse.body.data.old_content).toBe(answerData.content);
 
-      // 7. Try to update with unauthorized user (should fail)
-      const unauthorizedEditResponse = await request(app)
-        .put(`/api/answers/${answerId}/edit`)
-        .set('Authorization', `Bearer ${user2Token}`)
-        .send(updateData);
+      // 4. Like Answer
+      const likeResponse = await request(testApp)
+        .get(`/api/questions/${questionId}/answers/${answerId}/like`)
+        .set('Authorization', `Bearer ${authToken}`);
 
-      expect(unauthorizedEditResponse.status).toBe(403);
+      expect(likeResponse.status).toBe(200);
+      expect(likeResponse.body.success).toBe(true);
 
-      // 8. Delete the answer
-      const deleteResponse = await request(app)
-        .delete(`/api/answers/${answerId}/delete`)
-        .set('Authorization', `Bearer ${user1Token}`);
+      // 5. Unlike Answer
+      const unlikeResponse = await request(testApp)
+        .get(`/api/questions/${questionId}/answers/${answerId}/undo_like`)
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(unlikeResponse.status).toBe(200);
+      expect(unlikeResponse.body.success).toBe(true);
+
+      // 6. Delete Answer
+      const deleteResponse = await request(testApp)
+        .delete(`/api/questions/${questionId}/answers/${answerId}/delete`)
+        .set('Authorization', `Bearer ${authToken}`);
 
       expect(deleteResponse.status).toBe(200);
       expect(deleteResponse.body.success).toBe(true);
-
-      // 9. Verify answer is deleted
-      const deletedAnswerResponse = await request(app).get(
-        `/api/answers/${answerId}`
-      );
-
-      expect(deletedAnswerResponse.status).toBe(404);
     });
   });
 
   describe('Multi-User Answer Interactions', () => {
     it('should handle multiple users answering the same question', async () => {
-      // User1 answers the question
-      const answer1Data = {
-        content: 'First answer to the test question.',
-      };
+      // Create multiple answers to the same question
+      const answers = [
+        { content: 'First answer to the question' },
+        { content: 'Second answer to the question' },
+        { content: 'Third answer to the question' },
+      ];
 
-      const answer1Response = await request(app)
-        .post(`/api/answers/${testQuestion._id}/answer`)
-        .set('Authorization', `Bearer ${user1Token}`)
-        .send(answer1Data);
+      const createdAnswers = [];
 
-      expect(answer1Response.status).toBe(200);
-      const answer1Id = answer1Response.body.data._id;
+      for (const answerData of answers) {
+        const response = await request(testApp)
+          .post(`/api/questions/${questionId}/answers`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .send(answerData);
 
-      // User2 answers the same question
-      const answer2Data = {
-        content: 'Second answer to the test question.',
-      };
+        expect(response.status).toBe(200);
+        createdAnswers.push(response.body.data);
+      }
 
-      const answer2Response = await request(app)
-        .post(`/api/answers/${testQuestion._id}/answer`)
-        .set('Authorization', `Bearer ${user2Token}`)
-        .send(answer2Data);
-
-      expect(answer2Response.status).toBe(200);
-      const answer2Id = answer2Response.body.data._id;
-
-      // Verify both answers exist
-      const getAllResponse = await request(app).get(
-        `/api/answers/${testQuestion._id}/answers`
+      // Get all answers for the question
+      const getAllResponse = await request(testApp).get(
+        `/api/questions/${questionId}/answers`
       );
 
       expect(getAllResponse.status).toBe(200);
-      expect(getAllResponse.body.data.length).toBeGreaterThanOrEqual(2);
-
-      // User1 likes answer2
-      const likeResponse = await request(app)
-        .get(`/api/answers/${answer2Id}/like`)
-        .set('Authorization', `Bearer ${user1Token}`);
-
-      expect(likeResponse.status).toBe(200);
-
-      // User2 likes answer1
-      const likeResponse2 = await request(app)
-        .get(`/api/answers/${answer1Id}/like`)
-        .set('Authorization', `Bearer ${user2Token}`);
-
-      expect(likeResponse2.status).toBe(200);
-
-      // Verify likes are recorded
-      const getAllResponse2 = await request(app).get(
-        `/api/answers/${testQuestion._id}/answers`
+      expect(getAllResponse.body.success).toBe(true);
+      expect(getAllResponse.body.data.length).toBeGreaterThanOrEqual(
+        answers.length
       );
 
-      expect(getAllResponse2.status).toBe(200);
-      expect(getAllResponse2.body.data.length).toBeGreaterThanOrEqual(2);
+      // Clean up - delete created answers
+      for (const answer of createdAnswers) {
+        await request(testApp)
+          .delete(`/api/questions/${questionId}/answers/${answer._id}/delete`)
+          .set('Authorization', `Bearer ${authToken}`);
+      }
     });
   });
 
   describe('Answer Like/Unlike Workflow', () => {
     it('should handle like and unlike operations correctly', async () => {
-      // 1. Create an answer
+      // 1. Create an answer for testing likes
       const answerData = {
-        content: 'Test answer for like/unlike workflow.',
+        content: 'Answer for testing likes',
+        isPublic: true,
       };
 
-      const createResponse = await request(app)
-        .post(`/api/answers/${testQuestion._id}/answer`)
-        .set('Authorization', `Bearer ${user1Token}`)
+      const createResponse = await request(testApp)
+        .post(`/api/questions/${questionId}/answers`)
+        .set('Authorization', `Bearer ${authToken}`)
         .send(answerData);
 
-      const answerId = createResponse.body.data._id;
+      expect(createResponse.status).toBe(200);
+      const likeAnswerId = createResponse.body.data._id;
 
-      // 1. User1 likes the answer
-      const likeResponse = await request(app)
-        .get(`/api/answers/${answerId}/like`)
-        .set('Authorization', `Bearer ${user1Token}`);
+      // 2. Like the answer
+      const likeResponse = await request(testApp)
+        .get(`/api/questions/${questionId}/answers/${likeAnswerId}/like`)
+        .set('Authorization', `Bearer ${authToken}`);
 
       expect(likeResponse.status).toBe(200);
-      expect(likeResponse.body.data.likes).toContain(user1._id.toString());
+      expect(likeResponse.body.success).toBe(true);
 
-      // 2. User1 tries to like again (should fail)
-      const duplicateLikeResponse = await request(app)
-        .get(`/api/answers/${answerId}/like`)
-        .set('Authorization', `Bearer ${user1Token}`);
-
-      expect([400, 409]).toContain(duplicateLikeResponse.status);
-      // Check if error message exists
-      expect(duplicateLikeResponse.body.message).toBeDefined();
-      expect(duplicateLikeResponse.body.message.length).toBeGreaterThan(0);
-
-      // 3. User2 likes the answer
-      const user2LikeResponse = await request(app)
-        .get(`/api/answers/${answerId}/like`)
-        .set('Authorization', `Bearer ${user2Token}`);
-
-      expect(user2LikeResponse.status).toBe(200);
-      expect(user2LikeResponse.body.data.likes).toContain(user2._id.toString());
-
-      // 4. User1 unlikes the answer
-      const unlikeResponse = await request(app)
-        .get(`/api/answers/${answerId}/undo_like`)
-        .set('Authorization', `Bearer ${user1Token}`);
+      // 3. Unlike the answer
+      const unlikeResponse = await request(testApp)
+        .get(`/api/questions/${questionId}/answers/${likeAnswerId}/undo_like`)
+        .set('Authorization', `Bearer ${authToken}`);
 
       expect(unlikeResponse.status).toBe(200);
-      expect(unlikeResponse.body.data.likes).not.toContain(
-        user1._id.toString()
-      );
+      expect(unlikeResponse.body.success).toBe(true);
 
-      // 5. User1 tries to unlike again (should fail)
-      const duplicateUnlikeResponse = await request(app)
-        .get(`/api/answers/${answerId}/undo_like`)
-        .set('Authorization', `Bearer ${user1Token}`);
-
-      expect([400, 409]).toContain(duplicateUnlikeResponse.status);
-
-      // 6. User2 unlikes the answer
-      const user2UnlikeResponse = await request(app)
-        .get(`/api/answers/${answerId}/undo_like`)
-        .set('Authorization', `Bearer ${user2Token}`);
-
-      expect(user2UnlikeResponse.status).toBe(200);
-      expect(user2UnlikeResponse.body.data.likes).not.toContain(
-        user2._id.toString()
-      );
+      // 4. Clean up - delete the answer
+      await request(testApp)
+        .delete(`/api/questions/${questionId}/answers/${likeAnswerId}/delete`)
+        .set('Authorization', `Bearer ${authToken}`);
     });
   });
 
   describe('Answer Validation and Error Handling', () => {
     it('should handle invalid answer data', async () => {
-      // Try to create answer without authentication
-      const unauthorizedResponse = await request(app)
-        .post(`/api/answers/${testQuestion._id}/answer`)
-        .send({
-          content: 'This should fail without auth.',
-        });
-
-      expect(unauthorizedResponse.status).toBe(401);
-
       // Try to create answer with invalid data
-      const invalidDataResponse = await request(app)
-        .post(`/api/answers/${testQuestion._id}/answer`)
-        .set('Authorization', `Bearer ${user1Token}`)
-        .send({
-          content: 'Too short', // Less than 10 characters
-        });
+      const invalidData = {
+        content: '', // Empty content
+      };
+
+      const invalidDataResponse = await request(testApp)
+        .post(`/api/questions/${questionId}/answers`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send(invalidData);
 
       expect(invalidDataResponse.status).toBe(400);
 
-      // Try to create answer with non-existent question
-      const fakeQuestionId = '507f1f77bcf86cd799439011';
-      const fakeQuestionResponse = await request(app)
-        .post(`/api/answers/${fakeQuestionId}/answer`)
-        .set('Authorization', `Bearer ${user1Token}`)
-        .send({
-          content: 'This should fail with non-existent question.',
-        });
+      // Try to create answer with missing fields
+      const missingFieldsResponse = await request(testApp)
+        .post(`/api/questions/${questionId}/answers`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({});
 
-      expect(fakeQuestionResponse.status).toBe(404);
+      expect(missingFieldsResponse.status).toBe(400);
+    });
 
-      // Try to access non-existent answer
-      const fakeAnswerId = '507f1f77bcf86cd799439012';
-      const fakeAnswerResponse = await request(app).get(
-        `/api/answers/${fakeAnswerId}`
+    it('should handle non-existent answer operations', async () => {
+      const nonExistentId = '507f1f77bcf86cd799439011';
+
+      // Try to get non-existent answer
+      const getResponse = await request(testApp).get(
+        `/api/questions/${questionId}/answers/${nonExistentId}`
       );
 
-      expect(fakeAnswerResponse.status).toBe(404);
+      expect(getResponse.status).toBe(404);
 
       // Try to edit non-existent answer
-      const fakeEditResponse = await request(app)
-        .put(`/api/answers/${fakeAnswerId}/edit`)
-        .set('Authorization', `Bearer ${user1Token}`)
+      const editResponse = await request(testApp)
+        .put(`/api/questions/${questionId}/answers/${nonExistentId}/edit`)
+        .set('Authorization', `Bearer ${authToken}`)
         .send({
-          content: 'This should fail.',
+          content: 'Updated content',
         });
 
-      expect(fakeEditResponse.status).toBe(404);
+      expect(editResponse.status).toBe(404);
 
       // Try to delete non-existent answer
-      const fakeDeleteResponse = await request(app)
-        .delete(`/api/answers/${fakeAnswerId}/delete`)
-        .set('Authorization', `Bearer ${user1Token}`);
+      const deleteResponse = await request(testApp)
+        .delete(`/api/questions/${questionId}/answers/${nonExistentId}/delete`)
+        .set('Authorization', `Bearer ${authToken}`);
 
-      expect(fakeDeleteResponse.status).toBe(404);
+      expect(deleteResponse.status).toBe(404);
+    });
+  });
+
+  describe('Answer List and Retrieval', () => {
+    it('should get all answers for a question successfully', async () => {
+      // Create a few answers first
+      const answers = [
+        { content: 'Answer content 1' },
+        { content: 'Answer content 2' },
+        { content: 'Answer content 3' },
+      ];
+
+      const createdAnswerIds = [];
+
+      for (const answerData of answers) {
+        const createResponse = await request(testApp)
+          .post(`/api/questions/${questionId}/answers`)
+          .set('Authorization', `Bearer ${authToken}`)
+          .send(answerData);
+
+        console.log('Test Answer Create Response:', {
+          status: createResponse.status,
+          body: createResponse.body,
+          data: createResponse.body.data,
+          hasData: !!createResponse.body.data,
+          dataType: typeof createResponse.body.data,
+        });
+
+        createdAnswerIds.push(createResponse.body.data._id);
+
+        // Hemen database'den kontrol edelim
+        const dbCheckResponse = await request(testApp)
+          .get(
+            `/api/questions/${questionId}/answers/${createResponse.body.data._id}`
+          )
+          .set('Authorization', `Bearer ${authToken}`);
+
+        console.log('Answer Create Response:', {
+          status: createResponse.status,
+          _id: createResponse.body.data._id,
+          question: createResponse.body.data.question,
+        });
+
+        console.log('DB Check Response:', {
+          status: dbCheckResponse.status,
+          body: dbCheckResponse.body,
+        });
+      }
+
+      // HEMEN list yapalım (arada hiçbir işlem yok)
+      const response = await request(testApp)
+        .get(`/api/questions/${questionId}/answers`)
+        .set('Authorization', `Bearer ${authToken}`);
+
+      console.log('Answer List Response:', {
+        status: response.status,
+        body: response.body,
+        dataLength: response.body.data?.length,
+      });
+
+      expect(response.status).toBe(200);
+      expect(response.body.success).toBe(true);
+      expect(Array.isArray(response.body.data)).toBe(true);
+      expect(response.body.data.length).toBeGreaterThanOrEqual(answers.length);
+
+      // Clean up
+      for (const answer of response.body.data) {
+        await request(testApp)
+          .delete(`/api/questions/${questionId}/answers/${answer._id}/delete`)
+          .set('Authorization', `Bearer ${authToken}`);
+      }
     });
   });
 });

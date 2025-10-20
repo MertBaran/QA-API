@@ -5,9 +5,13 @@ import { EntityId } from '../../../types/database';
 export class FakeUserService implements IUserService {
   private users: IUserModel[] = [];
 
-  async findById(userId: EntityId): Promise<IUserModel | null> {
-    return this.users.find(user => user._id === userId) || null;
-  }
+  findById = jest
+    .fn()
+    .mockImplementation(
+      async (userId: EntityId): Promise<IUserModel | null> => {
+        return this.users.find(user => user._id === userId) || null;
+      }
+    );
 
   async findByEmail(email: string): Promise<IUserModel | null> {
     return this.users.find(user => user.email === email) || null;

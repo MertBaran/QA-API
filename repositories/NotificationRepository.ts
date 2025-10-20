@@ -14,36 +14,26 @@ export class NotificationRepository implements INotificationRepository {
   async createNotification(
     notification: Partial<INotificationModel>
   ): Promise<INotificationModel> {
-    try {
-      const newNotification = new NotificationMongo({
-        ...notification,
-        createdAt: new Date(),
-        retryCount: 0,
-        maxRetries: 3,
-        tags: notification.tags || [],
-      });
+    const newNotification = new NotificationMongo({
+      ...notification,
+      createdAt: new Date(),
+      retryCount: 0,
+      maxRetries: 3,
+      tags: notification.tags || [],
+    });
 
-      const savedNotification = await newNotification.save();
-      this.logger.info('Notification created', {
-        id: savedNotification._id,
-        type: savedNotification.type,
-      });
+    const savedNotification = await newNotification.save();
+    this.logger.info('Notification created', {
+      id: savedNotification._id,
+      type: savedNotification.type,
+    });
 
-      return savedNotification.toObject();
-    } catch (error) {
-      this.logger.error('Error creating notification', { error, notification });
-      throw error;
-    }
+    return savedNotification.toObject();
   }
 
   async getNotificationById(id: string): Promise<INotificationModel | null> {
-    try {
-      const notification = await NotificationMongo.findById(id);
-      return notification?.toObject() || null;
-    } catch (error) {
-      this.logger.error('Error getting notification by id', { error, id });
-      throw error;
-    }
+    const notification = await NotificationMongo.findById(id);
+    return notification?.toObject() || null;
   }
 
   async getNotificationsByUserId(
@@ -51,20 +41,12 @@ export class NotificationRepository implements INotificationRepository {
     limit: number = 50,
     offset: number = 0
   ): Promise<INotificationModel[]> {
-    try {
-      const notifications = await NotificationMongo.find({ userId })
-        .sort({ createdAt: -1 })
-        .skip(offset)
-        .limit(limit);
+    const notifications = await NotificationMongo.find({ userId })
+      .sort({ createdAt: -1 })
+      .skip(offset)
+      .limit(limit);
 
-      return notifications.map(n => n.toObject());
-    } catch (error) {
-      this.logger.error('Error getting notifications by user id', {
-        error,
-        userId,
-      });
-      throw error;
-    }
+    return notifications.map(n => n.toObject());
   }
 
   async updateNotificationStatus(
@@ -72,97 +54,73 @@ export class NotificationRepository implements INotificationRepository {
     status: INotificationModel['status'],
     additionalData?: Partial<INotificationModel>
   ): Promise<boolean> {
-    try {
-      const updateData: any = { status };
+    const updateData: any = { status };
 
-      // Status'a göre zaman bilgilerini güncelle
-      switch (status) {
-        case 'sent':
-          updateData.sentAt = new Date();
-          break;
-        case 'delivered':
-          updateData.deliveredAt = new Date();
-          break;
-        case 'read':
-          updateData.readAt = new Date();
-          break;
-        case 'failed':
-          updateData.retryCount = (additionalData?.retryCount || 0) + 1;
-          break;
-      }
-
-      // Ek verileri ekle
-      if (additionalData) {
-        Object.assign(updateData, additionalData);
-      }
-
-      const result = await NotificationMongo.findByIdAndUpdate(id, updateData, {
-        new: true,
-      });
-      this.logger.info('Notification status updated', {
-        id,
-        status,
-        success: !!result,
-      });
-
-      return !!result;
-    } catch (error) {
-      this.logger.error('Error updating notification status', {
-        error,
-        id,
-        status,
-      });
-      throw error;
+    // Status'a göre zaman bilgilerini güncelle
+    switch (status) {
+      case 'sent':
+        updateData.sentAt = new Date();
+        break;
+      case 'delivered':
+        updateData.deliveredAt = new Date();
+        break;
+      case 'read':
+        updateData.readAt = new Date();
+        break;
+      case 'failed':
+        updateData.retryCount = (additionalData?.retryCount || 0) + 1;
+        break;
     }
+
+    // Ek verileri ekle
+    if (additionalData) {
+      Object.assign(updateData, additionalData);
+    }
+
+    const result = await NotificationMongo.findByIdAndUpdate(id, updateData, {
+      new: true,
+    });
+    this.logger.info('Notification status updated', {
+      id,
+      status,
+      success: !!result,
+    });
+
+    return !!result;
   }
 
   async deleteNotification(id: string): Promise<boolean> {
-    try {
-      const result = await NotificationMongo.findByIdAndDelete(id);
-      this.logger.info('Notification deleted', { id, success: !!result });
-      return !!result;
-    } catch (error) {
-      this.logger.error('Error deleting notification', { error, id });
-      throw error;
-    }
+    const result = await NotificationMongo.findByIdAndDelete(id);
+    this.logger.info('Notification deleted', { id, success: !!result });
+    return !!result;
   }
 
   // Template CRUD
   async createTemplate(
     template: Partial<INotificationTemplateModel>
   ): Promise<INotificationTemplateModel> {
-    try {
-      const newTemplate = new NotificationTemplateMongo({
-        ...template,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        variables: template.variables || [],
-        tags: template.tags || [],
-      });
+    const newTemplate = new NotificationTemplateMongo({
+      ...template,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      variables: template.variables || [],
+      tags: template.tags || [],
+    });
 
-      const savedTemplate = await newTemplate.save();
-      this.logger.info('Template created', {
-        id: savedTemplate._id,
-        name: savedTemplate.name,
-      });
+    const savedTemplate = await newTemplate.save();
+    this.logger.info('Template created', {
+      id: savedTemplate._id,
+      name: savedTemplate.name,
+    });
 
-      return savedTemplate.toObject();
-    } catch (error) {
-      this.logger.error('Error creating template', { error, template });
-      throw error;
-    }
+    return savedTemplate.toObject();
   }
 
   async getTemplateById(
     id: string
   ): Promise<INotificationTemplateModel | null> {
-    try {
-      const template = await NotificationTemplateMongo.findById(id);
-      return template?.toObject() || null;
-    } catch (error) {
-      this.logger.error('Error getting template by id', { error, id });
-      throw error;
-    }
+    const template = await NotificationTemplateMongo.findById(id);
+    return template?.toObject() || null;
   }
 
   async getTemplateByName(
@@ -180,51 +138,36 @@ export class NotificationRepository implements INotificationRepository {
   async getTemplatesByType(
     type: INotificationTemplateModel['type']
   ): Promise<INotificationTemplateModel[]> {
-    try {
-      const templates = await NotificationTemplateMongo.find({
-        type,
-        isActive: true,
-      });
-      return templates.map(t => t.toObject());
-    } catch (error) {
-      this.logger.error('Error getting templates by type', { error, type });
-      throw error;
-    }
+    const templates = await NotificationTemplateMongo.find({
+      type,
+      isActive: true,
+    });
+    return templates.map(t => t.toObject());
   }
 
   async updateTemplate(
     id: string,
     template: Partial<INotificationTemplateModel>
   ): Promise<boolean> {
-    try {
-      const updateData = {
-        ...template,
-        updatedAt: new Date(),
-      };
+    const updateData = {
+      ...template,
+      updatedAt: new Date(),
+    };
 
-      const result = await NotificationTemplateMongo.findByIdAndUpdate(
-        id,
-        updateData,
-        { new: true }
-      );
-      this.logger.info('Template updated', { id, success: !!result });
+    const result = await NotificationTemplateMongo.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true }
+    );
+    this.logger.info('Template updated', { id, success: !!result });
 
-      return !!result;
-    } catch (error) {
-      this.logger.error('Error updating template', { error, id });
-      throw error;
-    }
+    return !!result;
   }
 
   async deleteTemplate(id: string): Promise<boolean> {
-    try {
-      const result = await NotificationTemplateMongo.findByIdAndDelete(id);
-      this.logger.info('Template deleted', { id, success: !!result });
-      return !!result;
-    } catch (error) {
-      this.logger.error('Error deleting template', { error, id });
-      throw error;
-    }
+    const result = await NotificationTemplateMongo.findByIdAndDelete(id);
+    this.logger.info('Template deleted', { id, success: !!result });
+    return !!result;
   }
 
   // Statistics
@@ -236,24 +179,17 @@ export class NotificationRepository implements INotificationRepository {
     delivered: number;
     read: number;
   }> {
-    try {
-      const filter = userId ? { userId } : {};
+    const filter = userId ? { userId } : {};
 
-      const [total, pending, sent, failed, delivered, read] = await Promise.all(
-        [
-          NotificationMongo.countDocuments(filter),
-          NotificationMongo.countDocuments({ ...filter, status: 'pending' }),
-          NotificationMongo.countDocuments({ ...filter, status: 'sent' }),
-          NotificationMongo.countDocuments({ ...filter, status: 'failed' }),
-          NotificationMongo.countDocuments({ ...filter, status: 'delivered' }),
-          NotificationMongo.countDocuments({ ...filter, status: 'read' }),
-        ]
-      );
+    const [total, pending, sent, failed, delivered, read] = await Promise.all([
+      NotificationMongo.countDocuments(filter),
+      NotificationMongo.countDocuments({ ...filter, status: 'pending' }),
+      NotificationMongo.countDocuments({ ...filter, status: 'sent' }),
+      NotificationMongo.countDocuments({ ...filter, status: 'failed' }),
+      NotificationMongo.countDocuments({ ...filter, status: 'delivered' }),
+      NotificationMongo.countDocuments({ ...filter, status: 'read' }),
+    ]);
 
-      return { total, pending, sent, failed, delivered, read };
-    } catch (error) {
-      this.logger.error('Error getting notification stats', { error, userId });
-      throw error;
-    }
+    return { total, pending, sent, failed, delivered, read };
   }
 }

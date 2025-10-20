@@ -41,121 +41,68 @@ export class UserMongooseDataSource implements IDataSource<IUserModel> {
   }
 
   async create(data: Partial<IUserModel>): Promise<IUserModel> {
-    try {
-      const { _id, ...rest } = data;
-      const result = await this.model.create(rest as Partial<IUserMongo>);
-      return this.toEntity(result);
-    } catch (_err) {
-      throw new CustomError(RepositoryConstants.USER.CREATE_ERROR.en, 500);
-    }
+    const { _id, ...rest } = data;
+    const result = await this.model.create(rest as Partial<IUserMongo>);
+    return this.toEntity(result);
   }
 
   async findById(id: string): Promise<IUserModel | null> {
-    try {
-      const result = await this.model.findById(id);
-      return result ? this.toEntity(result) : null;
-    } catch (_err) {
-      throw new CustomError(RepositoryConstants.USER.FIND_BY_ID_ERROR.en, 500);
-    }
+    const result = await this.model.findById(id);
+    return result ? this.toEntity(result) : null;
   }
 
   async findAll(): Promise<IUserModel[]> {
-    try {
-      const results = await this.model.find();
-      return results.map((doc: any) => this.toEntity(doc));
-    } catch (_err) {
-      throw new CustomError(RepositoryConstants.USER.FIND_ALL_ERROR.en, 500);
-    }
+    const results = await this.model.find();
+    return results.map((doc: any) => this.toEntity(doc));
   }
 
   async updateById(
     id: string,
     data: Partial<IUserModel>
   ): Promise<IUserModel | null> {
-    try {
-      const { _id, ...rest } = data;
-      const result = await this.model.findByIdAndUpdate(
-        id,
-        rest as Partial<IUserMongo>,
-        { new: true }
-      );
-      return result ? this.toEntity(result) : null;
-    } catch (_err) {
-      throw new CustomError(
-        RepositoryConstants.USER.UPDATE_BY_ID_ERROR.en,
-        500
-      );
-    }
+    const { _id, ...rest } = data;
+    const result = await this.model.findByIdAndUpdate(
+      id,
+      rest as Partial<IUserMongo>,
+      { new: true }
+    );
+    return result ? this.toEntity(result) : null;
   }
 
   async deleteById(id: string): Promise<IUserModel | null> {
-    try {
-      const result = await this.model.findByIdAndDelete(id);
-      return result ? this.toEntity(result) : null;
-    } catch (_err) {
-      throw new CustomError(
-        RepositoryConstants.USER.DELETE_BY_ID_ERROR.en,
-        500
-      );
-    }
+    const result = await this.model.findByIdAndDelete(id);
+    return result ? this.toEntity(result) : null;
   }
 
   async findByField(
     field: keyof IUserModel,
     value: any
   ): Promise<IUserModel[]> {
-    try {
-      const results = await this.model.find({ [field]: value });
-      return results.map((doc: any) => this.toEntity(doc));
-    } catch (_err) {
-      throw new CustomError(RepositoryConstants.USER.FIND_ALL_ERROR.en, 500);
-    }
+    const results = await this.model.find({ [field]: value });
+    return results.map((doc: any) => this.toEntity(doc));
   }
 
   async findByFields(fields: Partial<IUserModel>): Promise<IUserModel[]> {
-    try {
-      const results = await this.model.find(fields);
-      return results.map((doc: any) => this.toEntity(doc));
-    } catch (_err) {
-      throw new CustomError(RepositoryConstants.USER.FIND_ALL_ERROR.en, 500);
-    }
+    const results = await this.model.find(fields);
+    return results.map((doc: any) => this.toEntity(doc));
   }
 
   async countAll(): Promise<number> {
-    try {
-      return this.model.countDocuments();
-    } catch (_err) {
-      throw new CustomError(RepositoryConstants.USER.COUNT_ALL_ERROR.en, 500);
-    }
+    return this.model.countDocuments();
   }
 
   async deleteAll(): Promise<any> {
-    try {
-      return this.model.deleteMany({});
-    } catch (_err) {
-      throw new CustomError(RepositoryConstants.USER.DELETE_ALL_ERROR.en, 500);
-    }
+    return this.model.deleteMany({});
   }
 
   async findByEmailWithPassword(email: string): Promise<IUserModel | null> {
-    try {
-      const anyModel = this.model as any;
-      const result = await anyModel.findOne({ email }).select('+password');
-      return result ? this.toEntity(result) : null;
-    } catch (_err) {
-      throw new CustomError(
-        RepositoryConstants.USER.FIND_BY_EMAIL_WITH_PASSWORD_ERROR.en,
-        500
-      );
-    }
+    const anyModel = this.model as any;
+    const result = await anyModel.findOne({ email }).select('+password');
+    return result ? this.toEntity(result) : null;
   }
 
   async findActive(): Promise<IUserModel[]> {
-    try {
-      const results = await this.model.find({ blocked: { $ne: true } });
-      return results.map((doc: any) => this.toEntity(doc));
-    } catch (_err) {
-      throw new CustomError(RepositoryConstants.USER.FIND_ACTIVE_ERROR.en, 500);
-    }
+    const results = await this.model.find({ blocked: { $ne: true } });
+    return results.map((doc: any) => this.toEntity(doc));
   }
 }

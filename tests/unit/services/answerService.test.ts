@@ -1,9 +1,9 @@
 import 'reflect-metadata';
 import { AnswerManager } from '../../../services/managers/AnswerManager';
 import { AnswerRepository } from '../../../repositories/AnswerRepository';
-import { FakeAnswerDataSource } from '../../mocks/datasource/FakeAnswerDataSource';
+import { FakeAnswerDataSource } from '../../mocks/datasources/FakeAnswerDataSource';
 import { QuestionRepository } from '../../../repositories/QuestionRepository';
-import { FakeQuestionDataSource } from '../../mocks/datasource/FakeQuestionDataSource';
+import { FakeQuestionDataSource } from '../../mocks/datasources/FakeQuestionDataSource';
 
 describe('AnswerService Unit Tests', () => {
   let answerService: AnswerManager;

@@ -40,12 +40,12 @@ export class ApplicationSetup {
 
   private setupRoutes(): void {
     // Health check endpoints
-    this.app.get('/health/quick', (req: Request, res: Response) => {
-      this.healthController.quickHealthCheck(req, res);
+    this.app.get('/health/quick', (req: Request, res: Response, next: any) => {
+      this.healthController.quickHealthCheck(req, res, next);
     });
 
-    this.app.get('/health', async (req: Request, res: Response) => {
-      await this.healthController.fullHealthCheck(req, res);
+    this.app.get('/health', async (req: Request, res: Response, next: any) => {
+      await this.healthController.fullHealthCheck(req, res, next);
     });
 
     // Root endpoint
@@ -62,8 +62,13 @@ export class ApplicationSetup {
 
   async initialize(): Promise<void> {
     try {
+      console.log('🚀 Starting QA API Application...');
+      console.log('📦 Initializing application components...');
+
       // Initialize container and get config
       const config = await initializeContainer();
+      console.log(`🌍 Environment: ${config.NODE_ENV}`);
+      console.log(`🔧 Port: ${config.PORT}`);
 
       // Set application state
       this.appState.setReady(config);
@@ -87,20 +92,100 @@ export class ApplicationSetup {
       });
 
       // Connect to database - CRITICAL: Exit if database connection fails
+      console.log('🔌 Attempting to connect to database...');
+      console.log(
+        `📡 Database URI: ${config.MONGO_URI.replace(/\/\/.*@/, '//***:***@')}`
+      ); // Hide credentials
+
       try {
         const databaseAdapter = container.resolve<any>('IDatabaseAdapter');
-        await databaseAdapter.connect();
+
+        // Add timeout for database connection
+        const connectionPromise = databaseAdapter.connect();
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(
+            () =>
+              reject(new Error('Database connection timeout after 30 seconds')),
+            30000
+          );
+        });
+
+        console.log('⏳ Waiting for database connection...');
+
+        // Progress indicator while waiting for connection
+        let dots = 0;
+        let seconds = 0;
+        const messages = [
+          '⏳ Connecting to database',
+          '🔌 Establishing connection',
+          '📡 Verifying database',
+          '🔍 Checking credentials',
+          '⚡ Testing connection',
+        ];
+        let messageIndex = 0;
+
+        const progressInterval = setInterval(() => {
+          seconds++;
+          dots = (dots + 1) % 4;
+          const dotString = '.'.repeat(dots) + ' '.repeat(3 - dots);
+          const currentMessage = messages[messageIndex % messages.length];
+          process.stdout.write(`${currentMessage}${dotString} (${seconds}s)\r`);
+
+          // Change message every 3 seconds
+          if (seconds % 3 === 0) {
+            messageIndex++;
+          }
+        }, 1000);
+
+        try {
+          await Promise.race([connectionPromise, timeoutPromise]);
+          clearInterval(progressInterval);
+          process.stdout.write('\r'); // Clear the progress line
+        } catch (error) {
+          clearInterval(progressInterval);
+          process.stdout.write('\r'); // Clear the progress line
+          throw error;
+        }
+
         console.log('✅ Database connection established successfully');
+        console.log('🔗 Database is ready for operations');
       } catch (dbError) {
-        console.error('❌ CRITICAL: Database connection failed:', dbError);
+        console.error('❌ CRITICAL: Database connection failed!');
+        console.error('📊 Error details:', {
+          message: dbError instanceof Error ? dbError.message : String(dbError),
+          name: dbError instanceof Error ? dbError.name : 'Unknown',
+          code: (dbError as any)?.code || 'UNKNOWN',
+        });
         console.error(
-          '🛑 Application cannot start without database connection. Shutting down...'
+          '🔍 Connection string:',
+          config.MONGO_URI.replace(/\/\/.*@/, '//***:***@')
         );
+        console.error('');
+        console.error(
+          '🛑 Application cannot start without database connection.'
+        );
+        console.error('💡 Please check:');
+        console.error('   - MongoDB server is running');
+        console.error('   - Connection string is correct');
+        console.error('   - Network connectivity');
+        console.error('   - Database credentials');
+        console.error('');
+        console.error('🔄 Shutting down application...');
         process.exit(1);
       }
 
-      // Initialize cache provider (kullanılmıyor ama gerekli)
-      const _cacheProvider = container.resolve<any>('ICacheProvider');
+      // Initialize cache provider
+      console.log('🔌 Attempting to connect to cache (Redis)...');
+      try {
+        const cacheProvider = container.resolve<any>('ICacheProvider');
+        console.log('✅ Cache provider initialized successfully');
+      } catch (cacheError) {
+        console.warn(
+          '⚠️ Cache connection failed, but continuing without cache:',
+          cacheError instanceof Error ? cacheError.message : String(cacheError)
+        );
+        console.warn('💡 Application will use memory cache as fallback');
+      }
 
       // Connection monitoring WebSocket ile yapılacak (setInterval kaldırıldı)
 
@@ -114,17 +199,28 @@ export class ApplicationSetup {
 
   startServer(port: number, environment: string): void {
     this.server = this.app.listen(port, () => {
-      console.log(
-        `🚀 Server is running on port ${port} in ${environment} environment`
-      );
+      console.log('');
+      console.log('🎉 ================================================');
+      console.log('🎉           QA API SERVER STARTED');
+      console.log('🎉 ================================================');
+      console.log(`🌍 Environment: ${environment}`);
+      console.log(`🔧 Port: ${port}`);
+      console.log(`🌐 Server URL: http://localhost:${port}`);
+      console.log('');
 
       // Initialize WebSocket monitoring after server is started
       this.initializeWebSocketMonitoring();
       console.log(`🔌 WebSocket monitoring: ws://localhost:${port}`);
-      // Health check endpoints (en sonda)
+
+      // Health check endpoints
       console.log(`📊 Health checks available:`);
       console.log(`  - Quick: http://localhost:${port}/health/quick`);
       console.log(`  - Full:  http://localhost:${port}/health`);
+
+      console.log('');
+      console.log('✅ Application is ready to accept requests!');
+      console.log('===============================================');
+      console.log('');
     });
   }
 

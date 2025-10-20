@@ -31,117 +31,57 @@ export class UserRoleMongooseDataSource implements IDataSource<IUserRoleModel> {
   }
 
   async create(data: Partial<IUserRoleModel>): Promise<IUserRoleModel> {
-    try {
-      const { _id, ...rest } = data;
-      const result = await this.model.create(rest);
-      return this.toEntity(result);
-    } catch (_err) {
-      throw new CustomError(RepositoryConstants.USER_ROLE.CREATE_ERROR.en, 500);
-    }
+    const { _id, ...rest } = data;
+    const result = await this.model.create(rest);
+    return this.toEntity(result);
   }
 
   async findById(id: string): Promise<IUserRoleModel | null> {
-    try {
-      const result = await this.model.findById(id);
-      return result ? this.toEntity(result) : null;
-    } catch (_err) {
-      throw new CustomError(
-        RepositoryConstants.USER_ROLE.FIND_BY_ID_ERROR.en,
-        500
-      );
-    }
+    const result = await this.model.findById(id);
+    return result ? this.toEntity(result) : null;
   }
 
   async findAll(): Promise<IUserRoleModel[]> {
-    try {
-      const results = await this.model.find();
-      return results.map((doc: any) => this.toEntity(doc));
-    } catch (_err) {
-      throw new CustomError(
-        RepositoryConstants.USER_ROLE.FIND_ALL_ERROR.en,
-        500
-      );
-    }
+    const results = await this.model.find();
+    return results.map((doc: any) => this.toEntity(doc));
   }
 
   async updateById(
     id: string,
     data: Partial<IUserRoleModel>
   ): Promise<IUserRoleModel | null> {
-    try {
-      const { _id, ...rest } = data;
-      const result = await this.model.findByIdAndUpdate(id, rest, {
-        new: true,
-      });
-      return result ? this.toEntity(result) : null;
-    } catch (_err) {
-      throw new CustomError(
-        RepositoryConstants.USER_ROLE.UPDATE_BY_ID_ERROR.en,
-        500
-      );
-    }
+    const { _id, ...rest } = data;
+    const result = await this.model.findByIdAndUpdate(id, rest, {
+      new: true,
+    });
+    return result ? this.toEntity(result) : null;
   }
 
   async deleteById(id: string): Promise<IUserRoleModel | null> {
-    try {
-      const result = await this.model.findByIdAndDelete(id);
-      return result ? this.toEntity(result) : null;
-    } catch (_err) {
-      throw new CustomError(
-        RepositoryConstants.USER_ROLE.DELETE_BY_ID_ERROR.en,
-        500
-      );
-    }
+    const result = await this.model.findByIdAndDelete(id);
+    return result ? this.toEntity(result) : null;
   }
 
   async findByField(
     field: keyof IUserRoleModel,
     value: any
   ): Promise<IUserRoleModel[]> {
-    try {
-      const results = await this.model.find({ [field]: value });
-      return results.map((doc: any) => this.toEntity(doc));
-    } catch (_err) {
-      throw new CustomError(
-        RepositoryConstants.USER_ROLE.FIND_ALL_ERROR.en,
-        500
-      );
-    }
+    const results = await this.model.find({ [field]: value });
+    return results.map((doc: any) => this.toEntity(doc));
   }
 
   async findByFields(
     fields: Partial<IUserRoleModel>
   ): Promise<IUserRoleModel[]> {
-    try {
-      const results = await this.model.find(fields);
-      return results.map((doc: any) => this.toEntity(doc));
-    } catch (_err) {
-      throw new CustomError(
-        RepositoryConstants.USER_ROLE.FIND_ALL_ERROR.en,
-        500
-      );
-    }
+    const results = await this.model.find(fields);
+    return results.map((doc: any) => this.toEntity(doc));
   }
 
   async countAll(): Promise<number> {
-    try {
-      return this.model.countDocuments();
-    } catch (_err) {
-      throw new CustomError(
-        RepositoryConstants.USER_ROLE.COUNT_ALL_ERROR.en,
-        500
-      );
-    }
+    return this.model.countDocuments();
   }
 
   async deleteAll(): Promise<any> {
-    try {
-      return this.model.deleteMany({});
-    } catch (_err) {
-      throw new CustomError(
-        RepositoryConstants.USER_ROLE.DELETE_ALL_ERROR.en,
-        500
-      );
-    }
+    return this.model.deleteMany({});
   }
 }

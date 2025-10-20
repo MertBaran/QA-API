@@ -7,33 +7,15 @@ export class MongooseModelAdapter<T> implements IEntityModel<T> {
   constructor(private model: Model<T>) {}
 
   async create(data: Partial<T>): Promise<any> {
-    try {
-      return await this.model.create(data);
-    } catch (_err) {
-      throw new CustomError(
-        RepositoryConstants.MONGOOSE_ADAPTER.CREATE_ERROR.en,
-        500
-      );
-    }
+    return await this.model.create(data);
   }
 
   async findById(id: string): Promise<any> {
-    try {
-      return await this.model.findById(id);
-    } catch (_err) {
-      throw new CustomError(
-        RepositoryConstants.MONGOOSE_ADAPTER.FIND_BY_ID_ERROR.en,
-        500
-      );
-    }
+    return await this.model.findById(id);
   }
 
   async find(query?: any): Promise<any[]> {
-    try {
-      return await this.model.find(query);
-    } catch (_err) {
-      throw new CustomError(RepositoryConstants.MONGOOSE_ADAPTER.FIND_ERROR.en, 500);
-    }
+    return await this.model.find(query);
   }
 
   async findByIdAndUpdate(
@@ -41,58 +23,23 @@ export class MongooseModelAdapter<T> implements IEntityModel<T> {
     data: Partial<T>,
     options?: any
   ): Promise<any> {
-    try {
-      return await this.model.findByIdAndUpdate(id, data, options);
-    } catch (_err) {
-      throw new CustomError(
-        RepositoryConstants.MONGOOSE_ADAPTER.UPDATE_BY_ID_ERROR.en,
-        500
-      );
-    }
+    return await this.model.findByIdAndUpdate(id, data, options);
   }
 
   async findByIdAndDelete(id: string): Promise<any> {
-    try {
-      return await this.model.findByIdAndDelete(id);
-    } catch (_err) {
-      throw new CustomError(
-        RepositoryConstants.MONGOOSE_ADAPTER.DELETE_BY_ID_ERROR.en,
-        500
-      );
-    }
+    return await this.model.findByIdAndDelete(id);
   }
 
   async countDocuments(): Promise<number> {
-    try {
-      return await this.model.countDocuments();
-    } catch (_err) {
-      throw new CustomError(
-        RepositoryConstants.MONGOOSE_ADAPTER.COUNT_ALL_ERROR.en,
-        500
-      );
-    }
+    return await this.model.countDocuments();
   }
 
   async deleteMany(filter?: any): Promise<any> {
-    try {
-      return await this.model.deleteMany(filter);
-    } catch (_err) {
-      throw new CustomError(
-        RepositoryConstants.MONGOOSE_ADAPTER.DELETE_ALL_ERROR.en,
-        500
-      );
-    }
+    return await this.model.deleteMany(filter);
   }
 
   async findOne(query: any): Promise<any> {
-    try {
-      return await this.model.findOne(query);
-    } catch (_err) {
-      throw new CustomError(
-        RepositoryConstants.MONGOOSE_ADAPTER.FIND_ERROR.en,
-        500
-      );
-    }
+    return await this.model.findOne(query);
   }
 
   populate(_fields: string): any {

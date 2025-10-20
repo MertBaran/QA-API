@@ -11,69 +11,33 @@ export abstract class BaseRepository<TEntity> {
   }
 
   async create(data: Partial<TEntity>): Promise<TEntity> {
-    try {
-      return await this.dataSource.create(data);
-    } catch (_err) {
-      console.error('BaseRepository create error:', _err);
-      throw new CustomError(RepositoryConstants.BASE.CREATE_ERROR.en, 500);
-    }
+    return await this.dataSource.create(data);
   }
 
   async findById(id: EntityId): Promise<TEntity | null> {
-    try {
-      return await this.dataSource.findById(id.toString());
-    } catch (_err) {
-      console.error('BaseRepository findById error:', _err);
-      throw new CustomError(RepositoryConstants.BASE.FIND_BY_ID_ERROR.en, 500);
-    }
+    return await this.dataSource.findById(id.toString());
   }
 
   async findAll(): Promise<TEntity[]> {
-    try {
-      return await this.dataSource.findAll();
-    } catch (_err) {
-      throw new CustomError(RepositoryConstants.BASE.FIND_ALL_ERROR.en, 500);
-    }
+    return await this.dataSource.findAll();
   }
 
   async updateById(
     id: EntityId,
     data: Partial<TEntity>
   ): Promise<TEntity | null> {
-    try {
-      return await this.dataSource.updateById(id.toString(), data);
-    } catch (_err) {
-      throw new CustomError(
-        RepositoryConstants.BASE.UPDATE_BY_ID_ERROR.en,
-        500
-      );
-    }
+    return await this.dataSource.updateById(id.toString(), data);
   }
 
   async deleteById(id: EntityId): Promise<TEntity | null> {
-    try {
-      return await this.dataSource.deleteById(id.toString());
-    } catch (_err) {
-      throw new CustomError(
-        RepositoryConstants.BASE.DELETE_BY_ID_ERROR.en,
-        500
-      );
-    }
+    return await this.dataSource.deleteById(id.toString());
   }
 
   public async countAll(): Promise<number> {
-    try {
-      return await this.dataSource.countAll();
-    } catch (_err) {
-      throw new CustomError(RepositoryConstants.BASE.COUNT_ALL_ERROR.en, 500);
-    }
+    return await this.dataSource.countAll();
   }
 
   public async deleteAll(): Promise<any> {
-    try {
-      return await this.dataSource.deleteAll();
-    } catch (_err) {
-      throw new CustomError(RepositoryConstants.BASE.DELETE_ALL_ERROR.en, 500);
-    }
+    return await this.dataSource.deleteAll();
   }
 }

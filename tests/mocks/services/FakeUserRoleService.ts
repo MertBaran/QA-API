@@ -19,11 +19,11 @@ export class FakeUserRoleService implements IUserRoleService {
     });
   }
 
-  async assignRoleToUser(
+  assignRoleToUser = jest.fn().mockImplementation(async (
     userId: EntityId,
     roleId: EntityId,
     assignedBy: EntityId
-  ): Promise<IUserRoleModel> {
+  ): Promise<IUserRoleModel> => {
     const userRole: IUserRoleModel = {
       _id: `ur_${Date.now()}_${Math.random()}`,
       userId,
@@ -38,12 +38,12 @@ export class FakeUserRoleService implements IUserRoleService {
 
     this.userRoles.push(userRole);
     return userRole;
-  }
+  });
 
-  async removeRoleFromUser(
+  removeRoleFromUser = jest.fn().mockImplementation(async (
     userId: EntityId,
     roleId: EntityId
-  ): Promise<IUserRoleModel | null> {
+  ): Promise<IUserRoleModel | null> => {
     const index = this.userRoles.findIndex(
       ur => ur.userId === userId && ur.roleId === roleId && ur.isActive
     );
@@ -55,17 +55,17 @@ export class FakeUserRoleService implements IUserRoleService {
     userRole.isActive = false;
     userRole.updatedAt = new Date();
     return userRole;
-  }
+  });
 
-  async getUserActiveRoles(userId: EntityId): Promise<IUserRoleModel[]> {
+  getUserActiveRoles = jest.fn().mockImplementation(async (userId: EntityId): Promise<IUserRoleModel[]> => {
     return this.userRoles.filter(
       ur => ur.userId === userId && ur.isActive
     );
-  }
+  });
 
-  async getUserRoles(userId: EntityId): Promise<IUserRoleModel[]> {
+  getUserRoles = jest.fn().mockImplementation(async (userId: EntityId): Promise<IUserRoleModel[]> => {
     return this.userRoles.filter(ur => ur.userId === userId);
-  }
+  });
 
   async getRoleUsers(roleId: EntityId): Promise<IUserRoleModel[]> {
     return this.userRoles.filter(

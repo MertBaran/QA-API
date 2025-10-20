@@ -318,7 +318,7 @@ describe('BookmarkService', () => {
       const updateData = {
         tags: ['updated'],
         notes: 'Updated notes',
-        isPublic: true,
+        is_public: true,
       };
 
       const updatedBookmark = await bookmarkService.updateBookmark(

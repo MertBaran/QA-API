@@ -1,7 +1,7 @@
 import request from 'supertest';
 import app from '../../APP';
 import { container } from 'tsyringe';
-import { FakeUserDataSource } from '../mocks/datasource/FakeUserDataSource';
+import { FakeUserDataSource } from '../mocks/datasources/FakeUserDataSource';
 // AuthManager kullanılmıyor, kaldırıldı
 import { QuestionManager } from '../../services/managers/QuestionManager';
 import { AnswerManager } from '../../services/managers/AnswerManager';
@@ -68,7 +68,7 @@ export async function loginTestUser({
 
     const response = await request(app)
       .post('/api/auth/login')
-      .send({ email, password });
+      .send({ email, password, captchaToken: 'test-captcha-token-12345' });
 
     if (response.status !== 200) {
       throw new Error(`Login failed: ${response.body.message}`);
@@ -197,7 +197,7 @@ export async function loginTestUserAPI({
 }) {
   const response = await request(app)
     .post('/api/auth/login')
-    .send({ email, password });
+    .send({ email, password, captchaToken: 'test-captcha-token-12345' });
   if (response.status !== 200) {
     console.error('Login failed:', response.body);
   }

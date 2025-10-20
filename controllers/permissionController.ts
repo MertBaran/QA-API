@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import asyncErrorWrapper from 'express-async-handler';
 import { IUserRoleService } from '../services/contracts/IUserRoleService';
 import { IRoleService } from '../services/contracts/IRoleService';
 import { IUserService } from '../services/contracts/IUserService';
@@ -43,62 +44,55 @@ export class PermissionController {
     req: AuthenticatedRequest & { body: AssignRoleRequestDTO },
     res: Response<AssignRoleResponseDTO>
   ) => {
-    try {
-      const { userId, roleId, assignedBy } = req.body;
-      const adminUserId = req.user?.id;
+    const { userId, roleId, assignedBy } = req.body;
+    const adminUserId = req.user?.id;
 
-      // Kullanıcının var olup olmadığını kontrol et
-      const user = await this.userService.findById(userId);
-      if (!user) {
-        throw new CustomError(PermissionConstants.UserNotFound.en, 404);
-      }
-
-      // Role'ün var olup olmadığını kontrol et
-      const role = await this.roleService.findById(roleId);
-      if (!role) {
-        throw new CustomError(PermissionConstants.RoleNotFound.en, 404);
-      }
-
-      // Role'ün aktif olup olmadığını kontrol et
-      if (!role.isActive) {
-        throw new CustomError(PermissionConstants.RoleNotActive.en, 400);
-      }
-
-      // Kullanıcıya role ata
-      const userRole = await this.userRoleService.assignRoleToUser(
-        userId,
-        roleId,
-        assignedBy || adminUserId || ''
-      );
-
-      res.status(201).json({
-        success: true,
-        message: PermissionConstants.RoleAssignedSuccess.en,
-        data: {
-          userRole: {
-            id: userRole._id,
-            userId: userRole.userId,
-            roleId: userRole.roleId,
-            isActive: userRole.isActive,
-            assignedBy: userRole.assignedBy || '',
-            assignedAt: userRole.assignedAt,
-          },
-        },
-      });
-    } catch (error) {
-      if (error instanceof CustomError) {
-        throw error;
-      }
-      throw new CustomError(PermissionConstants.RoleAssignmentFailed.en, 500);
+    // Kullanıcının var olup olmadığını kontrol et
+    const user = await this.userService.findById(userId);
+    if (!user) {
+      throw new CustomError(PermissionConstants.UserNotFound.en, 404);
     }
+
+    // Role'ün var olup olmadığını kontrol et
+    const role = await this.roleService.findById(roleId);
+    if (!role) {
+      throw new CustomError(PermissionConstants.RoleNotFound.en, 404);
+    }
+
+    // Role'ün aktif olup olmadığını kontrol et
+    if (!role.isActive) {
+      throw new CustomError(PermissionConstants.RoleNotActive.en, 400);
+    }
+
+    // Kullanıcıya role ata
+    const userRole = await this.userRoleService.assignRoleToUser(
+      userId,
+      roleId,
+      assignedBy || adminUserId || ''
+    );
+
+    res.status(201).json({
+      success: true,
+      message: PermissionConstants.RoleAssignedSuccess.en,
+      data: {
+        userRole: {
+          id: userRole._id,
+          userId: userRole.userId,
+          roleId: userRole.roleId,
+          isActive: userRole.isActive,
+          assignedBy: userRole.assignedBy || '',
+          assignedAt: userRole.assignedAt,
+        },
+      },
+    });
   };
 
   // Kullanıcıdan role kaldır
-  removeRoleFromUser = async (
-    req: AuthenticatedRequest & { body: RemoveRoleRequestDTO },
-    res: Response<RemoveRoleResponseDTO>
-  ) => {
-    try {
+  removeRoleFromUser = asyncErrorWrapper(
+    async (
+      req: AuthenticatedRequest & { body: RemoveRoleRequestDTO },
+      res: Response<RemoveRoleResponseDTO>
+    ): Promise<void> => {
       const { userId, roleId } = req.body;
 
       // Kullanıcının var olup olmadığını kontrol et
@@ -134,20 +128,15 @@ export class PermissionController {
           },
         },
       });
-    } catch (error) {
-      if (error instanceof CustomError) {
-        throw error;
-      }
-      throw new CustomError(PermissionConstants.RoleRemovalFailed.en, 500);
     }
-  };
+  );
 
   // Kullanıcının mevcut role'lerini getir
-  getUserRoles = async (
-    req: AuthenticatedRequest & { params: UserIdParamDTO },
-    res: Response<UserRolesResponseDTO>
-  ) => {
-    try {
+  getUserRoles = asyncErrorWrapper(
+    async (
+      req: AuthenticatedRequest & { params: UserIdParamDTO },
+      res: Response<UserRolesResponseDTO>
+    ): Promise<void> => {
       const { userId } = req.params;
 
       // Kullanıcının var olup olmadığını kontrol et
@@ -184,23 +173,15 @@ export class PermissionController {
           roles: rolesWithDetails,
         },
       });
-    } catch (error) {
-      if (error instanceof CustomError) {
-        throw error;
-      }
-      throw new CustomError(
-        PermissionConstants.UserRolesRetrievalFailed.en,
-        500
-      );
     }
-  };
+  );
 
   // Tüm role'leri listele
-  getAllRoles = async (
-    req: AuthenticatedRequest,
-    res: Response<AllRolesResponseDTO>
-  ) => {
-    try {
+  getAllRoles = asyncErrorWrapper(
+    async (
+      req: AuthenticatedRequest,
+      res: Response<AllRolesResponseDTO>
+    ): Promise<void> => {
       const roles = await this.roleService.findAll();
 
       const rolesWithPermissions = await Promise.all(
@@ -240,17 +221,15 @@ export class PermissionController {
           roles: rolesWithPermissions,
         },
       });
-    } catch (error) {
-      throw new CustomError(PermissionConstants.RolesRetrievalFailed.en, 500);
     }
-  };
+  );
 
   // Tüm permission'ları listele
-  getAllPermissions = async (
-    req: AuthenticatedRequest,
-    res: Response<AllPermissionsResponseDTO>
-  ) => {
-    try {
+  getAllPermissions = asyncErrorWrapper(
+    async (
+      req: AuthenticatedRequest,
+      res: Response<AllPermissionsResponseDTO>
+    ): Promise<void> => {
       const permissions = await this.roleService.getAllPermissions();
 
       res.status(200).json({
@@ -267,20 +246,15 @@ export class PermissionController {
           })),
         },
       });
-    } catch (error) {
-      throw new CustomError(
-        PermissionConstants.PermissionsRetrievalFailed.en,
-        500
-      );
     }
-  };
+  );
 
   // Role'e permission ekle
-  addPermissionsToRole = async (
-    req: AuthenticatedRequest & { body: AddPermissionsToRoleRequestDTO },
-    res: Response<AddPermissionsToRoleResponseDTO>
-  ) => {
-    try {
+  addPermissionsToRole = asyncErrorWrapper(
+    async (
+      req: AuthenticatedRequest & { body: AddPermissionsToRoleRequestDTO },
+      res: Response<AddPermissionsToRoleResponseDTO>
+    ): Promise<void> => {
       const { roleId, permissionIds } = req.body;
 
       // Role'ün var olup olmadığını kontrol et
@@ -325,23 +299,15 @@ export class PermissionController {
           },
         },
       });
-    } catch (error) {
-      if (error instanceof CustomError) {
-        throw error;
-      }
-      throw new CustomError(
-        PermissionConstants.PermissionsAddedToRoleFailed.en,
-        500
-      );
     }
-  };
+  );
 
   // Role'den permission kaldır
-  removePermissionsFromRole = async (
-    req: AuthenticatedRequest & { body: RemovePermissionsFromRoleRequestDTO },
-    res: Response<RemovePermissionsFromRoleResponseDTO>
-  ) => {
-    try {
+  removePermissionsFromRole = asyncErrorWrapper(
+    async (
+      req: AuthenticatedRequest & { body: RemovePermissionsFromRoleRequestDTO },
+      res: Response<RemovePermissionsFromRoleResponseDTO>
+    ): Promise<void> => {
       const { roleId, permissionIds } = req.body;
 
       // Role'ün var olup olmadığını kontrol et
@@ -371,23 +337,15 @@ export class PermissionController {
           },
         },
       });
-    } catch (error) {
-      if (error instanceof CustomError) {
-        throw error;
-      }
-      throw new CustomError(
-        PermissionConstants.PermissionsRemovedFromRoleFailed.en,
-        500
-      );
     }
-  };
+  );
 
   // Kullanıcının permission'larını getir
-  getUserPermissions = async (
-    req: AuthenticatedRequest & { params: UserIdParamDTO },
-    res: Response<UserPermissionsResponseDTO>
-  ) => {
-    try {
+  getUserPermissions = asyncErrorWrapper(
+    async (
+      req: AuthenticatedRequest & { params: UserIdParamDTO },
+      res: Response<UserPermissionsResponseDTO>
+    ): Promise<void> => {
       const { userId } = req.params;
 
       // Kullanıcının var olup olmadığını kontrol et
@@ -442,14 +400,6 @@ export class PermissionController {
           permissions: permissions.filter(p => p !== null),
         },
       });
-    } catch (error) {
-      if (error instanceof CustomError) {
-        throw error;
-      }
-      throw new CustomError(
-        PermissionConstants.UserPermissionsRetrievalFailed.en,
-        500
-      );
     }
-  };
+  );
 }
