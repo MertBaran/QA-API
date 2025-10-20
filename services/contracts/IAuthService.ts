@@ -30,4 +30,9 @@ export interface IAuthService {
       about?: string;
     }
   ): Promise<IUserModel>;
+
+  createJwtForUser(
+    payload: { id: string; name: string; lang?: string },
+    rememberMe?: boolean
+  ): string;
 }
