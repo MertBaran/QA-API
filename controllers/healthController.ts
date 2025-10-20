@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import asyncErrorWrapper from 'express-async-handler';
 import { container } from '../services/container';
-import { IHealthCheckService } from '../services/HealthCheckService';
+import { HealthCheckService } from '../services/HealthCheckService';
 import { ApplicationState } from '../services/ApplicationState';
 
 export class HealthCheckController {
@@ -45,7 +45,7 @@ export class HealthCheckController {
       }
 
       const healthCheckService =
-        container.resolve<IHealthCheckService>('HealthCheckService');
+        container.resolve<HealthCheckService>('HealthCheckService');
       const health = await healthCheckService.checkHealth();
       res.json(health);
     }

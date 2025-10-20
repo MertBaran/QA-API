@@ -237,11 +237,11 @@ export class AuthManager implements IAuthService {
     return user;
   }
 
-  createJwtForUser(
+  static generateJWTFromUser(
     user: {
       id: string;
       name: string;
-      lang?: string;
+      lang: string;
     },
     rememberMe: boolean = false
   ): string {
@@ -257,7 +257,7 @@ export class AuthManager implements IAuthService {
       {
         id: user.id,
         name: user.name,
-        lang: user.lang || 'en',
+        lang: user.lang,
         iat: Math.floor(Date.now() / 1000), // Added iat
       },
       secret,

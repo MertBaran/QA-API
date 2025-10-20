@@ -42,12 +42,8 @@ export interface HealthStatus {
   message?: string;
 }
 
-export interface IHealthCheckService {
-  checkHealth(): Promise<HealthStatus>;
-}
-
 @injectable()
-export class HealthCheckService implements IHealthCheckService {
+export class HealthCheckService {
   private startTime: number;
   private appState = ApplicationState.getInstance();
 

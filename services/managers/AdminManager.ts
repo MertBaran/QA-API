@@ -10,45 +10,14 @@ import { IUserRepository } from '../../repositories/interfaces/IUserRepository';
 import { IUserRoleService } from '../contracts/IUserRoleService';
 import { IRoleService } from '../contracts/IRoleService';
 import CustomError from '../../helpers/error/CustomError';
-import { IAdminService } from '../contracts/IAdminService';
-import { EntityId } from '../../types/database';
 
 @injectable()
-export class AdminManager implements IAdminService {
+export class AdminManager {
   constructor(
     @inject('IUserRepository') private userRepository: IUserRepository,
     @inject('IUserRoleService') private userRoleService: IUserRoleService,
     @inject('IRoleService') private roleService: IRoleService
   ) {}
-
-  // IAdminService: tek kullanıcı getir
-  async getSingleUser(userId: EntityId): Promise<IUserModel | null> {
-    return await this.userRepository.findById(userId);
-  }
-
-  // IAdminService: tüm kullanıcıları getir
-  async getAllUsers(): Promise<IUserModel[]> {
-    return await this.userRepository.findAll();
-  }
-
-  // IAdminService: kullanıcıyı engelle
-  async blockUser(userId: EntityId): Promise<IUserModel> {
-    const user = await this.userRepository.updateById(String(userId), {
-      blocked: true,
-    } as Partial<IUserModel>);
-    if (!user) {
-      throw new CustomError('User not found', 404);
-    }
-    return user;
-  }
-
-  // IAdminService: kullanıcıyı sil
-  async deleteUser(userId: EntityId): Promise<void> {
-    const deleted = await this.userRepository.deleteById(String(userId));
-    if (!deleted) {
-      throw new CustomError('User not found', 404);
-    }
-  }
 
   // Kullanıcıları admin için getir
   async getUsersForAdmin(

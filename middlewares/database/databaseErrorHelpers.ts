@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import CustomError from '../../helpers/error/CustomError';
 import asyncErrorWrapper from 'express-async-handler';
 import { container } from 'tsyringe';
-import { IUserService } from '../../services/contracts/IUserService';
 // IUserRepository kullanılmıyor, kaldırıldı
 import { IQuestionRepository } from '../../repositories/interfaces/IQuestionRepository';
 import { IAnswerRepository } from '../../repositories/interfaces/IAnswerRepository';
@@ -12,7 +11,7 @@ const checkUserExist = asyncErrorWrapper(
   async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
     if (!id) throw new Error('id is required');
-    const userService = container.resolve<IUserService>('IUserService');
+    const userService = container.resolve<any>('IUserService');
     const user = await userService.findById(id);
     if (!user) {
       return next(

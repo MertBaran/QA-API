@@ -1,8 +1,11 @@
 import 'reflect-metadata';
 import { AdminController } from '../../../controllers/adminController';
-import { Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from '../../../types/auth';
 import { container } from 'tsyringe';
+import { AdminManager } from '../../../services/managers/AdminManager';
+import { ILoggerProvider } from '../../../infrastructure/logging/ILoggerProvider';
+import { IExceptionTracker } from '../../../infrastructure/error/IExceptionTracker';
 import { FakeAdminService } from '../../mocks/services/FakeAdminService';
 import { FakeLoggerProvider } from '../../mocks/logging/FakeLoggerProvider';
 import { FakeExceptionTracker } from '../../mocks/error/FakeExceptionTracker';
@@ -281,7 +284,7 @@ describe('AdminController Unit Tests', () => {
       // Arrange
       mockRequest.params = { userId: 'user1' };
       jest
-        .spyOn(fakeAdminManager, 'deleteUserByAdmin')
+        .spyOn(fakeAdminManager, 'deleteUser')
         .mockRejectedValue(new Error('Service error'));
 
       // Act

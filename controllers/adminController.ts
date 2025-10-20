@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { container } from 'tsyringe';
-import { IAdminService } from '../services/contracts/IAdminService';
+import { AdminManager } from '../services/managers/AdminManager';
 import { ILoggerProvider } from '../infrastructure/logging/ILoggerProvider';
 import { IExceptionTracker } from '../infrastructure/error/IExceptionTracker';
 import { ApplicationError } from '../helpers/error/ApplicationError';
@@ -8,12 +8,12 @@ import { asyncErrorWrapper } from '../helpers/error/asyncErrorWrapper';
 import { AuthenticatedRequest } from '../types/auth';
 
 export class AdminController {
-  private adminService: IAdminService;
+  private adminManager: AdminManager;
   private logger: ILoggerProvider;
   private exceptionTracker: IExceptionTracker;
 
   constructor() {
-    this.adminService = container.resolve<IAdminService>('IAdminService');
+    this.adminManager = container.resolve<AdminManager>('IAdminService');
     this.logger = container.resolve<ILoggerProvider>('ILoggerProvider');
     this.exceptionTracker =
       container.resolve<IExceptionTracker>('IExceptionTracker');
@@ -50,7 +50,7 @@ export class AdminController {
         isOnline: isOnline === 'true',
       };
 
-      const result = await this.adminService.getUsersForAdmin(
+      const result = await this.adminManager.getUsersForAdmin(
         filters,
         Number(page),
         Number(limit)
@@ -77,7 +77,7 @@ export class AdminController {
       const { userId } = req.params;
       const userData = req.body;
 
-      const updatedUser = await this.adminService.updateUserByAdmin(
+      const updatedUser = await this.adminManager.updateUserByAdmin(
         userId as string,
         userData
       );
@@ -102,7 +102,7 @@ export class AdminController {
 
       const { userId } = req.params;
 
-      await this.adminService.deleteUserByAdmin(userId as string);
+      await this.adminManager.deleteUserByAdmin(userId as string);
 
       res.status(200).json({
         success: true,
@@ -125,7 +125,7 @@ export class AdminController {
       const { userId } = req.params;
       const { blocked } = req.body;
 
-      const updatedUser = await this.adminService.toggleUserBlock(
+      const updatedUser = await this.adminManager.toggleUserBlock(
         userId as string,
         blocked
       );
@@ -151,7 +151,7 @@ export class AdminController {
       const { userId } = req.params;
       const { roles } = req.body;
 
-      const updatedUser = await this.adminService.updateUserRoles(
+      const updatedUser = await this.adminManager.updateUserRoles(
         userId as string,
         roles
       );
@@ -174,7 +174,7 @@ export class AdminController {
         throw ApplicationError.authenticationError('User not authenticated');
       }
 
-      const stats = await this.adminService.getUserStats();
+      const stats = await this.adminManager.getUserStats();
 
       res.status(200).json({
         success: true,
