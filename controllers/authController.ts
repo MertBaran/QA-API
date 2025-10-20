@@ -9,7 +9,6 @@ import { IUserRoleService } from '../services/contracts/IUserRoleService';
 import { IRoleService } from '../services/contracts/IRoleService';
 import { IPermissionService } from '../services/contracts/IPermissionService';
 import { AuthConstants } from './constants/ControllerMessages';
-import { AuthManager } from '../services/managers/AuthManager';
 import { ILoggerProvider } from '../infrastructure/logging/ILoggerProvider';
 import { IExceptionTracker } from '../infrastructure/error/IExceptionTracker';
 import { ApplicationError } from '../helpers/error/ApplicationError';
@@ -58,7 +57,7 @@ export class AuthController {
       const locale = normalizeLocale(
         req.headers['accept-language'] as string | undefined
       );
-      const jwt = AuthManager.generateJWTFromUser({
+      const jwt = this.authService.createJwtForUser({
         id: user._id,
         name: user.name,
         lang: locale,
@@ -118,7 +117,7 @@ export class AuthController {
       const locale = normalizeLocale(
         req.headers['accept-language'] as string | undefined
       );
-      const jwt = AuthManager.generateJWTFromUser({
+      const jwt = this.authService.createJwtForUser({
         id: user._id,
         name: user.name,
         lang: locale,
@@ -160,7 +159,7 @@ export class AuthController {
       const locale = normalizeLocale(
         req.headers['accept-language'] as string | undefined
       );
-      const jwt = AuthManager.generateJWTFromUser(
+      const jwt = this.authService.createJwtForUser(
         {
           id: user._id,
           name: user.name,
