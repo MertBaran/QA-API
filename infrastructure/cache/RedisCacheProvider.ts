@@ -70,6 +70,11 @@ export class RedisCacheProvider implements ICacheProvider {
         port: config.port,
         maxRetriesPerRequest: 3,
         lazyConnect: true,
+        retryDelayOnFailover: 100,
+        enableReadyCheck: false,
+        maxRetriesPerRequest: null,
+        connectTimeout: 10000,
+        commandTimeout: 5000,
       });
     }
 
@@ -127,10 +132,14 @@ export class RedisCacheProvider implements ICacheProvider {
 
     // Create new client for localhost
     const localClient = new Redis({
-      host: 'localhost',
+      host: '127.0.0.1',
       port: 6379,
       maxRetriesPerRequest: 3,
       lazyConnect: true,
+      retryDelayOnFailover: 100,
+      enableReadyCheck: false,
+      connectTimeout: 10000,
+      commandTimeout: 5000,
     });
 
     localClient.on('connect', () => {
@@ -155,9 +164,14 @@ export class RedisCacheProvider implements ICacheProvider {
 
   async get<T>(key: string): Promise<T | null> {
     this.initializeClient();
-    if (!this.client || !this.isConnected) return null;
+    if (!this.client) return null;
 
     try {
+      // Check if client is ready before using
+      if (!this.client.status || this.client.status !== 'ready') {
+        return null;
+      }
+
       const value = await this.client.get(key);
       return value ? JSON.parse(value) : null;
     } catch (error) {
@@ -168,9 +182,14 @@ export class RedisCacheProvider implements ICacheProvider {
 
   async set<T>(key: string, value: T, ttlSeconds = 3600): Promise<void> {
     this.initializeClient();
-    if (!this.client || !this.isConnected) return;
+    if (!this.client) return;
 
     try {
+      // Check if client is ready before using
+      if (!this.client.status || this.client.status !== 'ready') {
+        return;
+      }
+
       await this.client.setex(key, ttlSeconds, JSON.stringify(value));
     } catch (error) {
       console.warn('Redis SET error:', error);
@@ -179,9 +198,14 @@ export class RedisCacheProvider implements ICacheProvider {
 
   async del(key: string): Promise<void> {
     this.initializeClient();
-    if (!this.client || !this.isConnected) return;
+    if (!this.client) return;
 
     try {
+      // Check if client is ready before using
+      if (!this.client.status || this.client.status !== 'ready') {
+        return;
+      }
+
       await this.client.del(key);
     } catch (error) {
       console.warn('Redis DEL error:', error);
