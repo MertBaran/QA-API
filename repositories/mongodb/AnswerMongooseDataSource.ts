@@ -3,7 +3,7 @@ import { IEntityModel } from '../interfaces/IEntityModel';
 import { IAnswerModel } from '../../models/interfaces/IAnswerModel';
 import { IDataSource } from '../interfaces/IDataSource';
 import { IAnswerMongo } from '../../models/mongodb/AnswerMongoModel';
-import CustomError from '../../infrastructure/error/CustomError';
+import { ApplicationError } from '../../infrastructure/error/ApplicationError';
 import { RepositoryConstants } from '../constants/RepositoryMessages';
 
 @injectable()
@@ -62,12 +62,15 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
     return this.toEntity(result);
   }
 
-  async findById(id: string): Promise<IAnswerModel | null> {
+  async findById(id: string): Promise<IAnswerModel> {
     const result = await (this.model as any)
       .findById(id)
       .populate('user', 'name email profile_image')
       .populate('question', 'title');
-    return result ? this.toEntity(result) : null;
+    if (!result) {
+      throw ApplicationError.notFoundError('Answer not found');
+    }
+    return this.toEntity(result);
   }
 
   async findAll(): Promise<IAnswerModel[]> {
@@ -80,7 +83,7 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
   async updateById(
     id: string,
     data: Partial<IAnswerModel>
-  ): Promise<IAnswerModel | null> {
+  ): Promise<IAnswerModel> {
     // Omit _id to avoid type conflict
     const { _id, ...rest } = data;
     const result = await this.model.findByIdAndUpdate(
@@ -88,12 +91,18 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
       rest as Partial<IAnswerMongo>,
       { new: true }
     );
-    return result ? this.toEntity(result) : null;
+    if (!result) {
+      throw ApplicationError.notFoundError('Answer not found');
+    }
+    return this.toEntity(result);
   }
 
-  async deleteById(id: string): Promise<IAnswerModel | null> {
+  async deleteById(id: string): Promise<IAnswerModel> {
     const result = await this.model.findByIdAndDelete(id);
-    return result ? this.toEntity(result) : null;
+    if (!result) {
+      throw ApplicationError.notFoundError('Answer not found');
+    }
+    return this.toEntity(result);
   }
 
   async findByField(
