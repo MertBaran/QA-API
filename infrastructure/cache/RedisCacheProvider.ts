@@ -77,25 +77,26 @@ export class RedisCacheProvider implements ICacheProvider {
       });
     }
 
-    // Handle connection events silently
+    // Handle connection events
     this.client.on('connect', () => {
       this.isConnected = true;
-      // Silent success
+      console.log('✅ Redis connected successfully');
     });
 
-    this.client.on('error', () => {
+    this.client.on('error', (err) => {
       this.isConnected = false;
-      // Silent fail
+      console.warn('⚠️ Redis connection error:', err.message);
     });
 
     this.client.on('close', () => {
       this.isConnected = false;
-      // Silent close
+      console.log('🔌 Redis connection closed');
     });
 
-    // Try to connect silently
-    this.client.connect().catch(() => {
-      // Silent connection failure - just use memory cache
+    // Try to connect
+    this.client.connect().catch((err) => {
+      console.warn('⚠️ Redis initial connection failed:', err.message);
+      console.log('📝 Using memory cache as fallback');
     });
   }
 

@@ -139,7 +139,7 @@ export class WebSocketMonitorService {
     ws.on('close', () => {
       this.clients.delete(ws);
       // Silent close for internal client
-      
+
       // Stop monitoring if no clients left
       if (this.clients.size === 0 && this.isMonitoring) {
         this.stopMonitoring();
@@ -149,7 +149,7 @@ export class WebSocketMonitorService {
     ws.on('error', (error: Error) => {
       // Silent error for internal client
       this.clients.delete(ws);
-      
+
       // Stop monitoring if no clients left
       if (this.clients.size === 0 && this.isMonitoring) {
         this.stopMonitoring();
