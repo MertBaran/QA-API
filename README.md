@@ -1,4 +1,4 @@
-# 🚀 QA Platform API
+# 🚀 Question & Answers Platform API
 
 <div align="center">
 
@@ -11,136 +11,9 @@
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 ![WebSocket](https://img.shields.io/badge/WebSocket-000000?style=for-the-badge&logo=websocket&logoColor=white)
 
-**Enterprise-grade Q&A platform API with AI-powered development, real-time monitoring, and smart notification system**
+
 
 </div>
-
----
-
-## 🤖 AI-Powered Development
-
-- Auto test generation ve optimization
-- AI-assisted code review ve refactoring
-- Intelligent architecture decisions
-- Smart notification strategy selection
-
-**232+ Tests** ✅ | **Multi-language i18n** 🌍 | **Redis Caching** ⚡ | **Smart Notifications** 📧 | **Real-time Monitoring** 📊 | **Permission Management** 🔐
-
-## ✨ Core Features
-
-### 🔐 Authentication & Authorization
-
-- **JWT Authentication** with refresh tokens
-- **Google OAuth2** integration
-- **Role-based access control** (User, Moderator, Admin)
-- **Permission-based authorization** with granular control
-- **Password reset** with template-based emails
-- **Profile management** with edit capabilities
-
-### ❓ Q&A System
-
-- **Question creation** with rich text support
-- **Answer management** with voting system
-- **Like/Unlike** functionality for questions and answers
-- **Search and filtering** capabilities
-- **Category-based organization**
-
-### 🌐 Internationalization (i18n)
-
-- **Multi-language support** (EN, TR, DE)
-- **Dynamic language switching**
-- **Localized error messages**
-- **Template-based content localization**
-- **Redis-based caching** for translations
-
-### 📧 Smart Notification System
-
-- **Multi-channel notifications** (Email, SMS, Push, Webhook)
-- **Template-based messaging** with variable replacement
-- **Smart hybrid strategy** (Direct vs Queue-based)
-- **Multi-language templates** (EN, TR, DE)
-- **RabbitMQ integration** for async processing
-- **Notification history** and tracking
-- **Dynamic strategy selection** based on load and priority
-
-### 📊 Real-time Monitoring & Health Checks
-
-- **Hybrid health check system** (Quick & Full)
-- **WebSocket-based real-time monitoring**
-- **Connection status monitoring** (Database, Cache, Queue, Email)
-- **Automatic alert notifications** on service failures
-- **Monitoring statistics** and metrics
-- **Alert history** with configurable limits
-- **Service dependency tracking**
-
-### 🚀 Performance & Scalability
-
-- **Redis caching** for improved performance
-- **Load balancing** ready
-- **Horizontal scaling** support
-- **Performance monitoring** with metrics
-- **Rate limiting** and throttling
-- **Connection pooling** optimization
-
-### 🛡️ Security & Monitoring
-
-- **Audit logging** for all operations
-- **Input validation** with Zod schemas
-- **Error handling** with custom error types
-- **Request/Response logging**
-- **Health check endpoints**
-- **Security middleware** stack
-
-## 🏗️ Architecture
-
-### 📦 Dependency Injection
-
-- **tsyringe** container for DI
-- **Interface-based tokens** for loose coupling
-- **Service layer** abstraction
-- **Repository pattern** implementation
-
-### 🗄️ Data Layer
-
-- **MongoDB** as primary database
-- **MongoDB Adapter** for database abstraction
-- **Repository pattern** for data access
-- **Service layer** for business logic abstraction
-- **Mongoose** for schema management
-
-### 📡 Real-time Monitoring Architecture
-
-```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   WebSocket     │    │   Connection     │    │   Alert         │
-│   Server        │───▶│   Monitor        │───▶│   System        │
-│                 │    │                  │    │                 │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Real-time     │    │   Service        │    │   Notification  │
-│   Updates       │    │   Health Check   │    │   Manager       │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-```
-
-### 🔄 Notification Architecture
-
-```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Smart         │    │   Multi-Channel  │    │   Template      │
-│ Notification    │───▶│   Manager        │───▶│   System        │
-│ Manager         │    │                  │    │                 │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Strategy      │    │   Channel        │    │   Multi-Lang    │
-│   Selection     │    │   Handlers       │    │   Templates     │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-```
-
-## 🚀 Quick Start
 
 ### Prerequisites
 
@@ -368,16 +241,6 @@ GET /health          // Full check - detailed service information
 }
 ```
 
-## 📊 Performance Metrics
-
-- ✅ **<200ms** average response time
-- ✅ **300 RPS** capacity under load
-- ✅ **<1%** error rate
-- ✅ **Multi-language** caching
-- ✅ **Smart notification** strategy selection
-- ✅ **Queue-based** async processing
-- ✅ **Real-time monitoring** with WebSocket
-- ✅ **Hybrid health checks** for optimal performance
 
 ## 🐳 Docker & Deployment
 
@@ -501,27 +364,5 @@ QA-API/
 - **Audit logging**
 - **Custom metrics** collection
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-<div align="center">
-
-**Made with ❤️ using AI-powered development**
-
-_Enterprise-grade architecture • Comprehensive testing • Smart notifications • Real-time monitoring • Modern practices_
-
-[![GitHub stars](https://img.shields.io/github/stars/MertBaran/QA-API?style=social)](https://github.com/MertBaran/QA-API)
-[![GitHub forks](https://img.shields.io/github/forks/MertBaran/QA-API?style=social)](https://github.com/MertBaran/QA-API)
 
 </div>
