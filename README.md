@@ -1,8 +1,17 @@
-# Question & Answers Platform API
+# 🚀 QA Platform API
 
-A comprehensive REST API for a question and answer platform built with TypeScript, Node.js, and MongoDB.
+<div align="center">
 
-## Tech Stack
+![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
+![Node.js](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white)
+![Redis](https://img.shields.io/badge/redis-%23DD0031.svg?style=for-the-badge&logo=redis&logoColor=white)
+![RabbitMQ](https://img.shields.io/badge/RabbitMQ-FF6600?style=for-the-badge&logo=rabbitmq&logoColor=white)
+![Jest](https://img.shields.io/badge/-jest-%23C21325?style=for-the-badge&logo=jest&logoColor=white)
+![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
+![WebSocket](https://img.shields.io/badge/WebSocket-000000?style=for-the-badge&logo=websocket&logoColor=white)
+
+<<<<<<< HEAD
 
 - **Backend**: TypeScript, Node.js, Express
 - **Database**: MongoDB with Mongoose
@@ -10,7 +19,10 @@ A comprehensive REST API for a question and answer platform built with TypeScrip
 - **Message Queue**: RabbitMQ (optional)
 - **Testing**: Jest
 - **Containerization**: Docker
-- **Real-time**: WebSocket
+- # **Real-time**: WebSocket
+
+</div>
+>>>>>>> 46b3c8953758a45ab550e2cb456317a331b2cdf8
 
 ### Prerequisites
 
@@ -238,7 +250,13 @@ GET /health          // Full check - detailed service information
 }
 ```
 
+<<<<<<< HEAD
+
 ## Docker & Deployment
+
+=======
+
+## 🐳 Docker & Deployment
 
 ### Docker Compose
 
@@ -280,62 +298,27 @@ services:
 
 ```
 QA-API/
-├── APP.ts                    # Application entry point
-├── config/                   # Configuration files
-│   ├── env/                 # Environment configurations
-│   └── smtpConfig.ts        # SMTP configuration
-├── constants/                # Application constants
-├── controllers/              # Request handlers
-│   └── constants/           # Controller message constants
-├── database/                 # Database management
-│   ├── factories/           # Database strategy factories
-│   ├── interfaces/          # Database interfaces
-│   ├── migrations/          # Database migrations
-│   ├── seeders/             # Database seeders
-│   ├── seeds/               # Seed data
-│   └── strategies/          # Database strategies
-├── infrastructure/          # External services
-│   ├── audit/               # Audit providers
-│   ├── auth/                # Authentication providers
-│   ├── cache/               # Cache providers
-│   ├── error/               # Error handling
-│   ├── i18n/                # Internationalization
-│   ├── logging/             # Logging providers
-│   ├── metrics/             # Metrics collection
-│   └── validation/          # Validation schemas
-├── middlewares/             # Express middlewares
-│   ├── audit/               # Audit middleware
-│   ├── authorization/       # Authorization middleware
-│   ├── database/            # Database middleware
-│   ├── errors/              # Error middleware
-│   ├── i18n/                # i18n middleware
-│   └── libraries/            # Library middleware
-├── models/                   # Data models
-│   ├── interfaces/          # Model interfaces
-│   ├── mongodb/             # MongoDB models
-│   └── postgresql/          # PostgreSQL models
-├── performance/             # Performance testing
-├── public/                   # Static files
-├── repositories/             # Data access layer
-│   ├── adapters/            # Database adapters
-│   ├── base/                # Base repository
-│   ├── interfaces/          # Repository interfaces
-│   └── mongodb/             # MongoDB repositories
-├── routers/                  # Route definitions
-├── scripts/                  # Utility scripts
-│   ├── maintenance/         # Maintenance scripts
-│   └── setup/               # Setup scripts
-├── services/                 # Business logic
-│   ├── contracts/           # Service contracts
-│   ├── managers/            # Business managers
-│   ├── notification/        # Notification services
-│   └── providers/           # Service providers
-├── tests/                    # Test suites
-│   ├── api/                 # API tests
-│   ├── integration/         # Integration tests
-│   ├── mocks/               # Test mocks
-│   ├── unit/                # Unit tests
-│   └── utils/               # Test utilities
-└── types/                    # TypeScript types
-    └── dto/                 # Data Transfer Objects
+├── controllers/          # Request handlers
+├── services/            # Business logic
+│   ├── managers/        # Business managers
+│   ├── providers/       # External service providers
+│   └── monitoring/      # Monitoring services
+├── repositories/        # Data access layer
+├── models/              # Data models
+├── middlewares/         # Express middlewares
+├── infrastructure/      # External services
+│   ├── cache/          # Cache providers
+│   ├── validation/     # Validation schemas
+│   ├── logging/        # Logging providers
+│   └── audit/          # Audit providers
+├── tests/               # Test suites
+│   ├── unit/           # Unit tests
+│   ├── integration/    # Integration tests
+│   └── mocks/          # Test mocks
+├── scripts/             # Utility scripts
+└── types/               # TypeScript types
 ```
+
+# <<<<<<< HEAD
+
+</div>
