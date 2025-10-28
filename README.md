@@ -53,9 +53,9 @@ docker build -t qa-api .
 docker run -p 3000:3000 --env-file config/env/config.env qa-api
 ```
 
-## 📚 API Endpoints
+## API Endpoints
 
-### 🔐 Authentication
+### Authentication
 
 ```
 POST   /api/auth/register              # User registration
@@ -68,7 +68,7 @@ GET    /api/auth/profile               # Get user profile
 PUT    /api/auth/edit                  # Edit user profile
 ```
 
-### ❓ Questions
+### Questions
 
 ```
 GET    /api/questions                  # List questions
@@ -80,7 +80,7 @@ GET    /api/questions/:id/like         # Like question
 GET    /api/questions/:id/undo_like    # Unlike question
 ```
 
-### 💬 Answers
+### Answers
 
 ```
 POST   /api/answers/:questionId/answer # Add answer to question
@@ -91,7 +91,7 @@ GET    /api/answers/:id/like           # Like answer
 GET    /api/answers/:id/undo_like      # Unlike answer
 ```
 
-### 📧 Notifications
+### Notifications
 
 ```
 POST   /api/notifications/send         # Send notification
@@ -101,7 +101,7 @@ GET    /api/notifications/templates    # List available templates
 GET    /api/notifications/queue-status # Get queue status
 ```
 
-### 👥 User Management
+### User Management
 
 ```
 GET    /api/users                      # List users (Admin)
@@ -110,7 +110,7 @@ PUT    /api/users/:id                  # Update user (Admin)
 DELETE /api/users/:id                  # Delete user (Admin)
 ```
 
-### 🔐 Permission Management
+### Permission Management
 
 ```
 GET    /api/permissions/roles          # List all roles
@@ -121,7 +121,7 @@ POST   /api/permissions/roles/:roleId/permissions    # Add permissions to role
 DELETE /api/permissions/roles/:roleId/permissions    # Remove permissions from role
 ```
 
-### 🏥 Health & Monitoring
+### Health & Monitoring
 
 ```
 GET    /health                         # Full health check
@@ -133,13 +133,13 @@ POST   /api/monitoring/start           # Start monitoring
 POST   /api/monitoring/stop            # Stop monitoring
 ```
 
-### 🔌 WebSocket Endpoints
+### WebSocket Endpoints
 
 ```
 WS     /ws/monitoring                  # Real-time monitoring updates
 ```
 
-## 🧪 Testing
+## Testing
 
 ```bash
 # All tests (excluding API tests)
@@ -162,7 +162,7 @@ npm run test:setup                    # Setup test environment
 npm run test:clean                    # Clean test data
 ```
 
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables
 
@@ -280,30 +280,6 @@ services:
       - '15672:15672'
 ```
 
-### Kubernetes
-
-```bash
-# Deploy to Kubernetes
-kubectl apply -f k8s/
-```
-
-## 🔄 CI/CD Pipeline
-
-### Jenkins Pipeline
-
-- **Automated testing** on every commit
-- **Docker image** building
-- **Deployment** to staging/production
-- **Performance testing** integration
-
-### GitHub Actions
-
-- **Code quality** checks
-- **Security scanning**
-- **Automated releases**
-
-## 🛠️ Development
-
 ### Code Structure
 
 ```
@@ -328,41 +304,6 @@ QA-API/
 ├── scripts/             # Utility scripts
 └── types/               # TypeScript types
 ```
-
-### Key Patterns
-
-- **Dependency Injection** with tsyringe
-- **Repository Pattern** for data access
-- **Service Layer** for business logic abstraction
-- **DTO Pattern** for request/response type safety
-- **Middleware Pattern** for cross-cutting concerns
-- **Strategy Pattern** for notification selection
-- **Observer Pattern** for real-time monitoring
-- **Factory Pattern** for service creation
-
-## 🔍 Monitoring & Observability
-
-### Health Checks
-
-- **Quick Health Check**: Basic service availability
-- **Full Health Check**: Detailed service information with response times
-- **Service-specific checks**: Database, Cache, Queue, Email connectivity
-
-### Real-time Monitoring
-
-- **WebSocket-based** real-time updates
-- **Connection status** monitoring
-- **Automatic alerts** on service failures
-- **Monitoring statistics** and metrics
-- **Alert history** with configurable limits
-
-### Metrics & Logging
-
-- **Request/Response logging**
-- **Performance metrics**
-- **Error tracking**
-- **Audit logging**
-- **Custom metrics** collection
 
 
 </div>
