@@ -153,8 +153,8 @@ export class RedisCacheProvider implements ICacheProvider {
   }
 
   async get<T>(key: string): Promise<T | null> {
-    this.initializeClient();
-    if (!this.client) return null;
+    // Skip initialization - Redis disabled
+    return null;
 
     try {
       // Check if client is ready before using
@@ -175,8 +175,8 @@ export class RedisCacheProvider implements ICacheProvider {
   }
 
   async set<T>(key: string, value: T, ttlSeconds = 3600): Promise<void> {
-    this.initializeClient();
-    if (!this.client) return;
+    // Skip initialization - Redis disabled
+    return;
 
     try {
       // Check if client is ready before using
@@ -196,8 +196,8 @@ export class RedisCacheProvider implements ICacheProvider {
   }
 
   async del(key: string): Promise<void> {
-    this.initializeClient();
-    if (!this.client) return;
+    // Skip initialization - Redis disabled
+    return;
 
     try {
       // Check if client is ready before using
