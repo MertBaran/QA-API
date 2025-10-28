@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import CustomError from '../../infrastructure/error/CustomError';
+import { ApplicationError } from '../../infrastructure/error/ApplicationError';
 import jwt from 'jsonwebtoken';
 import {
   isTokenIncluded,
@@ -32,22 +32,28 @@ const getAccessToRoute = (
   next: NextFunction
 ) => {
   if (!isTokenIncluded(req)) {
-    return next(new CustomError(AuthMiddlewareMessages.Unauthorized, 401));
+    return next(new ApplicationError(AuthMiddlewareMessages.Unauthorized, 401));
   }
 
   const access_token = getAccessTokenFromHeader(req);
   if (!access_token) {
-    return next(new CustomError(AuthMiddlewareMessages.NoAccessToken, 401));
+    return next(
+      new ApplicationError(AuthMiddlewareMessages.NoAccessToken, 401)
+    );
   }
   if (!process.env['JWT_SECRET_KEY']) {
-    return next(new CustomError(AuthMiddlewareMessages.JwtSecretMissing, 500));
+    return next(
+      new ApplicationError(AuthMiddlewareMessages.JwtSecretMissing, 500)
+    );
   }
   jwt.verify(
     access_token,
     process.env['JWT_SECRET_KEY']!,
     async (err, decoded) => {
       if (err)
-        return next(new CustomError(AuthMiddlewareMessages.Unauthorized, 401));
+        return next(
+          new ApplicationError(AuthMiddlewareMessages.Unauthorized, 401)
+        );
       const decodedToken = decoded as DecodedToken & {
         lang?: 'en' | 'tr' | 'de';
         iat?: number;
@@ -68,7 +74,7 @@ const getAccessToRoute = (
             tokenCreatedAt < user.lastPasswordChange
           ) {
             return next(
-              new CustomError(AuthMiddlewareMessages.TokenExpired, 401)
+              new ApplicationError(AuthMiddlewareMessages.TokenExpired, 401)
             );
           }
         } catch (error) {
@@ -101,7 +107,7 @@ const getQuestionOwnerAccess = asyncErrorWrapper(
     );
     const question = await questionRepository.findById(questionId);
     if (!question || question.user !== userId) {
-      return next(new CustomError(AuthMiddlewareMessages.OwnerOnly, 403));
+      return next(new ApplicationError(AuthMiddlewareMessages.OwnerOnly, 403));
     }
     next();
   }
@@ -123,7 +129,7 @@ const getAnswerOwnerAccess = asyncErrorWrapper(
         ? (answer.user as { _id: string })._id
         : answer && answer.user;
     if (!answer || answerUserId !== userId) {
-      return next(new CustomError(AuthMiddlewareMessages.OwnerOnly, 403));
+      return next(new ApplicationError(AuthMiddlewareMessages.OwnerOnly, 403));
     }
     next();
   }
