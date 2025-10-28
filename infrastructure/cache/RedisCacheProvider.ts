@@ -26,8 +26,8 @@ export class RedisCacheProvider implements ICacheProvider {
 
   private getRedisConfiguration() {
     const redisUrl = this.connectionConfig.url;
-    const redisHost = this.connectionConfig.host;
-    const redisPort = this.connectionConfig.port;
+    const redisHost = this.connectionConfig.host || 'localhost';
+    const redisPort = this.connectionConfig.port || 6379;
 
     // Business logic: If REDIS_URL exists, use cloud Redis
     // Otherwise use localhost
@@ -39,7 +39,7 @@ export class RedisCacheProvider implements ICacheProvider {
         database: this.getRedisDatabase(redisUrl),
       };
     } else {
-      // Default to localhost
+      // Default to localhost:6379
       return {
         type: 'local',
         host: redisHost,
@@ -63,85 +63,43 @@ export class RedisCacheProvider implements ICacheProvider {
         lazyConnect: true,
       });
     } else {
-      console.log(`🔗 Redis: Connecting to Localhost (${config.port})`);
+      console.log(`🔗 Redis: Connecting to ${config.host}:${config.port}`);
 
       this.client = new Redis({
         host: config.host,
         port: config.port,
         lazyConnect: true,
         enableReadyCheck: false,
-        // Connection stability settings
-        retryStrategy: (times) => {
-          if (times > 3) {
-            // Stop retrying after 3 attempts
-            return null;
-          }
-          // Wait 1 second between retries
-          return 1000;
-        },
-        reconnectOnError: () => false, // Don't auto-reconnect on error
+        // Never retry - fail fast
+        retryStrategy: () => null,
+        reconnectOnError: () => false,
         maxRetriesPerRequest: 1,
-        connectTimeout: 10000,
-        commandTimeout: 5000,
-        keepAlive: 30000, // Keep connection alive
+        connectTimeout: 5000, // 5 seconds timeout
+        commandTimeout: 3000,
         family: 4, // Force IPv4
       });
     }
 
     // Handle connection events
-    this.client.on('connect', () => {
+    this.client.once('connect', () => {
       this.isConnected = true;
       console.log('✅ Redis connected successfully');
     });
 
     this.client.on('error', err => {
       this.isConnected = false;
-      console.warn('⚠️ Redis connection error:', err.message);
+      // Silent - don't spam console
     });
 
-    this.client.on('close', () => {
+    this.client.once('close', () => {
       this.isConnected = false;
-      console.log('🔌 Redis connection closed');
+      // Silent - connection closed
     });
 
-    // Try to connect
+    // Try to connect - fail fast
     this.client.connect().catch(err => {
-      console.warn('⚠️ Redis initial connection failed:', err.message);
-      console.log('📝 Using memory cache as fallback');
-    });
-  }
-
-  private tryLocalFallback(): void {
-    console.log('🔄 Attempting to connect to localhost Redis as fallback...');
-
-    // Create new client for localhost
-    const localClient = new Redis({
-      host: '127.0.0.1',
-      port: 6379,
-      maxRetriesPerRequest: 3,
-      lazyConnect: true,
-      enableReadyCheck: false,
-      connectTimeout: 10000,
-      commandTimeout: 5000,
-    });
-
-    localClient.on('connect', () => {
-      this.isConnected = true;
-      this.client = localClient;
-      console.log('✅ Redis localhost fallback connected successfully');
-    });
-
-    localClient.on('error', err => {
-      console.warn('⚠️ Redis localhost fallback also failed:', err.message);
-      console.log('📝 Using memory cache only');
-    });
-
-    localClient.connect().catch(err => {
-      console.warn(
-        '⚠️ Redis localhost fallback connection failed:',
-        err.message
-      );
-      console.log('📝 All Redis options exhausted, using memory cache only');
+      console.warn('⚠️ Redis not available, using memory cache fallback');
+      this.isConnected = false;
     });
   }
 
