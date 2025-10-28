@@ -27,7 +27,6 @@ export class QuestionManager implements IQuestionService {
       ...questionData,
       user: userId,
     });
-    // Invalidate cache when new question is created
     await this.cacheProvider.del('questions:all');
     return question;
   }

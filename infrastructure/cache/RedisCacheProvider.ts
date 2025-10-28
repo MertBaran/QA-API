@@ -8,14 +8,11 @@ import { CacheConnectionConfig } from '../../services/contracts/IConfigurationSe
 export class RedisCacheProvider implements ICacheProvider {
   private client: Redis | null = null;
   private initialized: boolean = false;
-  private connectionConfig: CacheConnectionConfig;
 
-  constructor(
-    @inject('ICacheConnectionConfig') connectionConfig: CacheConnectionConfig
-  ) {
+  constructor() {
     // Don't initialize Redis client here - wait for first use
     // This allows environment variables to be loaded first
-    this.connectionConfig = connectionConfig;
+    // Config will be fetched from container during initialization
   }
 
   private getRedisDatabase(redisUrl?: string): string {
@@ -24,9 +21,17 @@ export class RedisCacheProvider implements ICacheProvider {
   }
 
   private getRedisConfiguration() {
-    const redisUrl = this.connectionConfig.url;
-    const redisHost = this.connectionConfig.host || 'localhost';
-    const redisPort = this.connectionConfig.port || 6379;
+    // Fetch config from container at runtime (after it's registered)
+    const { container } = require('tsyringe');
+    const connectionConfig = container.resolve<CacheConnectionConfig>(
+      'ICacheConnectionConfig'
+    );
+
+    console.log('🔧 Redis Configuration:', connectionConfig);
+
+    const redisUrl = connectionConfig.url;
+    const redisHost = connectionConfig.host || 'localhost';
+    const redisPort = connectionConfig.port || 6379;
 
     // Business logic: If REDIS_URL exists, use cloud Redis
     // Otherwise use localhost
