@@ -209,9 +209,8 @@ export class ApplicationSetup {
       console.log('');
 
       // Initialize WebSocket monitoring after server is started
-      // Temporarily disabled to fix Redis connection issues
-      // this.initializeWebSocketMonitoring();
-      // console.log(`🔌 WebSocket monitoring: ws://localhost:${port}`);
+      this.initializeWebSocketMonitoring();
+      console.log(`🔌 WebSocket monitoring: ws://localhost:${port}`);
 
       // Health check endpoints
       console.log(`📊 Health checks available:`);
