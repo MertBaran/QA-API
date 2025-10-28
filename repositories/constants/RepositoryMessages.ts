@@ -1,6 +1,11 @@
 export const RepositoryConstants = {
   // Base Repository Messages
   BASE: {
+    FIND_BY_FIELD_VALUE_ERROR: {
+      tr: 'Veritabanı hatası: BaseRepository.findByFieldValue',
+      en: 'Database error in BaseRepository.findByFieldValue',
+      de: 'Datenbankfehler in BaseRepository.findByFieldValue',
+    },
     CREATE_ERROR: {
       tr: 'Veritabanı hatası: BaseRepository.create',
       en: 'Database error in BaseRepository.create',
@@ -163,6 +168,16 @@ export const RepositoryConstants = {
       en: 'Database error in AnswerMongooseDataSource.deleteAll',
       de: 'Datenbankfehler in AnswerMongooseDataSource.deleteAll',
     },
+    ALREADY_LIKED_ERROR: {
+      tr: 'Veritabanı hatası: AnswerMongooseDataSource.alreadyLiked',
+      en: 'Database error in AnswerMongooseDataSource.alreadyLiked',
+      de: 'Datenbankfehler in AnswerMongooseDataSource.alreadyLiked',
+    },
+    NOT_LIKED_ERROR: {
+      tr: 'Veritabanı hatası: AnswerMongooseDataSource.notLiked',
+      en: 'Database error in AnswerMongooseDataSource.notLiked',
+      de: 'Datenbankfehler in AnswerMongooseDataSource.notLiked',
+    },
   },
 
   // Role Repository Messages
@@ -265,6 +280,11 @@ export const RepositoryConstants = {
 
   // UserRole Repository Messages
   USER_ROLE: {
+    NOT_FOUND_ERROR: {
+      tr: 'Kullanıcı rolü bulunamadı',
+      en: 'User role not found',
+      de: 'Benutzerrolle nicht gefunden',
+    },
     CREATE_ERROR: {
       tr: 'Veritabanı hatası: UserRoleMongooseDataSource.create',
       en: 'Database error in UserRoleMongooseDataSource.create',
@@ -304,6 +324,20 @@ export const RepositoryConstants = {
       tr: 'Veritabanı hatası: UserRoleMongooseDataSource.findByUserId',
       en: 'Database error in UserRoleMongooseDataSource.findByUserId',
       de: 'Datenbankfehler in UserRoleMongooseDataSource.findByUserId',
+    },
+  },
+  NOTIFICATION: {
+    NOTIFICATION_NOT_FOUND: {
+      tr: 'Bildirim bulunamadı',
+      en: 'Notification not found',
+      de: 'Benachrichtigung nicht gefunden',
+    },
+  },
+  NOTIFICATION_TEMPLATE: {
+    TEMPLATE_NOT_FOUND: {
+      tr: 'Template bulunamadı',
+      en: 'Template not found',
+      de: 'Template nicht gefunden',
     },
   },
 

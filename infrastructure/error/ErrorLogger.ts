@@ -7,7 +7,7 @@ import {
 import { ErrorClassifier } from './ErrorClassifier';
 import { Request } from 'express';
 import { container } from 'tsyringe';
-import { IExceptionTracker } from '../../infrastructure/error/IExceptionTracker';
+import { IExceptionTracker } from './IExceptionTracker';
 import { IConfigurationService } from '../../services/contracts/IConfigurationService';
 import fs from 'fs';
 import path from 'path';

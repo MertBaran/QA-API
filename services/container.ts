@@ -49,6 +49,7 @@ import { SmartNotificationManager } from './managers/SmartNotificationManager';
 import { SmartNotificationStrategy } from './strategies/SmartNotificationStrategy';
 import { SystemMetricsCollector } from './metrics/SystemMetricsCollector';
 import { WebSocketMonitorService } from './WebSocketMonitorService';
+import { InternalWebSocketClient } from './InternalWebSocketClient';
 import { PermissionManager } from './managers/PermissionManager';
 import { RoleManager } from './managers/RoleManager';
 import { UserRoleManager } from './managers/UserRoleManager';
@@ -156,6 +157,12 @@ container.registerSingleton(
 container.registerSingleton(
   TOKENS.WebSocketMonitorService,
   WebSocketMonitorService
+);
+
+// Register internal WebSocket client
+container.registerSingleton(
+  TOKENS.InternalWebSocketClient,
+  InternalWebSocketClient
 );
 
 // Register notification managers based on technology

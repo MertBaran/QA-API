@@ -19,58 +19,66 @@ export class FakeUserRoleService implements IUserRoleService {
     });
   }
 
-  assignRoleToUser = jest.fn().mockImplementation(async (
-    userId: EntityId,
-    roleId: EntityId,
-    assignedBy: EntityId
-  ): Promise<IUserRoleModel> => {
-    const userRole: IUserRoleModel = {
-      _id: `ur_${Date.now()}_${Math.random()}`,
-      userId,
-      roleId,
-      assignedAt: new Date(),
-      assignedBy,
-      expiresAt: undefined,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+  assignRoleToUser = jest
+    .fn()
+    .mockImplementation(
+      async (
+        userId: EntityId,
+        roleId: EntityId,
+        assignedBy: EntityId
+      ): Promise<IUserRoleModel> => {
+        const userRole: IUserRoleModel = {
+          _id: `ur_${Date.now()}_${Math.random()}`,
+          userId,
+          roleId,
+          assignedAt: new Date(),
+          assignedBy,
+          expiresAt: undefined,
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
 
-    this.userRoles.push(userRole);
-    return userRole;
-  });
-
-  removeRoleFromUser = jest.fn().mockImplementation(async (
-    userId: EntityId,
-    roleId: EntityId
-  ): Promise<IUserRoleModel | null> => {
-    const index = this.userRoles.findIndex(
-      ur => ur.userId === userId && ur.roleId === roleId && ur.isActive
+        this.userRoles.push(userRole);
+        return userRole;
+      }
     );
-    if (index === -1) return null;
 
-    const userRole = this.userRoles[index];
-    if (!userRole) return null;
+  removeRoleFromUser = jest
+    .fn()
+    .mockImplementation(
+      async (
+        userId: EntityId,
+        roleId: EntityId
+      ): Promise<IUserRoleModel | null> => {
+        const index = this.userRoles.findIndex(
+          ur => ur.userId === userId && ur.roleId === roleId && ur.isActive
+        );
+        if (index === -1) return null;
 
-    userRole.isActive = false;
-    userRole.updatedAt = new Date();
-    return userRole;
-  });
+        const userRole = this.userRoles[index];
+        if (!userRole) return null;
 
-  getUserActiveRoles = jest.fn().mockImplementation(async (userId: EntityId): Promise<IUserRoleModel[]> => {
-    return this.userRoles.filter(
-      ur => ur.userId === userId && ur.isActive
+        userRole.isActive = false;
+        userRole.updatedAt = new Date();
+        return userRole;
+      }
     );
-  });
 
-  getUserRoles = jest.fn().mockImplementation(async (userId: EntityId): Promise<IUserRoleModel[]> => {
-    return this.userRoles.filter(ur => ur.userId === userId);
-  });
+  getUserActiveRoles = jest
+    .fn()
+    .mockImplementation(async (userId: EntityId): Promise<IUserRoleModel[]> => {
+      return this.userRoles.filter(ur => ur.userId === userId && ur.isActive);
+    });
+
+  getUserRoles = jest
+    .fn()
+    .mockImplementation(async (userId: EntityId): Promise<IUserRoleModel[]> => {
+      return this.userRoles.filter(ur => ur.userId === userId);
+    });
 
   async getRoleUsers(roleId: EntityId): Promise<IUserRoleModel[]> {
-    return this.userRoles.filter(
-      ur => ur.roleId === roleId && ur.isActive
-    );
+    return this.userRoles.filter(ur => ur.roleId === roleId && ur.isActive);
   }
 
   async isUserAssignedToRole(
@@ -246,7 +254,12 @@ export class FakeUserRoleService implements IUserRoleService {
 
     for (let i = 0; i < this.userRoles.length; i++) {
       const userRole = this.userRoles[i];
-      if (userRole && userRole.expiresAt && userRole.expiresAt < now && userRole.isActive) {
+      if (
+        userRole &&
+        userRole.expiresAt &&
+        userRole.expiresAt < now &&
+        userRole.isActive
+      ) {
         userRole.isActive = false;
         userRole.updatedAt = new Date();
         deactivatedCount++;
@@ -254,5 +267,18 @@ export class FakeUserRoleService implements IUserRoleService {
     }
 
     return deactivatedCount;
+  }
+
+  async findByUserIdAndRoleId(
+    userId: EntityId,
+    roleId: EntityId
+  ): Promise<IUserRoleModel> {
+    const userRole = this.userRoles.find(
+      ur => ur.userId === userId && ur.roleId === roleId
+    );
+    if (!userRole) {
+      throw new Error('UserRole not found');
+    }
+    return userRole;
   }
 }

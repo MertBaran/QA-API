@@ -3,7 +3,7 @@ import { IEntityModel } from '../interfaces/IEntityModel';
 import { IUserModel } from '../../models/interfaces/IUserModel';
 import { IDataSource } from '../interfaces/IDataSource';
 import { IUserMongo } from '../../models/mongodb/UserMongoModel';
-import CustomError from '../../helpers/error/CustomError';
+import { ApplicationError } from '../../infrastructure/error/ApplicationError';
 import { RepositoryConstants } from '../constants/RepositoryMessages';
 
 @injectable()
@@ -46,9 +46,14 @@ export class UserMongooseDataSource implements IDataSource<IUserModel> {
     return this.toEntity(result);
   }
 
-  async findById(id: string): Promise<IUserModel | null> {
+  async findById(id: string): Promise<IUserModel> {
     const result = await this.model.findById(id);
-    return result ? this.toEntity(result) : null;
+    if (!result) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.FIND_BY_ID_ERROR.en
+      );
+    }
+    return this.toEntity(result);
   }
 
   async findAll(): Promise<IUserModel[]> {
@@ -56,22 +61,29 @@ export class UserMongooseDataSource implements IDataSource<IUserModel> {
     return results.map((doc: any) => this.toEntity(doc));
   }
 
-  async updateById(
-    id: string,
-    data: Partial<IUserModel>
-  ): Promise<IUserModel | null> {
+  async updateById(id: string, data: Partial<IUserModel>): Promise<IUserModel> {
     const { _id, ...rest } = data;
     const result = await this.model.findByIdAndUpdate(
       id,
       rest as Partial<IUserMongo>,
       { new: true }
     );
-    return result ? this.toEntity(result) : null;
+    if (!result) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.UPDATE_BY_ID_ERROR.en
+      );
+    }
+    return this.toEntity(result);
   }
 
-  async deleteById(id: string): Promise<IUserModel | null> {
+  async deleteById(id: string): Promise<IUserModel> {
     const result = await this.model.findByIdAndDelete(id);
-    return result ? this.toEntity(result) : null;
+    if (!result) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.DELETE_BY_ID_ERROR.en
+      );
+    }
+    return this.toEntity(result);
   }
 
   async findByField(
@@ -95,10 +107,15 @@ export class UserMongooseDataSource implements IDataSource<IUserModel> {
     return this.model.deleteMany({});
   }
 
-  async findByEmailWithPassword(email: string): Promise<IUserModel | null> {
+  async findByEmailWithPassword(email: string): Promise<IUserModel> {
     const anyModel = this.model as any;
     const result = await anyModel.findOne({ email }).select('+password');
-    return result ? this.toEntity(result) : null;
+    if (!result) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.FIND_BY_FIELD_VALUE_ERROR.en
+      );
+    }
+    return this.toEntity(result);
   }
 
   async findActive(): Promise<IUserModel[]> {

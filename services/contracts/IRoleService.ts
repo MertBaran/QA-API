@@ -3,8 +3,8 @@ import { EntityId } from '../../types/database';
 
 export interface IRoleService {
   create(role: Partial<IRoleModel>): Promise<IRoleModel>;
-  findById(id: EntityId): Promise<IRoleModel | null>;
-  findByName(name: string): Promise<IRoleModel | null>;
+  findById(id: EntityId): Promise<IRoleModel>;
+  findByName(name: string): Promise<IRoleModel>;
   findAll(): Promise<IRoleModel[]>;
   updateById(
     id: EntityId,
@@ -17,7 +17,7 @@ export interface IRoleService {
   assignPermissionToRole(
     roleId: EntityId,
     permissionId: EntityId
-  ): Promise<IRoleModel | null>;
+  ): Promise<IRoleModel>;
   removePermissionFromRole(
     roleId: EntityId,
     permissionId: EntityId
@@ -27,9 +27,9 @@ export interface IRoleService {
   addPermissionsToRole(
     roleId: EntityId,
     permissionIds: EntityId[]
-  ): Promise<IRoleModel | null>;
+  ): Promise<IRoleModel>;
   removePermissionsFromRole(
     roleId: EntityId,
     permissionIds: EntityId[]
-  ): Promise<IRoleModel | null>;
+  ): Promise<IRoleModel>;
 }

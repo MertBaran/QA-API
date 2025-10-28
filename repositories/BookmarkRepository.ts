@@ -9,7 +9,7 @@ import {
 import { IDataSource } from './interfaces/IDataSource';
 import { EntityId } from '../types/database';
 import { ILoggerProvider } from '../infrastructure/logging/ILoggerProvider';
-import { ApplicationError } from '../helpers/error/ApplicationError';
+import { ApplicationError } from '../infrastructure/error/ApplicationError';
 import {
   PaginationQueryDTO,
   PaginatedResponse,
@@ -34,7 +34,7 @@ export class BookmarkRepository implements IBookmarkRepository {
     return bookmark;
   }
 
-  async findById(id: EntityId): Promise<IBookmarkModel | null> {
+  async findById(id: EntityId): Promise<IBookmarkModel> {
     return await this.bookmarkDataSource.findById(id);
   }
 
@@ -45,11 +45,9 @@ export class BookmarkRepository implements IBookmarkRepository {
   async update(
     id: EntityId,
     data: Partial<IBookmarkModel>
-  ): Promise<IBookmarkModel | null> {
+  ): Promise<IBookmarkModel> {
     const updated = await this.bookmarkDataSource.updateById(id, data);
-    if (updated) {
-      this.logger.info('Bookmark updated successfully', { bookmarkId: id });
-    }
+    this.logger.info('Bookmark updated successfully', { bookmarkId: id });
     return updated;
   }
 
@@ -68,15 +66,13 @@ export class BookmarkRepository implements IBookmarkRepository {
   async updateById(
     id: EntityId,
     data: Partial<IBookmarkModel>
-  ): Promise<IBookmarkModel | null> {
+  ): Promise<IBookmarkModel> {
     return this.update(id, data);
   }
 
-  async deleteById(id: EntityId): Promise<IBookmarkModel | null> {
+  async deleteById(id: EntityId): Promise<IBookmarkModel> {
     const deleted = await this.bookmarkDataSource.deleteById(id);
-    if (deleted) {
-      this.logger.info('Bookmark deleted successfully', { bookmarkId: id });
-    }
+    this.logger.info('Bookmark deleted successfully', { bookmarkId: id });
     return deleted;
   }
 

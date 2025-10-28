@@ -10,7 +10,7 @@ import {
 import { container } from 'tsyringe';
 import { IConfigurationService } from '../../services/contracts/IConfigurationService';
 import { ILoggerProvider } from '../logging/ILoggerProvider';
-import { ErrorLogger } from '../../helpers/error/ErrorLogger';
+import { ErrorLogger } from '../../infrastructure/error/ErrorLogger';
 
 export class SentryTracker implements IExceptionTracker {
   private isInitialized: boolean = false;

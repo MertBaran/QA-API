@@ -3,7 +3,7 @@ import { IEntityModel } from '../interfaces/IEntityModel';
 import { IQuestionModel } from '../../models/interfaces/IQuestionModel';
 import { IDataSource } from '../interfaces/IDataSource';
 import { IQuestionMongo } from '../../models/mongodb/QuestionMongoModel';
-import CustomError from '../../helpers/error/CustomError';
+import { ApplicationError } from '../../infrastructure/error/ApplicationError';
 import { RepositoryConstants } from '../constants/RepositoryMessages';
 import {
   PaginationQueryDTO,
@@ -70,11 +70,16 @@ export class QuestionMongooseDataSource implements IDataSource<IQuestionModel> {
     return this.toEntity(result);
   }
 
-  async findById(id: string): Promise<IQuestionModel | null> {
+  async findById(id: string): Promise<IQuestionModel> {
     const result = await this.model
       .findById(id)
       .populate('user', 'name email profile_image');
-    return result ? this.toEntity(result) : null;
+    if (!result) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.FIND_BY_ID_ERROR.en
+      );
+    }
+    return this.toEntity(result);
   }
 
   async findAll(): Promise<IQuestionModel[]> {
@@ -85,19 +90,29 @@ export class QuestionMongooseDataSource implements IDataSource<IQuestionModel> {
   async updateById(
     id: string,
     data: Partial<IQuestionModel>
-  ): Promise<IQuestionModel | null> {
+  ): Promise<IQuestionModel> {
     const { _id, ...rest } = data;
     const result = await this.model.findByIdAndUpdate(
       id,
       rest as Partial<IQuestionMongo>,
       { new: true }
     );
-    return result ? this.toEntity(result) : null;
+    if (!result) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.UPDATE_BY_ID_ERROR.en
+      );
+    }
+    return this.toEntity(result);
   }
 
-  async deleteById(id: string): Promise<IQuestionModel | null> {
+  async deleteById(id: string): Promise<IQuestionModel> {
     const result = await this.model.findByIdAndDelete(id);
-    return result ? this.toEntity(result) : null;
+    if (!result) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.DELETE_BY_ID_ERROR.en
+      );
+    }
+    return this.toEntity(result);
   }
 
   async findByField(

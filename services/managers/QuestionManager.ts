@@ -1,7 +1,7 @@
 import { injectable, inject } from 'tsyringe';
 import { IQuestionRepository } from '../../repositories/interfaces/IQuestionRepository';
 import { IQuestionModel } from '../../models/interfaces/IQuestionModel';
-import CustomError from '../../helpers/error/CustomError';
+import { ApplicationError } from '../../infrastructure/error/ApplicationError';
 import { EntityId } from '../../types/database';
 import { ICacheProvider } from '../../infrastructure/cache/ICacheProvider';
 import { IQuestionService } from '../contracts/IQuestionService';
@@ -53,7 +53,9 @@ export class QuestionManager implements IQuestionService {
     const question =
       await this.questionRepository.findByIdWithPopulate(questionId);
     if (!question) {
-      throw new CustomError(QuestionServiceMessages.QuestionNotFound.en, 404);
+      throw ApplicationError.notFoundError(
+        QuestionServiceMessages.QuestionNotFound.en
+      );
     }
     return question;
   }
@@ -67,7 +69,9 @@ export class QuestionManager implements IQuestionService {
       updateData
     );
     if (!question) {
-      throw new CustomError(QuestionServiceMessages.QuestionNotFound.en, 404);
+      throw ApplicationError.notFoundError(
+        QuestionServiceMessages.QuestionNotFound.en
+      );
     }
     await this.cacheProvider.del('questions:all');
     return question;
@@ -76,7 +80,9 @@ export class QuestionManager implements IQuestionService {
   async deleteQuestion(questionId: EntityId): Promise<IQuestionModel> {
     const question = await this.questionRepository.deleteById(questionId);
     if (!question) {
-      throw new CustomError(QuestionServiceMessages.QuestionNotFound.en, 404);
+      throw ApplicationError.notFoundError(
+        QuestionServiceMessages.QuestionNotFound.en
+      );
     }
     await this.cacheProvider.del('questions:all');
     return question;
@@ -93,8 +99,13 @@ export class QuestionManager implements IQuestionService {
     if (!question) {
       const exists = await this.questionRepository.findById(questionId);
       if (!exists)
-        throw new CustomError(QuestionServiceMessages.QuestionNotFound.en, 404);
-      throw new CustomError(QuestionServiceMessages.AlreadyLiked.en, 400);
+        throw ApplicationError.notFoundError(
+          QuestionServiceMessages.QuestionNotFound.en
+        );
+      throw ApplicationError.businessError(
+        QuestionServiceMessages.AlreadyLiked.en,
+        400
+      );
     }
     return question;
   }
@@ -110,8 +121,13 @@ export class QuestionManager implements IQuestionService {
     if (!question) {
       const exists = await this.questionRepository.findById(questionId);
       if (!exists)
-        throw new CustomError(QuestionServiceMessages.QuestionNotFound.en, 404);
-      throw new CustomError(QuestionServiceMessages.NotLikedYet.en, 400);
+        throw ApplicationError.notFoundError(
+          QuestionServiceMessages.QuestionNotFound.en
+        );
+      throw ApplicationError.businessError(
+        QuestionServiceMessages.NotLikedYet.en,
+        400
+      );
     }
     return question;
   }

@@ -6,6 +6,8 @@ import BookmarkMongo, {
   IBookmarkMongo,
 } from '../../models/mongodb/BookmarkMongoModel';
 import { ILoggerProvider } from '../../infrastructure/logging/ILoggerProvider';
+import { RepositoryConstants } from '../constants/RepositoryMessages';
+import { ApplicationError } from '../../infrastructure/error/ApplicationError';
 
 @injectable()
 export class BookmarkMongooseDataSource implements IDataSource<IBookmarkModel> {
@@ -26,9 +28,14 @@ export class BookmarkMongooseDataSource implements IDataSource<IBookmarkModel> {
     return this.mapToModel(savedBookmark);
   }
 
-  async findById(id: EntityId): Promise<IBookmarkModel | null> {
+  async findById(id: EntityId): Promise<IBookmarkModel> {
     const bookmark = await BookmarkMongo.findById(id);
-    return bookmark ? this.mapToModel(bookmark) : null;
+    if (!bookmark) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.FIND_BY_ID_ERROR.en
+      );
+    }
+    return this.mapToModel(bookmark);
   }
 
   async findAll(): Promise<IBookmarkModel[]> {
@@ -39,7 +46,7 @@ export class BookmarkMongooseDataSource implements IDataSource<IBookmarkModel> {
   async update(
     id: EntityId,
     data: Partial<IBookmarkModel>
-  ): Promise<IBookmarkModel | null> {
+  ): Promise<IBookmarkModel> {
     const updatedBookmark = await BookmarkMongo.findByIdAndUpdate(
       id,
       { ...data, updatedAt: new Date() },
@@ -52,17 +59,22 @@ export class BookmarkMongooseDataSource implements IDataSource<IBookmarkModel> {
       });
     }
 
-    return updatedBookmark ? this.mapToModel(updatedBookmark) : null;
+    if (!updatedBookmark) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.UPDATE_BY_ID_ERROR.en
+      );
+    }
+    return this.mapToModel(updatedBookmark);
   }
 
   async updateById(
     id: EntityId,
     data: Partial<IBookmarkModel>
-  ): Promise<IBookmarkModel | null> {
+  ): Promise<IBookmarkModel> {
     return this.update(id, data);
   }
 
-  async deleteById(id: EntityId): Promise<IBookmarkModel | null> {
+  async deleteById(id: EntityId): Promise<IBookmarkModel> {
     const bookmark = await BookmarkMongo.findByIdAndDelete(id);
     const deleted = !!bookmark;
 
@@ -70,7 +82,12 @@ export class BookmarkMongooseDataSource implements IDataSource<IBookmarkModel> {
       this.logger.info('Bookmark deleted from MongoDB', { bookmarkId: id });
     }
 
-    return bookmark ? this.mapToModel(bookmark) : null;
+    if (!bookmark) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.DELETE_BY_ID_ERROR.en
+      );
+    }
+    return this.mapToModel(bookmark);
   }
 
   async findByField(
@@ -117,9 +134,14 @@ export class BookmarkMongooseDataSource implements IDataSource<IBookmarkModel> {
 
   async findOneByFields(
     fields: Partial<IBookmarkModel>
-  ): Promise<IBookmarkModel | null> {
+  ): Promise<IBookmarkModel> {
     const bookmark = await BookmarkMongo.findOne(fields);
-    return bookmark ? this.mapToModel(bookmark) : null;
+    if (!bookmark) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.FIND_BY_FIELD_VALUE_ERROR.en
+      );
+    }
+    return this.mapToModel(bookmark);
   }
 
   private mapToModel(mongoBookmark: IBookmarkMongo): IBookmarkModel {

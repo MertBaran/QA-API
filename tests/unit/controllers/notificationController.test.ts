@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { NotificationController } from '../../../controllers/notificationController';
 import { INotificationService } from '../../../services/contracts/INotificationService';
 // NotificationConstants kullanılmıyor, kaldırıldı
-import { HelperMessages } from '../../../helpers/constants/HelperMessages';
+import { HelperMessages } from '../../../constants/HelperMessages';
 import { UserNotificationPreferences } from '../../../services/contracts/NotificationPayload';
 
 // Mock dependencies

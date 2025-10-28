@@ -8,6 +8,8 @@ import {
   PaginationQueryDTO,
   PaginatedResponse,
 } from '../types/dto/question/pagination.dto';
+import { ApplicationError } from '../infrastructure/error/ApplicationError';
+import { RepositoryConstants } from './constants/RepositoryMessages';
 
 @injectable()
 export class QuestionRepository
@@ -20,7 +22,7 @@ export class QuestionRepository
     super(dataSource);
   }
 
-  async findByIdWithPopulate(id: string): Promise<IQuestionModel | null> {
+  async findByIdWithPopulate(id: string): Promise<IQuestionModel> {
     // IDataSource'a özel metot yoksa, findById ile döner
     return this.findById(id);
   }
@@ -34,20 +36,32 @@ export class QuestionRepository
     return all.filter(q => q.user === userId);
   }
 
-  async findBySlug(slug: string): Promise<IQuestionModel | null> {
+  async findBySlug(slug: string): Promise<IQuestionModel> {
     const all = await this.dataSource.findAll();
-    return all.find(q => q.slug === slug) || null;
+    const question = all.find(q => q.slug === slug);
+    if (!question) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.FIND_BY_FIELD_VALUE_ERROR.en
+      );
+    }
+    return question;
   }
 
   async likeQuestion(
     questionId: EntityId,
     userId: EntityId
-  ): Promise<IQuestionModel | null> {
+  ): Promise<IQuestionModel> {
     const question = await this.findById(questionId);
-    if (!question) return null;
+    if (!question) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.FIND_BY_ID_ERROR.en
+      );
+    }
     if (question.likes.includes(userId)) {
-      // Already liked, return null to indicate error
-      return null;
+      throw ApplicationError.businessError(
+        RepositoryConstants.ANSWER.ALREADY_LIKED_ERROR.en,
+        400
+      );
     }
     question.likes.push(userId);
     return this.updateById(questionId, { likes: question.likes });
@@ -56,12 +70,18 @@ export class QuestionRepository
   async unlikeQuestion(
     questionId: EntityId,
     userId: EntityId
-  ): Promise<IQuestionModel | null> {
+  ): Promise<IQuestionModel> {
     const question = await this.findById(questionId);
-    if (!question) return null;
+    if (!question) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.FIND_BY_ID_ERROR.en
+      );
+    }
     if (!question.likes.includes(userId)) {
-      // Not liked, return null to indicate error
-      return null;
+      throw ApplicationError.businessError(
+        RepositoryConstants.ANSWER.NOT_LIKED_ERROR.en,
+        400
+      );
     }
     question.likes = question.likes.filter(like => like !== userId);
     return this.updateById(questionId, { likes: question.likes });

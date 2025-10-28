@@ -5,6 +5,8 @@ import { INotificationTemplateModel } from '../models/interfaces/INotificationTe
 import NotificationMongo from '../models/mongodb/NotificationMongoModel';
 import NotificationTemplateMongo from '../models/mongodb/NotificationTemplateMongoModel';
 import { ILoggerProvider } from '../infrastructure/logging/ILoggerProvider';
+import { ApplicationError } from '../infrastructure/error';
+import { RepositoryConstants } from './constants/RepositoryMessages';
 
 @injectable()
 export class NotificationRepository implements INotificationRepository {
@@ -31,9 +33,14 @@ export class NotificationRepository implements INotificationRepository {
     return savedNotification.toObject();
   }
 
-  async getNotificationById(id: string): Promise<INotificationModel | null> {
+  async getNotificationById(id: string): Promise<INotificationModel> {
     const notification = await NotificationMongo.findById(id);
-    return notification?.toObject() || null;
+    if (!notification) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.NOTIFICATION.NOTIFICATION_NOT_FOUND.en
+      );
+    }
+    return notification.toObject();
   }
 
   async getNotificationsByUserId(
@@ -116,19 +123,25 @@ export class NotificationRepository implements INotificationRepository {
     return savedTemplate.toObject();
   }
 
-  async getTemplateById(
-    id: string
-  ): Promise<INotificationTemplateModel | null> {
+  async getTemplateById(id: string): Promise<INotificationTemplateModel> {
     const template = await NotificationTemplateMongo.findById(id);
-    return template?.toObject() || null;
+    if (!template) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.NOTIFICATION_TEMPLATE.TEMPLATE_NOT_FOUND.en
+      );
+    }
+    return template.toObject();
   }
 
-  async getTemplateByName(
-    name: string
-  ): Promise<INotificationTemplateModel | null> {
+  async getTemplateByName(name: string): Promise<INotificationTemplateModel> {
     try {
       const template = await NotificationTemplateMongo.findOne({ name });
-      return template?.toObject() || null;
+      if (!template) {
+        throw ApplicationError.notFoundError(
+          RepositoryConstants.NOTIFICATION_TEMPLATE.TEMPLATE_NOT_FOUND.en
+        );
+      }
+      return template.toObject();
     } catch (error) {
       this.logger.error('Error getting template by name', { error, name });
       throw error;

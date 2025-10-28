@@ -4,6 +4,8 @@ import { IRoleModel } from '../models/interfaces/IRoleModel';
 import { IRoleDataSource } from './interfaces/IRoleDataSource';
 import { EntityId } from '../types/database';
 import { BaseRepository } from './base/BaseRepository';
+import { RepositoryConstants } from './constants/RepositoryMessages';
+import { ApplicationError } from '../infrastructure/error/ApplicationError';
 
 @injectable()
 export class RoleRepository
@@ -16,8 +18,14 @@ export class RoleRepository
     super(roleDataSource);
   }
 
-  async findByName(name: string): Promise<IRoleModel | null> {
-    return this.roleDataSource.findByName(name);
+  async findByName(name: string): Promise<IRoleModel> {
+    const role = await this.roleDataSource.findByName(name);
+    if (!role) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.FIND_BY_FIELD_VALUE_ERROR.en
+      );
+    }
+    return role;
   }
 
   async findSystemRoles(): Promise<IRoleModel[]> {
@@ -31,14 +39,14 @@ export class RoleRepository
   async assignPermission(
     roleId: EntityId,
     permissionId: EntityId
-  ): Promise<IRoleModel | null> {
+  ): Promise<IRoleModel> {
     return this.roleDataSource.assignPermission(roleId, permissionId);
   }
 
   async removePermission(
     roleId: EntityId,
     permissionId: EntityId
-  ): Promise<IRoleModel | null> {
+  ): Promise<IRoleModel> {
     return this.roleDataSource.removePermission(roleId, permissionId);
   }
 
@@ -53,14 +61,14 @@ export class RoleRepository
   async addPermissionsToRole(
     roleId: EntityId,
     permissionIds: EntityId[]
-  ): Promise<IRoleModel | null> {
+  ): Promise<IRoleModel> {
     return this.roleDataSource.addPermissionsToRole(roleId, permissionIds);
   }
 
   async removePermissionsFromRole(
     roleId: EntityId,
     permissionIds: EntityId[]
-  ): Promise<IRoleModel | null> {
+  ): Promise<IRoleModel> {
     return this.roleDataSource.removePermissionsFromRole(roleId, permissionIds);
   }
 }
