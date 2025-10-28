@@ -46,6 +46,7 @@ export const TOKENS = {
   INotificationStrategy: 'INotificationStrategy',
   SystemMetricsCollector: 'SystemMetricsCollector',
   WebSocketMonitorService: 'WebSocketMonitorService',
+  InternalWebSocketClient: 'InternalWebSocketClient',
   INotificationService: 'INotificationService',
   IEmailChannel: 'IEmailChannel',
   ISMSChannel: 'ISMSChannel',

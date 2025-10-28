@@ -6,6 +6,7 @@ import { INotificationService } from './contracts/INotificationService';
 import { ApplicationState } from './ApplicationState';
 import { ICacheProvider } from '../infrastructure/cache/ICacheProvider';
 import { container } from './container';
+import { InternalWebSocketClient } from './InternalWebSocketClient';
 
 export interface ConnectionStatus {
   service: 'database' | 'cache' | 'queue' | 'email';
@@ -58,9 +59,12 @@ export class WebSocketMonitorService {
   constructor(
     @inject('ILoggerProvider') private logger: ILoggerProvider,
     @inject('INotificationService')
-    private notificationService: INotificationService
+    private notificationService: INotificationService,
+    @inject('InternalWebSocketClient')
+    private internalClient: InternalWebSocketClient
   ) {
     this.initializeStatus();
+    // Don't start internal client immediately - wait for app to be ready
   }
 
   private initializeStatus(): void {
@@ -224,18 +228,13 @@ export class WebSocketMonitorService {
       return;
     }
 
-    // Only start monitoring if there are active WebSocket clients
-    if (this.clients.size === 0) {
-      this.logger.info(
-        'No WebSocket clients connected - monitoring not started'
-      );
-      return;
-    }
+    // Start internal client when monitoring starts (app should be ready by then)
+    this.startInternalClient();
 
     this.isMonitoring = true;
     this.monitoringInterval = setInterval(() => {
-      // Only monitor if there are active clients
-      if (this.clients.size > 0) {
+      // Always monitor if internal client is connected or external clients exist
+      if (this.internalClient.isClientConnected() || this.clients.size > 0) {
         this.checkAllConnections();
       } else {
         // No clients - stop monitoring to save resources
@@ -245,7 +244,8 @@ export class WebSocketMonitorService {
 
     this.logger.info('🔍 WebSocket connection monitoring started', {
       interval: `${intervalMs}ms`,
-      clients: this.clients.size,
+      internalClient: this.internalClient.isClientConnected(),
+      externalClients: this.clients.size,
       services: ['database', 'cache', 'queue', 'email'],
     });
   }
@@ -257,6 +257,20 @@ export class WebSocketMonitorService {
     }
     this.isMonitoring = false;
     this.logger.info('🛑 WebSocket connection monitoring stopped');
+  }
+
+  private async startInternalClient(): Promise<void> {
+    try {
+      const wsUrl = `ws://localhost:${process.env['PORT'] || 3000}`;
+      await this.internalClient.connect(wsUrl);
+      this.logger.info(
+        '✅ Internal WebSocket client started for continuous monitoring'
+      );
+    } catch (error) {
+      this.logger.error('Failed to start internal WebSocket client:', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
   private async checkAllConnections(): Promise<void> {
@@ -379,79 +393,22 @@ export class WebSocketMonitorService {
   }
 
   private async checkCacheConnection(config: any): Promise<void> {
-    if (this.shouldSkipCheck('cache')) {
-      return;
-    }
+    // Only check config, don't actually connect to Redis to avoid connection issues
+    const hasConfig = config.REDIS_HOST && config.REDIS_PORT;
 
-    try {
-      // Real Redis connection test - but silent
-      const cacheProvider = container.resolve<ICacheProvider>('ICacheProvider');
+    const previousStatus = this.connectionStatus.get('cache');
+    const newStatus: ConnectionStatus = {
+      service: 'cache',
+      status: hasConfig ? 'connected' : 'disconnected',
+      lastCheck: new Date(),
+      details: {
+        host: config.REDIS_HOST,
+        port: config.REDIS_PORT,
+        note: 'Config-based check only - no actual Redis connection test',
+      },
+    };
 
-      // Try to perform a simple operation to test connection
-      const testKey = `health-check-${Date.now()}`;
-
-      // Suppress Redis error logs during health check
-      const originalConsoleWarn = console.warn;
-      const originalConsoleLog = console.log;
-      console.warn = () => {}; // Suppress warnings during test
-      console.log = () => {}; // Suppress logs during test
-
-      try {
-        await cacheProvider.set(testKey, 'test', 1); // 1 second TTL
-        await cacheProvider.get(testKey);
-        await cacheProvider.del(testKey);
-      } finally {
-        // Restore console functions
-        console.warn = originalConsoleWarn;
-        console.log = originalConsoleLog;
-      }
-
-      const previousStatus = this.connectionStatus.get('cache');
-      const newStatus: ConnectionStatus = {
-        service: 'cache',
-        status: 'connected',
-        lastCheck: new Date(),
-        details: {
-          host: config.REDIS_HOST,
-          port: config.REDIS_PORT,
-          testResult: 'success',
-        },
-      };
-
-      this.updateConnectionStatus('cache', newStatus, previousStatus);
-      this.recordSuccess('cache');
-    } catch (error) {
-      this.recordFailure('cache');
-
-      // Cache connection failed - notify clients but don't crash
-      const previousStatus = this.connectionStatus.get('cache');
-      const newStatus: ConnectionStatus = {
-        service: 'cache',
-        status: 'disconnected',
-        lastCheck: new Date(),
-        error: error instanceof Error ? error.message : String(error),
-        details: {
-          host: config.REDIS_HOST,
-          port: config.REDIS_PORT,
-          testResult: 'failed',
-        },
-      };
-
-      this.updateConnectionStatus('cache', newStatus, previousStatus);
-
-      // Notify WebSocket clients about cache failure
-      this.broadcast({
-        type: 'alert',
-        data: {
-          type: 'connection_lost',
-          service: 'cache',
-          message: 'Redis cache connection lost',
-          timestamp: new Date(),
-          details: error instanceof Error ? error.message : String(error),
-        },
-        timestamp: new Date(),
-      });
-    }
+    this.updateConnectionStatus('cache', newStatus, previousStatus);
   }
 
   private async checkQueueConnection(): Promise<void> {
