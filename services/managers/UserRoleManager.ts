@@ -17,7 +17,7 @@ export class UserRoleManager implements IUserRoleService {
   }
 
   async getUserActiveRoles(userId: EntityId): Promise<IUserRoleModel[]> {
-    return await this.userRoleRepository.findByUserId(userId);
+    return await this.userRoleRepository.findByUserIdAndActive(userId);
   }
 
   async assignRoleToUser(
@@ -40,22 +40,22 @@ export class UserRoleManager implements IUserRoleService {
   }
 
   async hasRole(userId: EntityId, roleId: EntityId): Promise<boolean> {
-    const userRole = (await this.userRoleRepository.findByUserId(userId)).find(
-      userRole => userRole.roleId === roleId
+    const userRole = await this.userRoleRepository.findByUserIdAndRoleId(
+      userId,
+      roleId
     );
-    if (!userRole) {
-      return false;
-    }
     return userRole.isActive;
   }
 
   async hasAnyRole(userId: EntityId, roleIds: EntityId[]): Promise<boolean> {
-    const userRoles = await this.userRoleRepository.findByUserId(userId);
+    const userRoles =
+      await this.userRoleRepository.findByUserIdAndActive(userId);
     return userRoles.some(userRole => roleIds.includes(userRole.roleId));
   }
 
   async hasAllRoles(userId: EntityId, roleIds: EntityId[]): Promise<boolean> {
-    const userRoles = await this.userRoleRepository.findByUserId(userId);
+    const userRoles =
+      await this.userRoleRepository.findByUserIdAndActive(userId);
     const userRoleIds = userRoles.map(userRole => userRole.roleId);
     return roleIds.every(roleId => userRoleIds.includes(roleId));
   }

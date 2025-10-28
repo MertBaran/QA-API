@@ -36,9 +36,12 @@ export class FakeUserRoleRepository implements IUserRoleRepository {
     return userRole;
   }
 
-  async findById(id: EntityId): Promise<IUserRoleModel | null> {
+  async findById(id: EntityId): Promise<IUserRoleModel> {
     const userRole = this.userRoles.find(ur => ur._id === id);
-    return userRole || null;
+    if (!userRole) {
+      throw new Error('UserRole not found');
+    }
+    return userRole;
   }
 
   async findAll(): Promise<IUserRoleModel[]> {
@@ -48,12 +51,16 @@ export class FakeUserRoleRepository implements IUserRoleRepository {
   async updateById(
     id: EntityId,
     data: Partial<IUserRoleModel>
-  ): Promise<IUserRoleModel | null> {
+  ): Promise<IUserRoleModel> {
     const index = this.userRoles.findIndex(ur => ur._id === id);
-    if (index === -1) return null;
+    if (index === -1) {
+      throw new Error('UserRole not found');
+    }
 
     const existingUserRole = this.userRoles[index];
-    if (!existingUserRole) return null;
+    if (!existingUserRole) {
+      throw new Error('UserRole not found');
+    }
 
     this.userRoles[index] = {
       ...existingUserRole,
@@ -64,15 +71,19 @@ export class FakeUserRoleRepository implements IUserRoleRepository {
     return this.userRoles[index];
   }
 
-  async deleteById(id: EntityId): Promise<IUserRoleModel | null> {
+  async deleteById(id: EntityId): Promise<IUserRoleModel> {
     const index = this.userRoles.findIndex(ur => ur._id === id);
-    if (index === -1) return null;
+    if (index === -1) {
+      throw new Error('UserRole not found');
+    }
 
     const deletedUserRole = this.userRoles[index];
-    if (!deletedUserRole) return null;
+    if (!deletedUserRole) {
+      throw new Error('UserRole not found');
+    }
 
     this.userRoles.splice(index, 1);
-    return deletedUserRole;
+    return deletedUserRole as IUserRoleModel;
   }
 
   async findByUserId(userId: EntityId): Promise<IUserRoleModel[]> {
@@ -230,11 +241,14 @@ export class FakeUserRoleRepository implements IUserRoleRepository {
   async findByUserIdAndRoleId(
     userId: EntityId,
     roleId: EntityId
-  ): Promise<IUserRoleModel | null> {
+  ): Promise<IUserRoleModel> {
     const userRole = this.userRoles.find(
       ur => ur.userId === userId && ur.roleId === roleId
     );
-    return userRole || null;
+    if (!userRole) {
+      throw new Error('UserRole not found');
+    }
+    return userRole;
   }
 
   async assignRoleToUser(
@@ -261,26 +275,21 @@ export class FakeUserRoleRepository implements IUserRoleRepository {
   async removeRoleFromUser(
     userId: EntityId,
     roleId: EntityId
-  ): Promise<IUserRoleModel | null> {
+  ): Promise<IUserRoleModel> {
     const userRole = await this.findByUserIdAndRoleId(userId, roleId);
-    if (!userRole) return null;
-
-    return await this.updateById(userRole._id, { isActive: false });
+    return (await this.updateById(userRole._id, {
+      isActive: false,
+    })) as IUserRoleModel;
   }
-
   async deactivateExpiredRoles(): Promise<number> {
     const now = new Date();
-    let deactivatedCount = 0;
-
-    for (let i = 0; i < this.userRoles.length; i++) {
-      const userRole = this.userRoles[i];
-      if (userRole && userRole.expiresAt && userRole.expiresAt < now && userRole.isActive) {
-        userRole.isActive = false;
-        userRole.updatedAt = new Date();
-        deactivatedCount++;
-      }
-    }
-
-    return deactivatedCount;
+    const expiredUserRoles = this.userRoles.filter(
+      ur => ur.expiresAt && ur.expiresAt < now && ur.isActive
+    );
+    expiredUserRoles.forEach(ur => {
+      ur.isActive = false;
+      ur.updatedAt = new Date();
+    });
+    return expiredUserRoles.length;
   }
 }

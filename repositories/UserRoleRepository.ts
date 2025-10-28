@@ -40,13 +40,16 @@ export class UserRoleRepository
     userId: EntityId,
     roleId: EntityId
   ): Promise<IUserRoleModel> {
-    const userRole = (await this.dataSource.findByField(
-      'userId',
-      userId
-    )) as IUserRoleModel[];
-    return (await this.dataSource.updateById(userId, {
+    const userRole = await this.findByUserIdAndRoleId(userId, roleId);
+    if (!userRole) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.USER_ROLE.NOT_FOUND_ERROR.en
+      );
+    }
+    
+    return await this.updateById(userRole._id.toString(), {
       isActive: false,
-    })) as IUserRoleModel;
+    });
   }
 
   async findByUserId(userId: EntityId): Promise<IUserRoleModel[]> {
