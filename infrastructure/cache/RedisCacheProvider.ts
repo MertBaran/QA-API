@@ -53,13 +53,6 @@ export class RedisCacheProvider implements ICacheProvider {
     if (this.initialized) return;
 
     this.initialized = true;
-    
-    // Temporarily disable Redis for development
-    console.log('🔗 Redis: Disabled for development - using memory cache only');
-    this.client = null;
-    this.isConnected = false;
-    return;
-
     const config = this.getRedisConfiguration();
 
     if (config.type === 'cloud') {
@@ -75,11 +68,12 @@ export class RedisCacheProvider implements ICacheProvider {
       this.client = new Redis({
         host: config.host,
         port: config.port,
-        maxRetriesPerRequest: 3,
+        maxRetriesPerRequest: 1,
         lazyConnect: true,
         enableReadyCheck: false,
-        connectTimeout: 10000,
-        commandTimeout: 5000,
+        connectTimeout: 5000,
+        commandTimeout: 3000,
+        family: 4, // Force IPv4
       });
     }
 
@@ -95,19 +89,11 @@ export class RedisCacheProvider implements ICacheProvider {
 
     this.client.on('error', err => {
       this.isConnected = false;
-      if (config.type === 'cloud') {
-        console.warn(
-          '⚠️ Redis Cloud connection error, falling back to memory cache:',
-          err.message
-        );
-        // Try to connect to localhost as fallback
-        this.tryLocalFallback();
-      } else {
-        console.warn(
-          '⚠️ Redis localhost connection error (using memory cache):',
-          err.message
-        );
-      }
+      console.warn(
+        '⚠️ Redis connection error (using memory cache):',
+        err.message
+      );
+      // Don't try fallback, just use memory cache
     });
 
     this.client.on('close', () => {
