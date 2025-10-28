@@ -1,6 +1,6 @@
 import { IDatabaseAdapter } from './IDatabaseAdapter';
 import { PostgreSQLIdAdapter } from '../../types/database';
-import CustomError from '../../infrastructure/error/CustomError';
+import { ApplicationError } from '../../infrastructure/error/ApplicationError';
 import { RepositoryConstants } from '../constants/RepositoryMessages';
 
 export class PostgreSQLAdapter implements IDatabaseAdapter {
@@ -27,7 +27,7 @@ export class PostgreSQLAdapter implements IDatabaseAdapter {
       );
     } catch (error) {
       console.error('❌ PostgreSQL connection error:', error);
-      throw new CustomError(
+      throw new ApplicationError(
         `Database connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
         500
       );
@@ -45,7 +45,7 @@ export class PostgreSQLAdapter implements IDatabaseAdapter {
       );
     } catch (error) {
       console.error('PostgreSQL disconnection error:', error);
-      throw new CustomError(
+      throw new ApplicationError(
         RepositoryConstants.DATABASE_ADAPTER.POSTGRESQL.DISCONNECT_ERROR.en,
         500
       );

@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { IDatabaseAdapter } from './IDatabaseAdapter';
 import { MongoDBIdAdapter } from '../../types/database';
-import CustomError from '../../infrastructure/error/CustomError';
+import { ApplicationError } from '../../infrastructure/error/ApplicationError';
 import { RepositoryConstants } from '../constants/RepositoryMessages';
 import { injectable, inject } from 'tsyringe';
 import { DatabaseConnectionConfig } from '../../services/contracts/IConfigurationService';
@@ -54,7 +54,7 @@ export class MongoDBAdapter implements IDatabaseAdapter {
         RepositoryConstants.DATABASE_ADAPTER.MONGODB.CONNECT_FAILED.en
       );
       // Throw error to trigger application shutdown
-      throw new CustomError(
+      throw new ApplicationError(
         `Database connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
         500
       );
@@ -70,7 +70,7 @@ export class MongoDBAdapter implements IDatabaseAdapter {
       );
     } catch (_error) {
       console.error('MongoDB disconnection error:', _error);
-      throw new CustomError(
+      throw new ApplicationError(
         RepositoryConstants.DATABASE_ADAPTER.MONGODB.DISCONNECT_ERROR.en,
         500
       );
