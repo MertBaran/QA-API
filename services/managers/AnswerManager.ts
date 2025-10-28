@@ -1,6 +1,6 @@
 import { injectable, inject } from 'tsyringe';
 import { IAnswerModel } from '../../models/interfaces/IAnswerModel';
-import CustomError from '../../helpers/error/CustomError';
+import CustomError from '../../infrastructure/error/CustomError';
 import { IAnswerRepository } from '../../repositories/interfaces/IAnswerRepository';
 import { EntityId } from '../../types/database';
 import { IQuestionRepository } from '../../repositories/interfaces/IQuestionRepository';

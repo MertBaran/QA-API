@@ -2,7 +2,7 @@ import { injectable } from 'tsyringe';
 import { IEntityModel } from '../interfaces/IEntityModel';
 import { IUserRoleModel } from '../../models/interfaces/IUserRoleModel';
 import { IDataSource } from '../interfaces/IDataSource';
-import CustomError from '../../helpers/error/CustomError';
+import CustomError from '../../infrastructure/error/CustomError';
 import { RepositoryConstants } from '../constants/RepositoryMessages';
 
 @injectable()

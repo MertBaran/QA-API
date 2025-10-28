@@ -8,7 +8,7 @@ import type { SuccessResponseDTO } from '../types/dto/common/success-response.dt
 // IUserModel kullanılmıyor, kaldırıldı
 import type { UserResponseDTO } from '../types/dto/user/user-response.dto';
 import type { IdParamDTO } from '../types/dto/common/id-param.dto';
-import CustomError from '../helpers/error/CustomError';
+import CustomError from '../infrastructure/error/CustomError';
 
 @injectable()
 export class UserController {

@@ -1,6 +1,6 @@
 import { Model } from 'mongoose';
 import { IEntityModel } from '../interfaces/IEntityModel';
-import CustomError from '../../helpers/error/CustomError';
+import CustomError from '../../infrastructure/error/CustomError';
 import { RepositoryConstants } from '../constants/RepositoryMessages';
 
 export class MongooseModelAdapter<T> implements IEntityModel<T> {

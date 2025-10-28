@@ -1,7 +1,7 @@
 import multer from 'multer';
 import path from 'path';
 import { Request } from 'express';
-import CustomError from '../../helpers/error/CustomError';
+import CustomError from '../../infrastructure/error/CustomError';
 import { UploadMiddlewareMessages } from '../constants/MiddlewareMessages';
 
 interface AuthenticatedRequest extends Request {

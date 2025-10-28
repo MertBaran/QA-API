@@ -1,5 +1,5 @@
 import { getAccessToRoute } from '../../../middlewares/authorization/authMiddleware';
-import CustomError from '../../../helpers/error/CustomError';
+import CustomError from '../../../infrastructure/error/CustomError';
 import jwt from 'jsonwebtoken';
 
 describe('authMiddleware - getAccessToRoute', () => {

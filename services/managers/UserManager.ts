@@ -3,7 +3,7 @@ import { IUserService } from '../contracts/IUserService';
 import { IUserModel } from '../../models/interfaces/IUserModel';
 import { IUserRepository } from '../../repositories/interfaces/IUserRepository';
 import { EntityId } from '../../types/database';
-import CustomError from '../../helpers/error/CustomError';
+import CustomError from '../../infrastructure/error/CustomError';
 import { UserServiceMessages } from '../constants/ServiceMessages';
 
 @injectable()

@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
-import CustomError from '../../helpers/error/CustomError';
+import CustomError from '../../infrastructure/error/CustomError';
 import jwt from 'jsonwebtoken';
 import {
   isTokenIncluded,
   getAccessTokenFromHeader,
-} from '../../helpers/authorization/tokenHelpers';
+} from '../../infrastructure/auth/tokenHelpers';
 import asyncErrorWrapper from 'express-async-handler';
 import { container } from 'tsyringe';
 // UserRepository kullanılmıyor, kaldırıldı

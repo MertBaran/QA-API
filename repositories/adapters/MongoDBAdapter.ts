@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { IDatabaseAdapter } from './IDatabaseAdapter';
 import { MongoDBIdAdapter } from '../../types/database';
-import CustomError from '../../helpers/error/CustomError';
+import CustomError from '../../infrastructure/error/CustomError';
 import { RepositoryConstants } from '../constants/RepositoryMessages';
 import { injectable, inject } from 'tsyringe';
 import { DatabaseConnectionConfig } from '../../services/contracts/IConfigurationService';

@@ -3,7 +3,7 @@ import { IEntityModel } from '../interfaces/IEntityModel';
 import { IQuestionModel } from '../../models/interfaces/IQuestionModel';
 import { IDataSource } from '../interfaces/IDataSource';
 import { IQuestionMongo } from '../../models/mongodb/QuestionMongoModel';
-import CustomError from '../../helpers/error/CustomError';
+import CustomError from '../../infrastructure/error/CustomError';
 import { RepositoryConstants } from '../constants/RepositoryMessages';
 import {
   PaginationQueryDTO,

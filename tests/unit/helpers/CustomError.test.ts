@@ -1,4 +1,4 @@
-import CustomError from '../../../helpers/error/CustomError';
+import CustomError from '../../../infrastructure/error/CustomError';
 
 describe('CustomError Unit Tests', () => {
   it('should create an error with message and statusCode', () => {

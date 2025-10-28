@@ -1,7 +1,7 @@
 import { injectable, inject } from 'tsyringe';
 import { IQuestionRepository } from '../../repositories/interfaces/IQuestionRepository';
 import { IQuestionModel } from '../../models/interfaces/IQuestionModel';
-import CustomError from '../../helpers/error/CustomError';
+import CustomError from '../../infrastructure/error/CustomError';
 import { EntityId } from '../../types/database';
 import { ICacheProvider } from '../../infrastructure/cache/ICacheProvider';
 import { IQuestionService } from '../contracts/IQuestionService';

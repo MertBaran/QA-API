@@ -1,6 +1,6 @@
 import { IDatabaseAdapter } from './IDatabaseAdapter';
 import { PostgreSQLIdAdapter } from '../../types/database';
-import CustomError from '../../helpers/error/CustomError';
+import CustomError from '../../infrastructure/error/CustomError';
 import { RepositoryConstants } from '../constants/RepositoryMessages';
 
 export class PostgreSQLAdapter implements IDatabaseAdapter {

@@ -1,7 +1,7 @@
 import {
   validateUserInput,
   comparePassword,
-} from '../../../helpers/input/inputHelpers';
+} from '../../../infrastructure/validation/inputHelpers';
 import bcrypt from 'bcryptjs';
 
 describe('inputHelpers Unit Tests', () => {

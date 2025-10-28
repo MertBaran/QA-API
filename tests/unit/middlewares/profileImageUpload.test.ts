@@ -1,4 +1,4 @@
-import CustomError from '../../../helpers/error/CustomError';
+import CustomError from '../../../infrastructure/error/CustomError';
 import profileImageUpload from '../../../middlewares/libraries/profileImageUpload';
 
 describe('profileImageUpload middleware', () => {

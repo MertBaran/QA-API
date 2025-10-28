@@ -3,7 +3,7 @@ import { IRoleService } from '../contracts/IRoleService';
 import { IRoleModel } from '../../models/interfaces/IRoleModel';
 import { EntityId } from '../../types/database';
 import { IRoleRepository } from '../../repositories/interfaces/IRoleRepository';
-import CustomError from '../../helpers/error/CustomError';
+import CustomError from '../../infrastructure/error/CustomError';
 import { RoleServiceMessages } from '../constants/ServiceMessages';
 
 @injectable()

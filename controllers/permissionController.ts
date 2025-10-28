@@ -3,7 +3,7 @@ import asyncErrorWrapper from 'express-async-handler';
 import { IUserRoleService } from '../services/contracts/IUserRoleService';
 import { IRoleService } from '../services/contracts/IRoleService';
 import { IUserService } from '../services/contracts/IUserService';
-import CustomError from '../helpers/error/CustomError';
+import CustomError from '../infrastructure/error/CustomError';
 import { PermissionConstants } from './constants/ControllerMessages';
 import {
   AssignRoleRequestDTO,

@@ -77,4 +77,11 @@ export class FakeAuthManager implements IAuthService {
   async updateProfile(userId: EntityId, profileData: any): Promise<IUserModel> {
     return this.getUserProfile(userId);
   }
+
+  createJwtForUser(
+    payload: { id: string; name: string; lang?: string },
+    rememberMe?: boolean
+  ): string {
+    return 'fake-jwt-token';
+  }
 }

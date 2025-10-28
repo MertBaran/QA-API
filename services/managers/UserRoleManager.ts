@@ -3,7 +3,7 @@ import { IUserRoleRepository } from '../../repositories/interfaces/IUserRoleRepo
 import { IUserRoleModel } from '../../models/interfaces/IUserRoleModel';
 import { EntityId } from '../../types/database';
 import { IUserRoleService } from '../contracts/IUserRoleService';
-import CustomError from '../../helpers/error/CustomError';
+import CustomError from '../../infrastructure/error/CustomError';
 
 @injectable()
 export class UserRoleManager implements IUserRoleService {

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import asyncErrorWrapper from 'express-async-handler';
 import { container } from 'tsyringe';
-import CustomError from '../../helpers/error/CustomError';
+import CustomError from '../../infrastructure/error/CustomError';
 import { AuthMiddlewareMessages } from '../constants/MiddlewareMessages';
 import { IUserRoleService } from '../../services/contracts/IUserRoleService';
 import { IRoleService } from '../../services/contracts/IRoleService';

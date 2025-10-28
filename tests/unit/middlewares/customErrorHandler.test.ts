@@ -1,5 +1,5 @@
 import customErrorHandler from '../../../middlewares/errors/customErrorHandler';
-import CustomError from '../../../helpers/error/CustomError';
+import CustomError from '../../../infrastructure/error/CustomError';
 import { container } from 'tsyringe';
 import { FakeEnvironmentProvider } from '../../mocks/providers/FakeEnvironmentProvider';
 import { FakeExceptionTracker } from '../../mocks/error/FakeExceptionTracker';

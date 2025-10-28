@@ -6,7 +6,7 @@ import {
 } from '../../../models/interfaces/IBookmarkModel';
 import { FakeBookmarkRepository } from '../../mocks/repositories/FakeBookmarkRepository';
 import { FakeLoggerProvider } from '../../mocks/logger/FakeLoggerProvider';
-import { ApplicationError } from '../../../helpers/error/ApplicationError';
+import { ApplicationError } from '../../../infrastructure/error/ApplicationError';
 
 describe('BookmarkRepository', () => {
   let bookmarkRepository: IBookmarkRepository;

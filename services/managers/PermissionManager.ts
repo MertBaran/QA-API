@@ -3,7 +3,7 @@ import { IPermissionService } from '../contracts/IPermissionService';
 import { IPermissionModel } from '../../models/interfaces/IPermissionModel';
 import { EntityId } from '../../types/database';
 import { IPermissionRepository } from '../../repositories/interfaces/IPermissionRepository';
-import CustomError from '../../helpers/error/CustomError';
+import CustomError from '../../infrastructure/error/CustomError';
 import { PermissionServiceMessages } from '../constants/ServiceMessages';
 
 @injectable()

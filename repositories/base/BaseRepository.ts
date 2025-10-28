@@ -1,6 +1,6 @@
 import { EntityId } from '../../types/database';
 import { IDataSource } from '../interfaces/IDataSource';
-import CustomError from '../../helpers/error/CustomError';
+import CustomError from '../../infrastructure/error/CustomError';
 import { RepositoryConstants } from '../constants/RepositoryMessages';
 
 export abstract class BaseRepository<TEntity> {

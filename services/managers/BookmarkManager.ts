@@ -15,7 +15,7 @@ import {
 import { EntityId } from '../../types/database';
 import { ICacheProvider } from '../../infrastructure/cache/ICacheProvider';
 import { ILoggerProvider } from '../../infrastructure/logging/ILoggerProvider';
-import { ApplicationError } from '../../helpers/error/ApplicationError';
+import { ApplicationError } from '../../infrastructure/error/ApplicationError';
 import {
   PaginationQueryDTO,
   PaginatedResponse,

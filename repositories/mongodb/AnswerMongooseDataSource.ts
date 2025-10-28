@@ -3,7 +3,7 @@ import { IEntityModel } from '../interfaces/IEntityModel';
 import { IAnswerModel } from '../../models/interfaces/IAnswerModel';
 import { IDataSource } from '../interfaces/IDataSource';
 import { IAnswerMongo } from '../../models/mongodb/AnswerMongoModel';
-import CustomError from '../../helpers/error/CustomError';
+import CustomError from '../../infrastructure/error/CustomError';
 import { RepositoryConstants } from '../constants/RepositoryMessages';
 
 @injectable()
