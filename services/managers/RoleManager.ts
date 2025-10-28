@@ -3,7 +3,7 @@ import { IRoleService } from '../contracts/IRoleService';
 import { IRoleModel } from '../../models/interfaces/IRoleModel';
 import { EntityId } from '../../types/database';
 import { IRoleRepository } from '../../repositories/interfaces/IRoleRepository';
-import CustomError from '../../infrastructure/error/CustomError';
+import { ApplicationError } from '../../infrastructure/error/ApplicationError';
 import { RoleServiceMessages } from '../constants/ServiceMessages';
 
 @injectable()
@@ -16,36 +16,49 @@ export class RoleManager implements IRoleService {
     try {
       const existingRole = await this.roleRepository.findByName(role.name!);
       if (existingRole) {
-        throw new CustomError(RoleServiceMessages.RoleExists.en, 400);
+        throw ApplicationError.businessError(
+          RoleServiceMessages.RoleExists.en,
+          400
+        );
       }
 
-      const newRole = await this.roleRepository.create(role);
-      if (!newRole) {
-        throw new CustomError(RoleServiceMessages.RoleCreateError.en, 500);
-      }
-
-      return newRole;
+      return await this.roleRepository.create(role);
     } catch (error) {
-      if (error instanceof CustomError) {
+      if (error instanceof ApplicationError) {
         throw error;
       }
-      throw new CustomError(RoleServiceMessages.RoleCreateError.en, 500);
+      throw ApplicationError.systemError(
+        RoleServiceMessages.RoleCreateError.en,
+        500
+      );
     }
   }
 
-  async findById(id: EntityId): Promise<IRoleModel | null> {
+  async findById(id: EntityId): Promise<IRoleModel> {
     try {
-      return await this.roleRepository.findById(id);
+      const role = await this.roleRepository.findById(id);
+      if (!role) {
+        throw ApplicationError.notFoundError(
+          RoleServiceMessages.RoleNotFound.en
+        );
+      }
+      return role;
     } catch (_error) {
-      throw new CustomError(RoleServiceMessages.RoleNotFound.en, 404);
+      throw ApplicationError.notFoundError(RoleServiceMessages.RoleNotFound.en);
     }
   }
 
-  async findByName(name: string): Promise<IRoleModel | null> {
+  async findByName(name: string): Promise<IRoleModel> {
     try {
-      return await this.roleRepository.findByName(name);
+      const role = await this.roleRepository.findByName(name);
+      if (!role) {
+        throw ApplicationError.notFoundError(
+          RoleServiceMessages.RoleNotFound.en
+        );
+      }
+      return role;
     } catch (_error) {
-      throw new CustomError(RoleServiceMessages.RoleNotFound.en, 404);
+      throw ApplicationError.notFoundError(RoleServiceMessages.RoleNotFound.en);
     }
   }
 
@@ -53,7 +66,10 @@ export class RoleManager implements IRoleService {
     try {
       return await this.roleRepository.findAll();
     } catch (_error) {
-      throw new CustomError(RoleServiceMessages.RoleListError.en, 500);
+      throw ApplicationError.systemError(
+        RoleServiceMessages.RoleListError.en,
+        500
+      );
     }
   }
 
@@ -64,14 +80,19 @@ export class RoleManager implements IRoleService {
     try {
       const role = await this.roleRepository.updateById(id, data);
       if (!role) {
-        throw new CustomError(RoleServiceMessages.RoleNotFound.en, 404);
+        throw ApplicationError.notFoundError(
+          RoleServiceMessages.RoleNotFound.en
+        );
       }
       return role;
     } catch (_error) {
-      if (_error instanceof CustomError) {
+      if (_error instanceof ApplicationError) {
         throw _error;
       }
-      throw new CustomError(RoleServiceMessages.RoleUpdateError.en, 500);
+      throw ApplicationError.systemError(
+        RoleServiceMessages.RoleUpdateError.en,
+        500
+      );
     }
   }
 
@@ -79,14 +100,19 @@ export class RoleManager implements IRoleService {
     try {
       const deleted = await this.roleRepository.deleteById(id);
       if (!deleted) {
-        throw new CustomError(RoleServiceMessages.RoleNotFound.en, 404);
+        throw ApplicationError.notFoundError(
+          RoleServiceMessages.RoleNotFound.en
+        );
       }
       return true;
     } catch (_error) {
-      if (_error instanceof CustomError) {
+      if (_error instanceof ApplicationError) {
         throw _error;
       }
-      throw new CustomError(RoleServiceMessages.RoleDeleteError.en, 500);
+      throw ApplicationError.systemError(
+        RoleServiceMessages.RoleDeleteError.en,
+        500
+      );
     }
   }
 
@@ -94,14 +120,18 @@ export class RoleManager implements IRoleService {
     try {
       const defaultRole = await this.roleRepository.findByName('user');
       if (!defaultRole) {
-        throw new CustomError(RoleServiceMessages.DefaultRoleNotFound.en, 404);
+        throw ApplicationError.notFoundError(
+          RoleServiceMessages.DefaultRoleNotFound.en
+        );
       }
       return defaultRole;
     } catch (_error) {
-      if (_error instanceof CustomError) {
+      if (_error instanceof ApplicationError) {
         throw _error;
       }
-      throw new CustomError(RoleServiceMessages.DefaultRoleNotFound.en, 404);
+      throw ApplicationError.notFoundError(
+        RoleServiceMessages.DefaultRoleNotFound.en
+      );
     }
   }
 
@@ -109,7 +139,10 @@ export class RoleManager implements IRoleService {
     try {
       return await this.roleRepository.findSystemRoles();
     } catch (_error) {
-      throw new CustomError(RoleServiceMessages.RoleListError.en, 500);
+      throw ApplicationError.systemError(
+        RoleServiceMessages.RoleListError.en,
+        500
+      );
     }
   }
 
@@ -117,49 +150,44 @@ export class RoleManager implements IRoleService {
     try {
       return await this.roleRepository.findActive();
     } catch (_error) {
-      throw new CustomError(RoleServiceMessages.RoleListError.en, 500);
+      throw ApplicationError.systemError(
+        RoleServiceMessages.RoleListError.en,
+        500
+      );
     }
   }
 
   async assignPermissionToRole(
     roleId: EntityId,
     permissionId: EntityId
-  ): Promise<IRoleModel | null> {
+  ): Promise<IRoleModel> {
     try {
-      const role = await this.roleRepository.assignPermission(
-        roleId,
-        permissionId
-      );
-      if (!role) {
-        throw new CustomError(RoleServiceMessages.RoleNotFound.en, 404);
-      }
-      return role;
+      return await this.roleRepository.assignPermission(roleId, permissionId);
     } catch (error) {
-      if (error instanceof CustomError) {
+      if (error instanceof ApplicationError) {
         throw error;
       }
-      throw new CustomError(RoleServiceMessages.RoleUpdateError.en, 500);
+      throw ApplicationError.systemError(
+        RoleServiceMessages.RoleUpdateError.en,
+        500
+      );
     }
   }
 
   async removePermissionFromRole(
     roleId: EntityId,
     permissionId: EntityId
-  ): Promise<IRoleModel | null> {
+  ): Promise<IRoleModel> {
     try {
-      const role = await this.roleRepository.removePermission(
-        roleId,
-        permissionId
-      );
-      if (!role) {
-        throw new CustomError(RoleServiceMessages.RoleNotFound.en, 404);
-      }
-      return role;
+      return await this.roleRepository.removePermission(roleId, permissionId);
     } catch (error) {
-      if (error instanceof CustomError) {
+      if (error instanceof ApplicationError) {
         throw error;
       }
-      throw new CustomError(RoleServiceMessages.RoleUpdateError.en, 500);
+      throw ApplicationError.systemError(
+        RoleServiceMessages.RoleUpdateError.en,
+        500
+      );
     }
   }
 
@@ -167,7 +195,7 @@ export class RoleManager implements IRoleService {
     try {
       return await this.roleRepository.getPermissionById(permissionId);
     } catch (error) {
-      throw new CustomError('Permission not found', 404);
+      throw ApplicationError.notFoundError('Permission not found');
     }
   }
 
@@ -175,49 +203,47 @@ export class RoleManager implements IRoleService {
     try {
       return await this.roleRepository.getAllPermissions();
     } catch (error) {
-      throw new CustomError('Failed to get permissions', 500);
+      throw ApplicationError.systemError('Failed to get permissions', 500);
     }
   }
 
   async addPermissionsToRole(
     roleId: EntityId,
     permissionIds: EntityId[]
-  ): Promise<IRoleModel | null> {
+  ): Promise<IRoleModel> {
     try {
-      const role = await this.roleRepository.addPermissionsToRole(
+      return await this.roleRepository.addPermissionsToRole(
         roleId,
         permissionIds
       );
-      if (!role) {
-        throw new CustomError(RoleServiceMessages.RoleNotFound.en, 404);
-      }
-      return role;
     } catch (error) {
-      if (error instanceof CustomError) {
+      if (error instanceof ApplicationError) {
         throw error;
       }
-      throw new CustomError(RoleServiceMessages.RoleUpdateError.en, 500);
+      throw ApplicationError.systemError(
+        RoleServiceMessages.RoleUpdateError.en,
+        500
+      );
     }
   }
 
   async removePermissionsFromRole(
     roleId: EntityId,
     permissionIds: EntityId[]
-  ): Promise<IRoleModel | null> {
+  ): Promise<IRoleModel> {
     try {
-      const role = await this.roleRepository.removePermissionsFromRole(
+      return await this.roleRepository.removePermissionsFromRole(
         roleId,
         permissionIds
       );
-      if (!role) {
-        throw new CustomError(RoleServiceMessages.RoleNotFound.en, 404);
-      }
-      return role;
     } catch (error) {
-      if (error instanceof CustomError) {
+      if (error instanceof ApplicationError) {
         throw error;
       }
-      throw new CustomError(RoleServiceMessages.RoleUpdateError.en, 500);
+      throw ApplicationError.systemError(
+        RoleServiceMessages.RoleUpdateError.en,
+        500
+      );
     }
   }
 }

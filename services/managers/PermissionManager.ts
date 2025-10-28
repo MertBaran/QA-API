@@ -3,7 +3,7 @@ import { IPermissionService } from '../contracts/IPermissionService';
 import { IPermissionModel } from '../../models/interfaces/IPermissionModel';
 import { EntityId } from '../../types/database';
 import { IPermissionRepository } from '../../repositories/interfaces/IPermissionRepository';
-import CustomError from '../../infrastructure/error/CustomError';
+import { ApplicationError } from '../../infrastructure/error/ApplicationError';
 import { PermissionServiceMessages } from '../constants/ServiceMessages';
 
 @injectable()
@@ -21,7 +21,7 @@ export class PermissionManager implements IPermissionService {
         permission.name!
       );
       if (existingPermission) {
-        throw new CustomError(
+        throw ApplicationError.businessError(
           PermissionServiceMessages.PermissionExists.en,
           400
         );
@@ -29,7 +29,7 @@ export class PermissionManager implements IPermissionService {
 
       const newPermission = await this.permissionRepository.create(permission);
       if (!newPermission) {
-        throw new CustomError(
+        throw ApplicationError.systemError(
           PermissionServiceMessages.PermissionCreateError.en,
           500
         );
@@ -37,34 +37,44 @@ export class PermissionManager implements IPermissionService {
 
       return newPermission;
     } catch (error) {
-      if (error instanceof CustomError) {
+      if (error instanceof ApplicationError) {
         throw error;
       }
-      throw new CustomError(
+      throw ApplicationError.systemError(
         PermissionServiceMessages.PermissionCreateError.en,
         500
       );
     }
   }
 
-  async findById(id: EntityId): Promise<IPermissionModel | null> {
+  async findById(id: EntityId): Promise<IPermissionModel> {
     try {
-      return await this.permissionRepository.findById(id);
+      const permission = await this.permissionRepository.findById(id);
+      if (!permission) {
+        throw ApplicationError.notFoundError(
+          PermissionServiceMessages.PermissionNotFound.en
+        );
+      }
+      return permission;
     } catch (_error) {
-      throw new CustomError(
-        PermissionServiceMessages.PermissionNotFound.en,
-        404
+      throw ApplicationError.notFoundError(
+        PermissionServiceMessages.PermissionNotFound.en
       );
     }
   }
 
-  async findByName(name: string): Promise<IPermissionModel | null> {
+  async findByName(name: string): Promise<IPermissionModel> {
     try {
-      return await this.permissionRepository.findByName(name);
+      const permission = await this.permissionRepository.findByName(name);
+      if (!permission) {
+        throw ApplicationError.notFoundError(
+          PermissionServiceMessages.PermissionNotFound.en
+        );
+      }
+      return permission;
     } catch (_error) {
-      throw new CustomError(
-        PermissionServiceMessages.PermissionNotFound.en,
-        404
+      throw ApplicationError.notFoundError(
+        PermissionServiceMessages.PermissionNotFound.en
       );
     }
   }
@@ -73,7 +83,7 @@ export class PermissionManager implements IPermissionService {
     try {
       return await this.permissionRepository.findAll();
     } catch (_error) {
-      throw new CustomError(
+      throw ApplicationError.systemError(
         PermissionServiceMessages.PermissionListError.en,
         500
       );
@@ -83,42 +93,40 @@ export class PermissionManager implements IPermissionService {
   async updateById(
     id: EntityId,
     data: Partial<IPermissionModel>
-  ): Promise<IPermissionModel | null> {
+  ): Promise<IPermissionModel> {
     try {
-      const permission = await this.permissionRepository.updateById(id, data);
-      if (!permission) {
-        throw new CustomError(
-          PermissionServiceMessages.PermissionNotFound.en,
-          404
+      const updated = await this.permissionRepository.updateById(id, data);
+      if (!updated) {
+        throw ApplicationError.notFoundError(
+          PermissionServiceMessages.PermissionNotFound.en
         );
       }
-      return permission;
+      return updated;
     } catch (_error) {
-      if (_error instanceof CustomError) {
+      if (_error instanceof ApplicationError) {
         throw _error;
       }
-      throw new CustomError(
+      throw ApplicationError.systemError(
         PermissionServiceMessages.PermissionUpdateError.en,
         500
       );
     }
   }
 
-  async deleteById(id: EntityId): Promise<boolean> {
+  async deleteById(id: EntityId): Promise<IPermissionModel> {
     try {
       const deleted = await this.permissionRepository.deleteById(id);
       if (!deleted) {
-        throw new CustomError(
-          PermissionServiceMessages.PermissionNotFound.en,
-          404
+        throw ApplicationError.notFoundError(
+          PermissionServiceMessages.PermissionNotFound.en
         );
       }
-      return true;
+      return deleted;
     } catch (_error) {
-      if (_error instanceof CustomError) {
+      if (_error instanceof ApplicationError) {
         throw _error;
       }
-      throw new CustomError(
+      throw ApplicationError.systemError(
         PermissionServiceMessages.PermissionDeleteError.en,
         500
       );
@@ -129,7 +137,7 @@ export class PermissionManager implements IPermissionService {
     try {
       return await this.permissionRepository.findByResource(resource);
     } catch (_error) {
-      throw new CustomError(
+      throw ApplicationError.systemError(
         PermissionServiceMessages.PermissionListError.en,
         500
       );
@@ -140,7 +148,7 @@ export class PermissionManager implements IPermissionService {
     try {
       return await this.permissionRepository.findByCategory(category);
     } catch (_error) {
-      throw new CustomError(
+      throw ApplicationError.systemError(
         PermissionServiceMessages.PermissionListError.en,
         500
       );
@@ -151,7 +159,7 @@ export class PermissionManager implements IPermissionService {
     try {
       return await this.permissionRepository.findActive();
     } catch (_error) {
-      throw new CustomError(
+      throw ApplicationError.systemError(
         PermissionServiceMessages.PermissionListError.en,
         500
       );

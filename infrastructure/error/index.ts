@@ -17,9 +17,6 @@ export * from './ApplicationError';
 // Async Error Wrapper
 export * from './asyncErrorWrapper';
 
-// Legacy CustomError (backward compatibility)
-export { default as CustomError } from './CustomError';
-
 // Future exception trackers can be added here:
 // export * from './BugsnagTracker';
 // export * from './RollbarTracker';

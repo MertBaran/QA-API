@@ -1,5 +1,5 @@
 import { IUserModel } from '../../models/interfaces/IUserModel';
-import CustomError from '../../infrastructure/error/CustomError';
+import { ApplicationError } from '../../infrastructure/error/ApplicationError';
 import { comparePassword } from '../../infrastructure/validation/inputHelpers';
 import { OAuth2Client } from 'google-auth-library';
 import { injectable, inject } from 'tsyringe';
@@ -41,7 +41,10 @@ export class AuthManager implements IAuthService {
 
     const existingUser = await this.userRepository.findByEmail(email);
     if (existingUser) {
-      throw new CustomError(AuthServiceMessages.EmailExists.en, 400);
+      throw ApplicationError.businessError(
+        AuthServiceMessages.EmailExists.en,
+        400
+      );
     }
 
     const name = `${firstName} ${lastName}`.trim();
@@ -57,10 +60,13 @@ export class AuthManager implements IAuthService {
       // Verilen role'ün var olup olmadığını kontrol et
       const role = await this.roleService.findById(roleId);
       if (!role) {
-        throw new CustomError('Specified role not found', 400);
+        throw ApplicationError.businessError('Specified role not found', 400);
       }
       if (!role.isActive) {
-        throw new CustomError('Specified role is not active', 400);
+        throw ApplicationError.businessError(
+          'Specified role is not active',
+          400
+        );
       }
       await this.userRoleService.assignRoleToUser(user._id, roleId);
     } else {
@@ -75,11 +81,15 @@ export class AuthManager implements IAuthService {
   async loginUser(email: string, password: string): Promise<IUserModel> {
     const user = await this.userRepository.findByEmailWithPassword(email);
     if (!user) {
-      throw new CustomError(AuthServiceMessages.InvalidCredentials.en, 400);
+      throw ApplicationError.notFoundError(
+        AuthServiceMessages.InvalidCredentials.en
+      );
     }
     const isPasswordCorrect = await comparePassword(password, user.password);
     if (!isPasswordCorrect) {
-      throw new CustomError(AuthServiceMessages.InvalidCredentials.en, 400);
+      throw ApplicationError.notFoundError(
+        AuthServiceMessages.InvalidCredentials.en
+      );
     }
     return user;
   }
@@ -91,11 +101,15 @@ export class AuthManager implements IAuthService {
     });
     const payload = ticket.getPayload();
     if (!payload) {
-      throw new CustomError(AuthServiceMessages.GooglePayloadMissing.en, 401);
+      throw ApplicationError.notFoundError(
+        AuthServiceMessages.GooglePayloadMissing.en
+      );
     }
     const { email, name } = payload;
     if (!email) {
-      throw new CustomError(AuthServiceMessages.GoogleEmailMissing.en, 401);
+      throw ApplicationError.notFoundError(
+        AuthServiceMessages.GoogleEmailMissing.en
+      );
     }
     let user = await this.userRepository.findByEmail(email);
     if (!user) {
@@ -116,7 +130,9 @@ export class AuthManager implements IAuthService {
   async forgotPassword(email: string, locale: string = 'en'): Promise<void> {
     const user = await this.userRepository.findByEmail(email);
     if (!user) {
-      throw new CustomError(AuthServiceMessages.EmailNotFound.en, 400);
+      throw ApplicationError.notFoundError(
+        AuthServiceMessages.EmailNotFound.en
+      );
     }
     const { token, expire } = AuthManager.generateResetPasswordToken();
     await this.userRepository.updateById(user._id, {
@@ -142,14 +158,18 @@ export class AuthManager implements IAuthService {
       );
     } catch (_err) {
       await this.userRepository.clearResetToken(user._id);
-      throw new CustomError(AuthServiceMessages.EmailSendError.en, 500);
+      throw ApplicationError.notFoundError(
+        AuthServiceMessages.EmailSendError.en
+      );
     }
   }
 
   async resetPassword(token: string, newPassword: string): Promise<void> {
     const user = await this.userRepository.findByResetToken(token);
     if (!user) {
-      throw new CustomError(AuthServiceMessages.InvalidOrExpiredToken.en, 400);
+      throw ApplicationError.notFoundError(
+        AuthServiceMessages.InvalidOrExpiredToken.en
+      );
     }
 
     // Yeni şifreyi hash'le
@@ -172,7 +192,7 @@ export class AuthManager implements IAuthService {
       profile_image: profileImage,
     });
     if (!user) {
-      throw new CustomError(AuthServiceMessages.UserNotFound.en, 404);
+      throw ApplicationError.notFoundError(AuthServiceMessages.UserNotFound.en);
     }
     return user;
   }
@@ -195,7 +215,10 @@ export class AuthManager implements IAuthService {
         profileData.email
       );
       if (existingUser && existingUser._id !== userId) {
-        throw new CustomError(AuthServiceMessages.EmailExists.en, 400);
+        throw ApplicationError.businessError(
+          AuthServiceMessages.EmailExists.en,
+          400
+        );
       }
     }
 
@@ -205,7 +228,9 @@ export class AuthManager implements IAuthService {
     if (profileData.firstName || profileData.lastName) {
       const currentUser = await this.userService.findById(userId);
       if (!currentUser) {
-        throw new CustomError(AuthServiceMessages.UserNotFound.en, 404);
+        throw ApplicationError.notFoundError(
+          AuthServiceMessages.UserNotFound.en
+        );
       }
 
       // Mevcut ismi parçala
@@ -232,7 +257,7 @@ export class AuthManager implements IAuthService {
 
     const user = await this.userRepository.updateById(userId, updateData);
     if (!user) {
-      throw new CustomError(AuthServiceMessages.UserNotFound.en, 404);
+      throw ApplicationError.notFoundError(AuthServiceMessages.UserNotFound.en);
     }
     return user;
   }
