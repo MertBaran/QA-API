@@ -3,7 +3,6 @@ import { IUserRoleRepository } from '../../repositories/interfaces/IUserRoleRepo
 import { IUserRoleModel } from '../../models/interfaces/IUserRoleModel';
 import { EntityId } from '../../types/database';
 import { IUserRoleService } from '../contracts/IUserRoleService';
-import CustomError from '../../infrastructure/error/CustomError';
 
 @injectable()
 export class UserRoleManager implements IUserRoleService {
@@ -26,15 +25,6 @@ export class UserRoleManager implements IUserRoleService {
     roleId: EntityId,
     assignedBy?: EntityId
   ): Promise<IUserRoleModel> {
-    // Önce bu role'ün zaten atanıp atanmadığını kontrol et
-    const existingRole = await this.userRoleRepository.findByUserIdAndRoleId(
-      userId,
-      roleId
-    );
-    if (existingRole) {
-      throw new CustomError('Role already assigned to user', 400);
-    }
-
     return await this.userRoleRepository.assignRoleToUser(
       userId,
       roleId,
@@ -45,7 +35,7 @@ export class UserRoleManager implements IUserRoleService {
   async removeRoleFromUser(
     userId: EntityId,
     roleId: EntityId
-  ): Promise<IUserRoleModel | null> {
+  ): Promise<IUserRoleModel> {
     return await this.userRoleRepository.removeRoleFromUser(userId, roleId);
   }
 
