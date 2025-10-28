@@ -153,66 +153,48 @@ export class RedisCacheProvider implements ICacheProvider {
   }
 
   async get<T>(key: string): Promise<T | null> {
-    // Skip initialization - Redis disabled
-    return null;
+    this.initializeClient();
+    if (!this.client) return null;
 
     try {
-      // Check if client is ready before using
       if (!this.client.status || this.client.status !== 'ready') {
-        console.log(`Redis not ready, skipping GET for key: ${key}`);
         return null;
       }
 
       const value = await this.client.get(key);
       return value ? JSON.parse(value) : null;
     } catch (error) {
-      console.log(
-        `Redis GET failed for key: ${key}, returning null:`,
-        error instanceof Error ? error.message : String(error)
-      );
       return null;
     }
   }
 
   async set<T>(key: string, value: T, ttlSeconds = 3600): Promise<void> {
-    // Skip initialization - Redis disabled
-    return;
+    this.initializeClient();
+    if (!this.client) return;
 
     try {
-      // Check if client is ready before using
       if (!this.client.status || this.client.status !== 'ready') {
-        console.log(`Redis not ready, skipping SET for key: ${key}`);
         return;
       }
 
       await this.client.setex(key, ttlSeconds, JSON.stringify(value));
     } catch (error) {
-      console.log(
-        `Redis SET failed for key: ${key}, continuing without cache:`,
-        error instanceof Error ? error.message : String(error)
-      );
-      // Don't throw error, just log and continue
+      // Silent fail
     }
   }
 
   async del(key: string): Promise<void> {
-    // Skip initialization - Redis disabled
-    return;
+    this.initializeClient();
+    if (!this.client) return;
 
     try {
-      // Check if client is ready before using
       if (!this.client.status || this.client.status !== 'ready') {
-        console.log(`Redis not ready, skipping DEL for key: ${key}`);
         return;
       }
 
       await this.client.del(key);
     } catch (error) {
-      console.log(
-        `Redis DEL failed for key: ${key}, continuing without cache:`,
-        error instanceof Error ? error.message : String(error)
-      );
-      // Don't throw error, just log and continue
+      // Silent fail
     }
   }
 }

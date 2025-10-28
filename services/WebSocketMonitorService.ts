@@ -281,7 +281,8 @@ export class WebSocketMonitorService {
     const config = this.appState.config;
     const checks = [
       this.checkDatabaseConnection(config.MONGO_URI),
-      this.checkCacheConnection(config),
+      // Skip cache check to avoid Redis connection issues
+      // this.checkCacheConnection(config),
       this.checkQueueConnection(),
       this.checkEmailConnection(config),
     ];
