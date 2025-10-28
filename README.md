@@ -1,146 +1,16 @@
-# 🚀 QA Platform API
+# Question & Answers Platform API
 
-<div align="center">
+A comprehensive REST API for a question and answer platform built with TypeScript, Node.js, and MongoDB.
 
-![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
-![Node.js](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)
-![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white)
-![Redis](https://img.shields.io/badge/redis-%23DD0031.svg?style=for-the-badge&logo=redis&logoColor=white)
-![RabbitMQ](https://img.shields.io/badge/RabbitMQ-FF6600?style=for-the-badge&logo=rabbitmq&logoColor=white)
-![Jest](https://img.shields.io/badge/-jest-%23C21325?style=for-the-badge&logo=jest&logoColor=white)
-![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
-![WebSocket](https://img.shields.io/badge/WebSocket-000000?style=for-the-badge&logo=websocket&logoColor=white)
+## Tech Stack
 
-**Enterprise-grade Q&A platform API with AI-powered development, real-time monitoring, and smart notification system**
-
-</div>
-
----
-
-## 🤖 AI-Powered Development
-
-- Auto test generation ve optimization
-- AI-assisted code review ve refactoring
-- Intelligent architecture decisions
-- Smart notification strategy selection
-
-**232+ Tests** ✅ | **Multi-language i18n** 🌍 | **Redis Caching** ⚡ | **Smart Notifications** 📧 | **Real-time Monitoring** 📊 | **Permission Management** 🔐
-
-## ✨ Core Features
-
-### 🔐 Authentication & Authorization
-
-- **JWT Authentication** with refresh tokens
-- **Google OAuth2** integration
-- **Role-based access control** (User, Moderator, Admin)
-- **Permission-based authorization** with granular control
-- **Password reset** with template-based emails
-- **Profile management** with edit capabilities
-
-### ❓ Q&A System
-
-- **Question creation** with rich text support
-- **Answer management** with voting system
-- **Like/Unlike** functionality for questions and answers
-- **Search and filtering** capabilities
-- **Category-based organization**
-
-### 🌐 Internationalization (i18n)
-
-- **Multi-language support** (EN, TR, DE)
-- **Dynamic language switching**
-- **Localized error messages**
-- **Template-based content localization**
-- **Redis-based caching** for translations
-
-### 📧 Smart Notification System
-
-- **Multi-channel notifications** (Email, SMS, Push, Webhook)
-- **Template-based messaging** with variable replacement
-- **Smart hybrid strategy** (Direct vs Queue-based)
-- **Multi-language templates** (EN, TR, DE)
-- **RabbitMQ integration** for async processing
-- **Notification history** and tracking
-- **Dynamic strategy selection** based on load and priority
-
-### 📊 Real-time Monitoring & Health Checks
-
-- **Hybrid health check system** (Quick & Full)
-- **WebSocket-based real-time monitoring**
-- **Connection status monitoring** (Database, Cache, Queue, Email)
-- **Automatic alert notifications** on service failures
-- **Monitoring statistics** and metrics
-- **Alert history** with configurable limits
-- **Service dependency tracking**
-
-### 🚀 Performance & Scalability
-
-- **Redis caching** for improved performance
-- **Load balancing** ready
-- **Horizontal scaling** support
-- **Performance monitoring** with metrics
-- **Rate limiting** and throttling
-- **Connection pooling** optimization
-
-### 🛡️ Security & Monitoring
-
-- **Audit logging** for all operations
-- **Input validation** with Zod schemas
-- **Error handling** with custom error types
-- **Request/Response logging**
-- **Health check endpoints**
-- **Security middleware** stack
-
-## 🏗️ Architecture
-
-### 📦 Dependency Injection
-
-- **tsyringe** container for DI
-- **Interface-based tokens** for loose coupling
-- **Service layer** abstraction
-- **Repository pattern** implementation
-
-### 🗄️ Data Layer
-
-- **MongoDB** as primary database
-- **MongoDB Adapter** for database abstraction
-- **Repository pattern** for data access
-- **Service layer** for business logic abstraction
-- **Mongoose** for schema management
-
-### 📡 Real-time Monitoring Architecture
-
-```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   WebSocket     │    │   Connection     │    │   Alert         │
-│   Server        │───▶│   Monitor        │───▶│   System        │
-│                 │    │                  │    │                 │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Real-time     │    │   Service        │    │   Notification  │
-│   Updates       │    │   Health Check   │    │   Manager       │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-```
-
-### 🔄 Notification Architecture
-
-```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Smart         │    │   Multi-Channel  │    │   Template      │
-│ Notification    │───▶│   Manager        │───▶│   System        │
-│ Manager         │    │                  │    │                 │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Strategy      │    │   Channel        │    │   Multi-Lang    │
-│   Selection     │    │   Handlers       │    │   Templates     │
-└─────────────────┘    └──────────────────┘    └─────────────────┘
-```
-
-## 🚀 Quick Start
+- **Backend**: TypeScript, Node.js, Express
+- **Database**: MongoDB with Mongoose
+- **Cache**: Redis
+- **Message Queue**: RabbitMQ (optional)
+- **Testing**: Jest
+- **Containerization**: Docker
+- **Real-time**: WebSocket
 
 ### Prerequisites
 
@@ -180,9 +50,9 @@ docker build -t qa-api .
 docker run -p 3000:3000 --env-file config/env/config.env qa-api
 ```
 
-## 📚 API Endpoints
+## API Endpoints
 
-### 🔐 Authentication
+### Authentication
 
 ```
 POST   /api/auth/register              # User registration
@@ -195,7 +65,7 @@ GET    /api/auth/profile               # Get user profile
 PUT    /api/auth/edit                  # Edit user profile
 ```
 
-### ❓ Questions
+### Questions
 
 ```
 GET    /api/questions                  # List questions
@@ -207,7 +77,7 @@ GET    /api/questions/:id/like         # Like question
 GET    /api/questions/:id/undo_like    # Unlike question
 ```
 
-### 💬 Answers
+### Answers
 
 ```
 POST   /api/answers/:questionId/answer # Add answer to question
@@ -218,7 +88,7 @@ GET    /api/answers/:id/like           # Like answer
 GET    /api/answers/:id/undo_like      # Unlike answer
 ```
 
-### 📧 Notifications
+### Notifications
 
 ```
 POST   /api/notifications/send         # Send notification
@@ -228,7 +98,7 @@ GET    /api/notifications/templates    # List available templates
 GET    /api/notifications/queue-status # Get queue status
 ```
 
-### 👥 User Management
+### User Management
 
 ```
 GET    /api/users                      # List users (Admin)
@@ -237,7 +107,7 @@ PUT    /api/users/:id                  # Update user (Admin)
 DELETE /api/users/:id                  # Delete user (Admin)
 ```
 
-### 🔐 Permission Management
+### Permission Management
 
 ```
 GET    /api/permissions/roles          # List all roles
@@ -248,7 +118,7 @@ POST   /api/permissions/roles/:roleId/permissions    # Add permissions to role
 DELETE /api/permissions/roles/:roleId/permissions    # Remove permissions from role
 ```
 
-### 🏥 Health & Monitoring
+### Health & Monitoring
 
 ```
 GET    /health                         # Full health check
@@ -260,13 +130,13 @@ POST   /api/monitoring/start           # Start monitoring
 POST   /api/monitoring/stop            # Stop monitoring
 ```
 
-### 🔌 WebSocket Endpoints
+### WebSocket Endpoints
 
 ```
 WS     /ws/monitoring                  # Real-time monitoring updates
 ```
 
-## 🧪 Testing
+## Testing
 
 ```bash
 # All tests (excluding API tests)
@@ -289,7 +159,7 @@ npm run test:setup                    # Setup test environment
 npm run test:clean                    # Clean test data
 ```
 
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables
 
@@ -368,18 +238,7 @@ GET /health          // Full check - detailed service information
 }
 ```
 
-## 📊 Performance Metrics
-
-- ✅ **<200ms** average response time
-- ✅ **300 RPS** capacity under load
-- ✅ **<1%** error rate
-- ✅ **Multi-language** caching
-- ✅ **Smart notification** strategy selection
-- ✅ **Queue-based** async processing
-- ✅ **Real-time monitoring** with WebSocket
-- ✅ **Hybrid health checks** for optimal performance
-
-## 🐳 Docker & Deployment
+## Docker & Deployment
 
 ### Docker Compose
 
@@ -417,111 +276,66 @@ services:
       - '15672:15672'
 ```
 
-### Kubernetes
-
-```bash
-# Deploy to Kubernetes
-kubectl apply -f k8s/
-```
-
-## 🔄 CI/CD Pipeline
-
-### Jenkins Pipeline
-
-- **Automated testing** on every commit
-- **Docker image** building
-- **Deployment** to staging/production
-- **Performance testing** integration
-
-### GitHub Actions
-
-- **Code quality** checks
-- **Security scanning**
-- **Automated releases**
-
-## 🛠️ Development
-
 ### Code Structure
 
 ```
 QA-API/
-├── controllers/          # Request handlers
-├── services/            # Business logic
-│   ├── managers/        # Business managers
-│   ├── providers/       # External service providers
-│   └── monitoring/      # Monitoring services
-├── repositories/        # Data access layer
-├── models/              # Data models
-├── middlewares/         # Express middlewares
-├── infrastructure/      # External services
-│   ├── cache/          # Cache providers
-│   ├── validation/     # Validation schemas
-│   ├── logging/        # Logging providers
-│   └── audit/          # Audit providers
-├── tests/               # Test suites
-│   ├── unit/           # Unit tests
-│   ├── integration/    # Integration tests
-│   └── mocks/          # Test mocks
-├── scripts/             # Utility scripts
-└── types/               # TypeScript types
+├── APP.ts                    # Application entry point
+├── config/                   # Configuration files
+│   ├── env/                 # Environment configurations
+│   └── smtpConfig.ts        # SMTP configuration
+├── constants/                # Application constants
+├── controllers/              # Request handlers
+│   └── constants/           # Controller message constants
+├── database/                 # Database management
+│   ├── factories/           # Database strategy factories
+│   ├── interfaces/          # Database interfaces
+│   ├── migrations/          # Database migrations
+│   ├── seeders/             # Database seeders
+│   ├── seeds/               # Seed data
+│   └── strategies/          # Database strategies
+├── infrastructure/          # External services
+│   ├── audit/               # Audit providers
+│   ├── auth/                # Authentication providers
+│   ├── cache/               # Cache providers
+│   ├── error/               # Error handling
+│   ├── i18n/                # Internationalization
+│   ├── logging/             # Logging providers
+│   ├── metrics/             # Metrics collection
+│   └── validation/          # Validation schemas
+├── middlewares/             # Express middlewares
+│   ├── audit/               # Audit middleware
+│   ├── authorization/       # Authorization middleware
+│   ├── database/            # Database middleware
+│   ├── errors/              # Error middleware
+│   ├── i18n/                # i18n middleware
+│   └── libraries/            # Library middleware
+├── models/                   # Data models
+│   ├── interfaces/          # Model interfaces
+│   ├── mongodb/             # MongoDB models
+│   └── postgresql/          # PostgreSQL models
+├── performance/             # Performance testing
+├── public/                   # Static files
+├── repositories/             # Data access layer
+│   ├── adapters/            # Database adapters
+│   ├── base/                # Base repository
+│   ├── interfaces/          # Repository interfaces
+│   └── mongodb/             # MongoDB repositories
+├── routers/                  # Route definitions
+├── scripts/                  # Utility scripts
+│   ├── maintenance/         # Maintenance scripts
+│   └── setup/               # Setup scripts
+├── services/                 # Business logic
+│   ├── contracts/           # Service contracts
+│   ├── managers/            # Business managers
+│   ├── notification/        # Notification services
+│   └── providers/           # Service providers
+├── tests/                    # Test suites
+│   ├── api/                 # API tests
+│   ├── integration/         # Integration tests
+│   ├── mocks/               # Test mocks
+│   ├── unit/                # Unit tests
+│   └── utils/               # Test utilities
+└── types/                    # TypeScript types
+    └── dto/                 # Data Transfer Objects
 ```
-
-### Key Patterns
-
-- **Dependency Injection** with tsyringe
-- **Repository Pattern** for data access
-- **Service Layer** for business logic abstraction
-- **DTO Pattern** for request/response type safety
-- **Middleware Pattern** for cross-cutting concerns
-- **Strategy Pattern** for notification selection
-- **Observer Pattern** for real-time monitoring
-- **Factory Pattern** for service creation
-
-## 🔍 Monitoring & Observability
-
-### Health Checks
-
-- **Quick Health Check**: Basic service availability
-- **Full Health Check**: Detailed service information with response times
-- **Service-specific checks**: Database, Cache, Queue, Email connectivity
-
-### Real-time Monitoring
-
-- **WebSocket-based** real-time updates
-- **Connection status** monitoring
-- **Automatic alerts** on service failures
-- **Monitoring statistics** and metrics
-- **Alert history** with configurable limits
-
-### Metrics & Logging
-
-- **Request/Response logging**
-- **Performance metrics**
-- **Error tracking**
-- **Audit logging**
-- **Custom metrics** collection
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-<div align="center">
-
-**Made with ❤️ using AI-powered development**
-
-_Enterprise-grade architecture • Comprehensive testing • Smart notifications • Real-time monitoring • Modern practices_
-
-[![GitHub stars](https://img.shields.io/github/stars/MertBaran/QA-API?style=social)](https://github.com/MertBaran/QA-API)
-[![GitHub forks](https://img.shields.io/github/forks/MertBaran/QA-API?style=social)](https://github.com/MertBaran/QA-API)
-
-</div>
