@@ -159,13 +159,17 @@ export class RedisCacheProvider implements ICacheProvider {
     try {
       // Check if client is ready before using
       if (!this.client.status || this.client.status !== 'ready') {
+        console.log(`Redis not ready, skipping GET for key: ${key}`);
         return null;
       }
 
       const value = await this.client.get(key);
       return value ? JSON.parse(value) : null;
     } catch (error) {
-      console.warn('Redis GET error:', error);
+      console.log(
+        `Redis GET failed for key: ${key}, returning null:`,
+        error instanceof Error ? error.message : String(error)
+      );
       return null;
     }
   }
@@ -177,12 +181,17 @@ export class RedisCacheProvider implements ICacheProvider {
     try {
       // Check if client is ready before using
       if (!this.client.status || this.client.status !== 'ready') {
+        console.log(`Redis not ready, skipping SET for key: ${key}`);
         return;
       }
 
       await this.client.setex(key, ttlSeconds, JSON.stringify(value));
     } catch (error) {
-      console.warn('Redis SET error:', error);
+      console.log(
+        `Redis SET failed for key: ${key}, continuing without cache:`,
+        error instanceof Error ? error.message : String(error)
+      );
+      // Don't throw error, just log and continue
     }
   }
 
@@ -193,12 +202,17 @@ export class RedisCacheProvider implements ICacheProvider {
     try {
       // Check if client is ready before using
       if (!this.client.status || this.client.status !== 'ready') {
+        console.log(`Redis not ready, skipping DEL for key: ${key}`);
         return;
       }
 
       await this.client.del(key);
     } catch (error) {
-      console.warn('Redis DEL error:', error);
+      console.log(
+        `Redis DEL failed for key: ${key}, continuing without cache:`,
+        error instanceof Error ? error.message : String(error)
+      );
+      // Don't throw error, just log and continue
     }
   }
 }

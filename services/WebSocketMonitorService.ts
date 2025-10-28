@@ -384,14 +384,27 @@ export class WebSocketMonitorService {
     }
 
     try {
-      // Real Redis connection test
+      // Real Redis connection test - but silent
       const cacheProvider = container.resolve<ICacheProvider>('ICacheProvider');
 
       // Try to perform a simple operation to test connection
       const testKey = `health-check-${Date.now()}`;
-      await cacheProvider.set(testKey, 'test', 1); // 1 second TTL
-      await cacheProvider.get(testKey);
-      await cacheProvider.del(testKey);
+
+      // Suppress Redis error logs during health check
+      const originalConsoleWarn = console.warn;
+      const originalConsoleLog = console.log;
+      console.warn = () => {}; // Suppress warnings during test
+      console.log = () => {}; // Suppress logs during test
+
+      try {
+        await cacheProvider.set(testKey, 'test', 1); // 1 second TTL
+        await cacheProvider.get(testKey);
+        await cacheProvider.del(testKey);
+      } finally {
+        // Restore console functions
+        console.warn = originalConsoleWarn;
+        console.log = originalConsoleLog;
+      }
 
       const previousStatus = this.connectionStatus.get('cache');
       const newStatus: ConnectionStatus = {
