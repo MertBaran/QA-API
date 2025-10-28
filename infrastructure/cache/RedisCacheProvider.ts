@@ -70,9 +70,7 @@ export class RedisCacheProvider implements ICacheProvider {
         port: config.port,
         maxRetriesPerRequest: 3,
         lazyConnect: true,
-        retryDelayOnFailover: 100,
         enableReadyCheck: false,
-        maxRetriesPerRequest: null,
         connectTimeout: 10000,
         commandTimeout: 5000,
       });
@@ -136,7 +134,6 @@ export class RedisCacheProvider implements ICacheProvider {
       port: 6379,
       maxRetriesPerRequest: 3,
       lazyConnect: true,
-      retryDelayOnFailover: 100,
       enableReadyCheck: false,
       connectTimeout: 10000,
       commandTimeout: 5000,
