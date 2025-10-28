@@ -39,7 +39,9 @@ export class UserRoleMongooseDataSource implements IDataSource<IUserRoleModel> {
   async findById(id: string): Promise<IUserRoleModel> {
     const result = await this.model.findById(id);
     if (!result) {
-      throw ApplicationError.notFoundError('UserRole not found');
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.FIND_BY_ID_ERROR.en
+      );
     }
     return this.toEntity(result);
   }
@@ -58,7 +60,9 @@ export class UserRoleMongooseDataSource implements IDataSource<IUserRoleModel> {
       new: true,
     });
     if (!result) {
-      throw ApplicationError.notFoundError('UserRole not found');
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.UPDATE_BY_ID_ERROR.en
+      );
     }
     return this.toEntity(result);
   }
@@ -66,7 +70,9 @@ export class UserRoleMongooseDataSource implements IDataSource<IUserRoleModel> {
   async deleteById(id: string): Promise<IUserRoleModel> {
     const result = await this.model.findByIdAndDelete(id);
     if (!result) {
-      throw ApplicationError.notFoundError('UserRole not found');
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.DELETE_BY_ID_ERROR.en
+      );
     }
     return this.toEntity(result);
   }

@@ -17,7 +17,7 @@ export class PermissionRepository
     super(permissionDataSource);
   }
 
-  async findByName(name: string): Promise<IPermissionModel | null> {
+  async findByName(name: string): Promise<IPermissionModel> {
     return this.permissionDataSource.findByName(name);
   }
 

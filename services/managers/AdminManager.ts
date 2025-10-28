@@ -22,13 +22,21 @@ export class AdminManager implements IAdminService {
   ) {}
 
   // IAdminService: tek kullanıcı getir
-  async getSingleUser(userId: EntityId): Promise<IUserModel | null> {
-    return await this.userRepository.findById(userId);
+  async getSingleUser(userId: EntityId): Promise<IUserModel> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw ApplicationError.notFoundError('User not found');
+    }
+    return user;
   }
 
   // IAdminService: tüm kullanıcıları getir
   async getAllUsers(): Promise<IUserModel[]> {
-    return await this.userRepository.findAll();
+    const users = await this.userRepository.findAll();
+    if (!users) {
+      throw ApplicationError.notFoundError('Users not found');
+    }
+    return users;
   }
 
   // IAdminService: kullanıcıyı engelle

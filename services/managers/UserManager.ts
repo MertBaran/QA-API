@@ -3,7 +3,7 @@ import { IUserService } from '../contracts/IUserService';
 import { IUserModel } from '../../models/interfaces/IUserModel';
 import { IUserRepository } from '../../repositories/interfaces/IUserRepository';
 import { EntityId } from '../../types/database';
-import CustomError from '../../infrastructure/error/CustomError';
+import { ApplicationError } from '../../infrastructure/error/ApplicationError';
 import { UserServiceMessages } from '../constants/ServiceMessages';
 
 @injectable()
@@ -12,22 +12,34 @@ export class UserManager implements IUserService {
     @inject('IUserRepository') private userRepository: IUserRepository
   ) {}
 
-  async findById(userId: EntityId): Promise<IUserModel | null> {
-    return await this.userRepository.findById(userId);
+  async findById(userId: EntityId): Promise<IUserModel> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw ApplicationError.notFoundError('User not found');
+    }
+    return user;
   }
 
-  async findByEmail(email: string): Promise<IUserModel | null> {
-    return await this.userRepository.findByEmail(email);
+  async findByEmail(email: string): Promise<IUserModel> {
+    const user = await this.userRepository.findByEmail(email);
+    if (!user) {
+      throw ApplicationError.notFoundError('User not found');
+    }
+    return user;
   }
 
-  async findByEmailWithPassword(email: string): Promise<IUserModel | null> {
-    return await this.userRepository.findByEmailWithPassword(email);
+  async findByEmailWithPassword(email: string): Promise<IUserModel> {
+    const user = await this.userRepository.findByEmailWithPassword(email);
+    if (!user) {
+      throw ApplicationError.notFoundError('User not found');
+    }
+    return user;
   }
 
   async create(userData: Partial<IUserModel>): Promise<IUserModel> {
     const user = await this.userRepository.create(userData);
     if (!user) {
-      throw new CustomError(UserServiceMessages.UserCreateError.en, 500);
+      throw ApplicationError.notFoundError('User not found');
     }
     return user;
   }
@@ -35,10 +47,10 @@ export class UserManager implements IUserService {
   async updateById(
     userId: EntityId,
     data: Partial<IUserModel>
-  ): Promise<IUserModel | null> {
+  ): Promise<IUserModel> {
     const user = await this.userRepository.updateById(userId, data);
     if (!user) {
-      throw new CustomError(UserServiceMessages.UserNotFound.en, 404);
+      throw ApplicationError.notFoundError('User not found');
     }
     return user;
   }
@@ -46,20 +58,35 @@ export class UserManager implements IUserService {
   async deleteById(userId: EntityId): Promise<boolean> {
     const deleted = await this.userRepository.deleteById(userId);
     if (!deleted) {
-      throw new CustomError(UserServiceMessages.UserNotFound.en, 404);
+      throw ApplicationError.businessError(
+        UserServiceMessages.UserDeleteError.en,
+        500
+      );
     }
     return true;
   }
 
   async findAll(): Promise<IUserModel[]> {
-    return await this.userRepository.findAll();
+    const users = await this.userRepository.findAll();
+    if (!users) {
+      throw ApplicationError.notFoundError('Users not found');
+    }
+    return users;
   }
 
   async findActive(): Promise<IUserModel[]> {
-    return await this.userRepository.findActive();
+    const users = await this.userRepository.findActive();
+    if (!users) {
+      throw ApplicationError.notFoundError('Users not found');
+    }
+    return users;
   }
 
   async countAll(): Promise<number> {
-    return await this.userRepository.countAll();
+    const count = await this.userRepository.countAll();
+    if (!count) {
+      throw ApplicationError.notFoundError('Count not found');
+    }
+    return count;
   }
 }

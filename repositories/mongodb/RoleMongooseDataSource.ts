@@ -4,6 +4,8 @@ import { IRoleModel } from '../../models/interfaces/IRoleModel';
 import { IRoleMongo } from '../../models/mongodb/RoleMongoModel';
 import { EntityId } from '../../types/database';
 import RoleMongo from '../../models/mongodb/RoleMongoModel';
+import { RepositoryConstants } from '../constants/RepositoryMessages';
+import { ApplicationError } from '../../infrastructure/error/ApplicationError';
 
 @injectable()
 export class RoleMongooseDataSource implements IRoleDataSource {
@@ -13,9 +15,14 @@ export class RoleMongooseDataSource implements IRoleDataSource {
     return this.toEntity(savedRole);
   }
 
-  async findById(id: EntityId): Promise<IRoleModel | null> {
+  async findById(id: EntityId): Promise<IRoleModel> {
     const role = await RoleMongo.findById(id).populate('permissions');
-    return role ? this.toEntity(role) : null;
+    if (!role) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.FIND_BY_ID_ERROR.en
+      );
+    }
+    return this.toEntity(role);
   }
 
   async findAll(): Promise<IRoleModel[]> {
@@ -26,16 +33,26 @@ export class RoleMongooseDataSource implements IRoleDataSource {
   async updateById(
     id: EntityId,
     data: Partial<IRoleModel>
-  ): Promise<IRoleModel | null> {
+  ): Promise<IRoleModel> {
     const role = await RoleMongo.findByIdAndUpdate(id, data, {
       new: true,
     }).populate('permissions');
-    return role ? this.toEntity(role) : null;
+    if (!role) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.UPDATE_BY_ID_ERROR.en
+      );
+    }
+    return this.toEntity(role);
   }
 
-  async deleteById(id: EntityId): Promise<IRoleModel | null> {
+  async deleteById(id: EntityId): Promise<IRoleModel> {
     const result = await RoleMongo.findByIdAndDelete(id);
-    return result ? this.toEntity(result) : null;
+    if (!result) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.DELETE_BY_ID_ERROR.en
+      );
+    }
+    return this.toEntity(result);
   }
 
   async findByField(
@@ -53,9 +70,14 @@ export class RoleMongooseDataSource implements IRoleDataSource {
     return roles.map(role => this.toEntity(role));
   }
 
-  async findByName(name: string): Promise<IRoleModel | null> {
+  async findByName(name: string): Promise<IRoleModel> {
     const role = await RoleMongo.findOne({ name }).populate('permissions');
-    return role ? this.toEntity(role) : null;
+    if (!role) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.FIND_BY_FIELD_VALUE_ERROR.en
+      );
+    }
+    return this.toEntity(role);
   }
 
   async findSystemRoles(): Promise<IRoleModel[]> {
@@ -75,25 +97,35 @@ export class RoleMongooseDataSource implements IRoleDataSource {
   async assignPermission(
     roleId: EntityId,
     permissionId: EntityId
-  ): Promise<IRoleModel | null> {
+  ): Promise<IRoleModel> {
     const role = await RoleMongo.findByIdAndUpdate(
       roleId,
       { $addToSet: { permissions: permissionId } },
       { new: true }
     ).populate('permissions');
-    return role ? this.toEntity(role) : null;
+    if (!role) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.UPDATE_BY_ID_ERROR.en
+      );
+    }
+    return this.toEntity(role);
   }
 
   async removePermission(
     roleId: EntityId,
     permissionId: EntityId
-  ): Promise<IRoleModel | null> {
+  ): Promise<IRoleModel> {
     const role = await RoleMongo.findByIdAndUpdate(
       roleId,
       { $pull: { permissions: permissionId } },
       { new: true }
     ).populate('permissions');
-    return role ? this.toEntity(role) : null;
+    if (!role) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.UPDATE_BY_ID_ERROR.en
+      );
+    }
+    return this.toEntity(role);
   }
 
   async getPermissionById(permissionId: EntityId): Promise<any> {
@@ -113,25 +145,35 @@ export class RoleMongooseDataSource implements IRoleDataSource {
   async addPermissionsToRole(
     roleId: EntityId,
     permissionIds: EntityId[]
-  ): Promise<IRoleModel | null> {
+  ): Promise<IRoleModel> {
     const role = await RoleMongo.findByIdAndUpdate(
       roleId,
       { $addToSet: { permissions: { $each: permissionIds } } },
       { new: true }
     ).populate('permissions');
-    return role ? this.toEntity(role) : null;
+    if (!role) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.UPDATE_BY_ID_ERROR.en
+      );
+    }
+    return this.toEntity(role);
   }
 
   async removePermissionsFromRole(
     roleId: EntityId,
     permissionIds: EntityId[]
-  ): Promise<IRoleModel | null> {
+  ): Promise<IRoleModel> {
     const role = await RoleMongo.findByIdAndUpdate(
       roleId,
       { $pull: { permissions: { $in: permissionIds } } },
       { new: true }
     ).populate('permissions');
-    return role ? this.toEntity(role) : null;
+    if (!role) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.UPDATE_BY_ID_ERROR.en
+      );
+    }
+    return this.toEntity(role);
   }
 
   async countAll(): Promise<number> {

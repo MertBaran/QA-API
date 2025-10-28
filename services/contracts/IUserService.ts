@@ -30,14 +30,11 @@ export interface UserStats {
 }
 
 export interface IUserService {
-  findById(userId: EntityId): Promise<IUserModel | null>;
-  findByEmail(email: string): Promise<IUserModel | null>;
-  findByEmailWithPassword(email: string): Promise<IUserModel | null>;
+  findById(userId: EntityId): Promise<IUserModel>;
+  findByEmail(email: string): Promise<IUserModel>;
+  findByEmailWithPassword(email: string): Promise<IUserModel>;
   create(userData: Partial<IUserModel>): Promise<IUserModel>;
-  updateById(
-    userId: EntityId,
-    data: Partial<IUserModel>
-  ): Promise<IUserModel | null>;
+  updateById(userId: EntityId, data: Partial<IUserModel>): Promise<IUserModel>;
   deleteById(userId: EntityId): Promise<boolean>;
   findAll(): Promise<IUserModel[]>;
   findActive(): Promise<IUserModel[]>;

@@ -3,15 +3,15 @@ import { EntityId } from '../../types/database';
 import { IRepository } from './IRepository';
 
 export interface IUserRepository extends IRepository<IUserModel> {
-  findByEmail(email: string): Promise<IUserModel | null>;
-  findByEmailWithPassword(email: string): Promise<IUserModel | null>;
-  findByResetToken(token: string): Promise<IUserModel | null>;
+  findByEmail(email: string): Promise<IUserModel>;
+  findByEmailWithPassword(email: string): Promise<IUserModel>;
+  findByResetToken(token: string): Promise<IUserModel>;
   updateResetToken(
     userId: EntityId,
     resetToken: string,
     resetExpire: Date
-  ): Promise<IUserModel | null>;
-  clearResetToken(userId: EntityId): Promise<IUserModel | null>;
+  ): Promise<IUserModel>;
+  clearResetToken(userId: EntityId): Promise<IUserModel>;
   findActive(): Promise<IUserModel[]>;
   countAll(): Promise<number>;
 }

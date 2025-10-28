@@ -8,17 +8,14 @@ import {
 
 export interface IQuestionRepository extends IRepository<IQuestionModel> {
   findByUser(userId: EntityId): Promise<IQuestionModel[]>;
-  findBySlug(slug: string): Promise<IQuestionModel | null>;
-  likeQuestion(
-    questionId: EntityId,
-    userId: EntityId
-  ): Promise<IQuestionModel | null>;
+  findBySlug(slug: string): Promise<IQuestionModel>;
+  likeQuestion(questionId: EntityId, userId: EntityId): Promise<IQuestionModel>;
   unlikeQuestion(
     questionId: EntityId,
     userId: EntityId
-  ): Promise<IQuestionModel | null>;
+  ): Promise<IQuestionModel>;
   searchByTitle(title: string): Promise<IQuestionModel[]>;
-  findByIdWithPopulate(id: EntityId): Promise<IQuestionModel | null>;
+  findByIdWithPopulate(id: EntityId): Promise<IQuestionModel>;
   findPaginated(
     filters: PaginationQueryDTO
   ): Promise<PaginatedResponse<IQuestionModel>>;

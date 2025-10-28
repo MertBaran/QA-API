@@ -68,7 +68,9 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
       .populate('user', 'name email profile_image')
       .populate('question', 'title');
     if (!result) {
-      throw ApplicationError.notFoundError('Answer not found');
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.FIND_BY_ID_ERROR.en
+      );
     }
     return this.toEntity(result);
   }
@@ -92,7 +94,9 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
       { new: true }
     );
     if (!result) {
-      throw ApplicationError.notFoundError('Answer not found');
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.UPDATE_BY_ID_ERROR.en
+      );
     }
     return this.toEntity(result);
   }
@@ -100,7 +104,9 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
   async deleteById(id: string): Promise<IAnswerModel> {
     const result = await this.model.findByIdAndDelete(id);
     if (!result) {
-      throw ApplicationError.notFoundError('Answer not found');
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.DELETE_BY_ID_ERROR.en
+      );
     }
     return this.toEntity(result);
   }

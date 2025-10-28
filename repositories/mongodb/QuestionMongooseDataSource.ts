@@ -75,7 +75,9 @@ export class QuestionMongooseDataSource implements IDataSource<IQuestionModel> {
       .findById(id)
       .populate('user', 'name email profile_image');
     if (!result) {
-      throw ApplicationError.notFoundError('Question not found');
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.FIND_BY_ID_ERROR.en
+      );
     }
     return this.toEntity(result);
   }
@@ -96,7 +98,9 @@ export class QuestionMongooseDataSource implements IDataSource<IQuestionModel> {
       { new: true }
     );
     if (!result) {
-      throw ApplicationError.notFoundError('Question not found');
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.UPDATE_BY_ID_ERROR.en
+      );
     }
     return this.toEntity(result);
   }
@@ -104,7 +108,9 @@ export class QuestionMongooseDataSource implements IDataSource<IQuestionModel> {
   async deleteById(id: string): Promise<IQuestionModel> {
     const result = await this.model.findByIdAndDelete(id);
     if (!result) {
-      throw ApplicationError.notFoundError('Question not found');
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.DELETE_BY_ID_ERROR.en
+      );
     }
     return this.toEntity(result);
   }
