@@ -56,15 +56,11 @@ export class RedisCacheProvider implements ICacheProvider {
     const config = this.getRedisConfiguration();
 
     if (config.type === 'cloud') {
-      console.log(`🔗 Redis: Connecting to Cloud (${config.database})`);
-
       this.client = new Redis(config.url!, {
         maxRetriesPerRequest: 3,
         lazyConnect: true,
       });
     } else {
-      console.log(`🔗 Redis: Connecting to Localhost (${config.port})`);
-
       this.client = new Redis({
         host: config.host,
         port: config.port,
@@ -73,48 +69,29 @@ export class RedisCacheProvider implements ICacheProvider {
         enableReadyCheck: false,
         connectTimeout: 5000,
         commandTimeout: 3000,
-        family: 4, // Force IPv4
+        family: 4,
       });
     }
 
-    // Handle connection events
+    // Handle connection events silently
     this.client.on('connect', () => {
       this.isConnected = true;
-      if (config.type === 'cloud') {
-        console.log(`✅ Redis: Cloud connected (${config.database})`);
-      } else {
-        console.log(`✅ Redis: Localhost connected (${config.port})`);
-      }
+      // Silent success
     });
 
-    this.client.on('error', err => {
+    this.client.on('error', () => {
       this.isConnected = false;
-      console.warn(
-        '⚠️ Redis connection error (using memory cache):',
-        err.message
-      );
-      // Don't try fallback, just use memory cache
+      // Silent fail
     });
 
     this.client.on('close', () => {
       this.isConnected = false;
-      console.log('🔌 Redis connection closed');
+      // Silent close
     });
 
-    // Try to connect
-    this.client.connect().catch(err => {
-      if (config.type === 'cloud') {
-        console.warn(
-          '⚠️ Redis Cloud initial connection failed, trying localhost fallback:',
-          err.message
-        );
-        this.tryLocalFallback();
-      } else {
-        console.warn(
-          '⚠️ Redis localhost initial connection failed:',
-          err.message
-        );
-      }
+    // Try to connect silently
+    this.client.connect().catch(() => {
+      // Silent connection failure - just use memory cache
     });
   }
 
