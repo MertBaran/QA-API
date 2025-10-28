@@ -40,69 +40,71 @@ export class PermissionController {
   ) {}
 
   // Kullanıcıya role ata
-  assignRoleToUser = async (
-    req: AuthenticatedRequest & { body: AssignRoleRequestDTO },
-    res: Response<AssignRoleResponseDTO>
-  ) => {
-    const { userId, roleId, assignedBy } = req.body;
-    const adminUserId = req.user?.id;
+  assignRoleToUser = asyncErrorWrapper(
+    async (
+      req: AuthenticatedRequest & { body: AssignRoleRequestDTO },
+      res: Response<AssignRoleResponseDTO>
+    ): Promise<void> => {
+      const { userId, roleId, assignedBy } = req.body;
+      const adminUserId = req.user?.id;
 
-    // Kullanıcının var olup olmadığını kontrol et
-    const user = await this.userService.findById(userId);
+      // Kullanıcının var olup olmadığını kontrol et
+      const user = await this.userService.findById(userId);
 
-    // Role'ün var olup olmadığını kontrol et
-    const role = await this.roleService.findById(roleId);
+      // Role'ün var olup olmadığını kontrol et
+      const role = await this.roleService.findById(roleId);
 
-    // Role'ün aktif olup olmadığını kontrol et
-    if (!role.isActive) {
-      throw ApplicationError.businessError(
-        PermissionConstants.RoleNotActive.en,
-        400
-      );
-    }
-
-    // Kullanıcının bu role'e zaten sahip olup olmadığını kontrol et
-    try {
-      await this.userRoleService.findByUserIdAndRoleId(userId, roleId);
-      // Role bulundu, bu duplicate assignment
-      throw ApplicationError.businessError(
-        'Role already assigned to user',
-        400
-      );
-    } catch (error) {
-      if (
-        error instanceof ApplicationError &&
-        error.category === 'USER_ERROR'
-      ) {
-        // Role bulunamadı, devam et (normal flow)
-      } else {
-        // BUSINESS_ERROR veya başka hatalar - re-throw
-        throw error;
+      // Role'ün aktif olup olmadığını kontrol et
+      if (!role.isActive) {
+        throw ApplicationError.businessError(
+          PermissionConstants.RoleNotActive.en,
+          400
+        );
       }
-    }
 
-    // Kullanıcıya role ata
-    const userRole = await this.userRoleService.assignRoleToUser(
-      userId,
-      roleId,
-      assignedBy || adminUserId || ''
-    );
+      // Kullanıcının bu role'e zaten sahip olup olmadığını kontrol et
+      try {
+        await this.userRoleService.findByUserIdAndRoleId(userId, roleId);
+        // Role bulundu, bu duplicate assignment
+        throw ApplicationError.businessError(
+          'Role already assigned to user',
+          400
+        );
+      } catch (error) {
+        if (
+          error instanceof ApplicationError &&
+          error.category === 'USER_ERROR'
+        ) {
+          // Role bulunamadı, devam et (normal flow)
+        } else {
+          // BUSINESS_ERROR veya başka hatalar - re-throw
+          throw error;
+        }
+      }
 
-    res.status(201).json({
-      success: true,
-      message: PermissionConstants.RoleAssignedSuccess.en,
-      data: {
-        userRole: {
-          id: userRole._id,
-          userId: userRole.userId,
-          roleId: userRole.roleId,
-          isActive: userRole.isActive,
-          assignedBy: userRole.assignedBy || '',
-          assignedAt: userRole.assignedAt,
+      // Kullanıcıya role ata
+      const userRole = await this.userRoleService.assignRoleToUser(
+        userId,
+        roleId,
+        assignedBy || adminUserId || ''
+      );
+
+      res.status(201).json({
+        success: true,
+        message: PermissionConstants.RoleAssignedSuccess.en,
+        data: {
+          userRole: {
+            id: userRole._id,
+            userId: userRole.userId,
+            roleId: userRole.roleId,
+            isActive: userRole.isActive,
+            assignedBy: userRole.assignedBy || '',
+            assignedAt: userRole.assignedAt,
+          },
         },
-      },
-    });
-  };
+      });
+    }
+  );
 
   // Kullanıcıdan role kaldır
   removeRoleFromUser = asyncErrorWrapper(
