@@ -1,18 +1,27 @@
-import { injectable, inject } from 'tsyringe';
+import { injectable } from 'tsyringe';
+import { container } from 'tsyringe';
 import Redis from 'ioredis';
 import { ICacheProvider } from './ICacheProvider';
 export { ICacheProvider } from './ICacheProvider';
 import { CacheConnectionConfig } from '../../services/contracts/IConfigurationService';
 
+/**
+ * Redis-based cache provider with lazy initialization and graceful fallback.
+ *
+ * Features:
+ * - Lazy connection: Only connects on first cache operation
+ * - Config from DI container: Fetched at runtime after environment setup
+ * - Fail-fast strategy: No retries, immediate fallback to memory cache
+ * - Silent errors: No console spam when Redis is unavailable
+ */
 @injectable()
 export class RedisCacheProvider implements ICacheProvider {
   private client: Redis | null = null;
   private initialized: boolean = false;
 
   constructor() {
-    // Don't initialize Redis client here - wait for first use
-    // This allows environment variables to be loaded first
-    // Config will be fetched from container during initialization
+    // Lazy initialization - client will be created on first use
+    // This ensures environment config is loaded before connection attempt
   }
 
   private getRedisDatabase(redisUrl?: string): string {
@@ -20,9 +29,11 @@ export class RedisCacheProvider implements ICacheProvider {
     return redisUrl.includes('/1') ? '1 (TEST)' : '0 (PRODUCTION)';
   }
 
+  /**
+   * Fetches Redis configuration from DI container at runtime.
+   * This ensures config is available after environment initialization.
+   */
   private getRedisConfiguration() {
-    // Fetch config from container at runtime (after it's registered)
-    const { container } = require('tsyringe');
     const connectionConfig = container.resolve<CacheConnectionConfig>(
       'ICacheConnectionConfig'
     );
@@ -33,26 +44,27 @@ export class RedisCacheProvider implements ICacheProvider {
     const redisHost = connectionConfig.host || 'localhost';
     const redisPort = connectionConfig.port || 6379;
 
-    // Business logic: If REDIS_URL exists, use cloud Redis
-    // Otherwise use localhost
+    // Use cloud Redis if REDIS_URL is provided, otherwise use localhost
     if (redisUrl) {
-      // Use cloud Redis if REDIS_URL exists
       return {
-        type: 'cloud',
+        type: 'cloud' as const,
         url: redisUrl,
         database: this.getRedisDatabase(redisUrl),
       };
-    } else {
-      // Default to localhost:6379
-      return {
-        type: 'local',
-        host: redisHost,
-        port: redisPort,
-        database: 'localhost',
-      };
     }
+
+    return {
+      type: 'local' as const,
+      host: redisHost,
+      port: redisPort,
+      database: 'localhost',
+    };
   }
 
+  /**
+   * Initializes Redis client with lazy connection strategy.
+   * Called once on first cache operation.
+   */
   private initializeClient(): void {
     if (this.initialized) return;
 
@@ -61,77 +73,90 @@ export class RedisCacheProvider implements ICacheProvider {
 
     if (config.type === 'cloud') {
       console.log(`🔗 Redis: Connecting to Cloud (${config.database})`);
-
       this.client = new Redis(config.url!, {
         maxRetriesPerRequest: 3,
         lazyConnect: true,
       });
     } else {
       console.log(`🔗 Redis: Connecting to ${config.host}:${config.port}`);
-
       this.client = new Redis({
         host: config.host,
         port: config.port,
         lazyConnect: true,
         enableReadyCheck: false,
-        // Never retry - fail fast
-        retryStrategy: () => null,
-        reconnectOnError: () => false,
+        retryStrategy: () => null, // Fail fast - no retries
+        reconnectOnError: () => false, // No automatic reconnection
         maxRetriesPerRequest: 1,
-        connectTimeout: 5000, // 5 seconds timeout
+        connectTimeout: 5000,
         commandTimeout: 3000,
         family: 4, // Force IPv4
       });
     }
 
-    // Handle connection events (only log success, silent on errors)
+    this.setupEventHandlers();
+  }
+
+  /**
+   * Sets up Redis connection event handlers.
+   * Only logs success, errors are silent to avoid console spam.
+   */
+  private setupEventHandlers(): void {
+    if (!this.client) return;
+
     this.client.once('ready', () => {
       console.log('✅ Redis connected successfully');
     });
 
     this.client.on('error', () => {
-      // Silent - don't spam console with errors
+      // Silent - graceful degradation to memory cache
     });
-
-    // DON'T call connect() - lazyConnect will connect on first command
-    // This prevents multiple connection attempts
   }
 
+  /**
+   * Retrieves a value from cache by key.
+   * Returns null if key doesn't exist or Redis is unavailable.
+   */
   async get<T>(key: string): Promise<T | null> {
     this.initializeClient();
     if (!this.client) return null;
 
     try {
-      // lazyConnect will auto-connect on first command
       const value = await this.client.get(key);
       return value ? JSON.parse(value) : null;
     } catch (error) {
-      // Silent fail - Redis not available or connection broken
-      return null;
+      return null; // Silent fail - graceful degradation
     }
   }
 
+  /**
+   * Stores a value in cache with TTL.
+   * @param key - Cache key
+   * @param value - Value to store (will be JSON serialized)
+   * @param ttlSeconds - Time to live in seconds (default: 3600)
+   */
   async set<T>(key: string, value: T, ttlSeconds = 3600): Promise<void> {
     this.initializeClient();
     if (!this.client) return;
 
     try {
-      // lazyConnect will auto-connect on first command
       await this.client.setex(key, ttlSeconds, JSON.stringify(value));
     } catch (error) {
-      // Silent fail - Redis not available or connection broken
+      // Silent fail - graceful degradation
     }
   }
 
+  /**
+   * Deletes a value from cache by key.
+   * No-op if key doesn't exist or Redis is unavailable.
+   */
   async del(key: string): Promise<void> {
     this.initializeClient();
     if (!this.client) return;
 
     try {
-      // lazyConnect will auto-connect on first command
       await this.client.del(key);
     } catch (error) {
-      // Silent fail - Redis not available or connection broken
+      // Silent fail - graceful degradation
     }
   }
 }
