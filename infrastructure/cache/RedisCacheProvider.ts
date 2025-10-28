@@ -53,6 +53,13 @@ export class RedisCacheProvider implements ICacheProvider {
     if (this.initialized) return;
 
     this.initialized = true;
+    
+    // Temporarily disable Redis for development
+    console.log('🔗 Redis: Disabled for development - using memory cache only');
+    this.client = null;
+    this.isConnected = false;
+    return;
+
     const config = this.getRedisConfiguration();
 
     if (config.type === 'cloud') {
