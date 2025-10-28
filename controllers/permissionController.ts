@@ -3,7 +3,7 @@ import asyncErrorWrapper from 'express-async-handler';
 import { IUserRoleService } from '../services/contracts/IUserRoleService';
 import { IRoleService } from '../services/contracts/IRoleService';
 import { IUserService } from '../services/contracts/IUserService';
-import CustomError from '../infrastructure/error/CustomError';
+import { ApplicationError } from '../infrastructure/error/ApplicationError';
 import { PermissionConstants } from './constants/ControllerMessages';
 import {
   AssignRoleRequestDTO,
@@ -50,18 +50,33 @@ export class PermissionController {
     // Kullanıcının var olup olmadığını kontrol et
     const user = await this.userService.findById(userId);
     if (!user) {
-      throw new CustomError(PermissionConstants.UserNotFound.en, 404);
+      throw ApplicationError.notFoundError(PermissionConstants.UserNotFound.en);
     }
 
     // Role'ün var olup olmadığını kontrol et
     const role = await this.roleService.findById(roleId);
     if (!role) {
-      throw new CustomError(PermissionConstants.RoleNotFound.en, 404);
+      throw ApplicationError.notFoundError(PermissionConstants.RoleNotFound.en);
     }
 
     // Role'ün aktif olup olmadığını kontrol et
     if (!role.isActive) {
-      throw new CustomError(PermissionConstants.RoleNotActive.en, 400);
+      throw ApplicationError.businessError(
+        PermissionConstants.RoleNotActive.en,
+        400
+      );
+    }
+
+    // Kullanıcının bu role'e zaten sahip olup olmadığını kontrol et
+    try {
+      await this.userRoleService.findByUserIdAndRoleId(userId, roleId);
+      throw ApplicationError.businessError('Role already assigned to user', 400);
+    } catch (error) {
+      if (error instanceof ApplicationError && error.category === 'USER_ERROR') {
+        // Role bulunamadı, devam et
+      } else {
+        throw error;
+      }
     }
 
     // Kullanıcıya role ata
@@ -94,28 +109,14 @@ export class PermissionController {
       res: Response<RemoveRoleResponseDTO>
     ): Promise<void> => {
       const { userId, roleId } = req.body;
-
-      // Kullanıcının var olup olmadığını kontrol et
+      // Kullanıcı ve role'ü bul
       const user = await this.userService.findById(userId);
-      if (!user) {
-        throw new CustomError(PermissionConstants.UserNotFound.en, 404);
-      }
-
-      // Role'ün var olup olmadığını kontrol et
       const role = await this.roleService.findById(roleId);
-      if (!role) {
-        throw new CustomError(PermissionConstants.RoleNotFound.en, 404);
-      }
-
       // Kullanıcıdan role'ü kaldır
       const removedUserRole = await this.userRoleService.removeRoleFromUser(
-        userId,
-        roleId
+        user._id,
+        role._id
       );
-
-      if (!removedUserRole) {
-        throw new CustomError(PermissionConstants.UserDoesNotHaveRole.en, 404);
-      }
 
       res.status(200).json({
         success: true,
@@ -141,12 +142,9 @@ export class PermissionController {
 
       // Kullanıcının var olup olmadığını kontrol et
       const user = await this.userService.findById(userId);
-      if (!user) {
-        throw new CustomError(PermissionConstants.UserNotFound.en, 404);
-      }
 
       // Kullanıcının tüm role'lerini al
-      const userRoles = await this.userRoleService.getUserRoles(userId);
+      const userRoles = await this.userRoleService.getUserRoles(user._id);
 
       // Role detaylarını al
       const rolesWithDetails = await Promise.all(
@@ -259,9 +257,6 @@ export class PermissionController {
 
       // Role'ün var olup olmadığını kontrol et
       const role = await this.roleService.findById(roleId);
-      if (!role) {
-        throw new CustomError(PermissionConstants.RoleNotFound.en, 404);
-      }
 
       // Permission'ların var olup olmadığını kontrol et
       const permissions = await Promise.all(
@@ -272,21 +267,16 @@ export class PermissionController {
 
       const invalidPermissions = permissions.filter(p => !p);
       if (invalidPermissions.length > 0) {
-        throw new CustomError(
-          PermissionConstants.SomePermissionsNotFound.en,
-          404
+        throw ApplicationError.notFoundError(
+          PermissionConstants.SomePermissionsNotFound.en
         );
       }
 
       // Role'e permission'ları ekle
       const updatedRole = await this.roleService.addPermissionsToRole(
-        roleId,
+        role._id,
         permissionIds
       );
-
-      if (!updatedRole) {
-        throw new CustomError(PermissionConstants.RoleNotFound.en, 404);
-      }
 
       res.status(200).json({
         success: true,
@@ -312,19 +302,12 @@ export class PermissionController {
 
       // Role'ün var olup olmadığını kontrol et
       const role = await this.roleService.findById(roleId);
-      if (!role) {
-        throw new CustomError(PermissionConstants.RoleNotFound.en, 404);
-      }
 
       // Role'den permission'ları kaldır
       const updatedRole = await this.roleService.removePermissionsFromRole(
-        roleId,
+        role._id,
         permissionIds
       );
-
-      if (!updatedRole) {
-        throw new CustomError(PermissionConstants.RoleNotFound.en, 404);
-      }
 
       res.status(200).json({
         success: true,
@@ -350,12 +333,9 @@ export class PermissionController {
 
       // Kullanıcının var olup olmadığını kontrol et
       const user = await this.userService.findById(userId);
-      if (!user) {
-        throw new CustomError(PermissionConstants.UserNotFound.en, 404);
-      }
 
       // Kullanıcının aktif role'lerini al
-      const userRoles = await this.userRoleService.getUserActiveRoles(userId);
+      const userRoles = await this.userRoleService.getUserActiveRoles(user._id);
 
       // Role'lerin permission'larını topla
       const allPermissions = new Set<string>();
@@ -394,7 +374,7 @@ export class PermissionController {
       res.status(200).json({
         success: true,
         data: {
-          userId,
+          userId: user._id,
           userName: user.name,
           userEmail: user.email,
           permissions: permissions.filter(p => p !== null),

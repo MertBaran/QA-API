@@ -1,6 +1,6 @@
 import { injectable, inject } from 'tsyringe';
 import { IAnswerModel } from '../../models/interfaces/IAnswerModel';
-import CustomError from '../../infrastructure/error/CustomError';
+import { ApplicationError } from '../../infrastructure/error/ApplicationError';
 import { IAnswerRepository } from '../../repositories/interfaces/IAnswerRepository';
 import { EntityId } from '../../types/database';
 import { IQuestionRepository } from '../../repositories/interfaces/IQuestionRepository';
@@ -20,9 +20,12 @@ export class AnswerManager implements IAnswerService {
     questionId: EntityId,
     userId: EntityId
   ): Promise<IAnswerModel> {
+    // Question'ın var olup olmadığını kontrol et
+    const question = await this.questionRepository.findById(questionId);
+
     const answer = await this.answerRepository.create({
       ...answerData,
-      question: questionId,
+      question: question._id,
       user: userId,
     });
     return answer;
@@ -35,20 +38,26 @@ export class AnswerManager implements IAnswerService {
   async getAnswerById(answerId: string): Promise<IAnswerModel> {
     const answer = await this.answerRepository.findByIdWithPopulate(answerId);
     if (!answer) {
-      throw new CustomError(AnswerServiceMessages.AnswerNotFound.en, 404);
+      throw ApplicationError.notFoundError(
+        AnswerServiceMessages.AnswerNotFound.en
+      );
     }
     return answer;
   }
 
   async updateAnswer(answerId: string, content: string): Promise<IAnswerModel> {
     if (!content) {
-      throw new CustomError(AnswerServiceMessages.ContentRequired.en, 400);
+      throw ApplicationError.validationError(
+        AnswerServiceMessages.ContentRequired.en
+      );
     }
     const answer = await this.answerRepository.updateById(answerId, {
       content,
     });
     if (!answer) {
-      throw new CustomError(AnswerServiceMessages.AnswerNotFound.en, 404);
+      throw ApplicationError.notFoundError(
+        AnswerServiceMessages.AnswerNotFound.en
+      );
     }
     return answer;
   }
@@ -56,23 +65,22 @@ export class AnswerManager implements IAnswerService {
   async deleteAnswer(answerId: string, questionId: string): Promise<void> {
     await this.answerRepository.deleteById(answerId);
     const question = await this.questionRepository.findById(questionId);
-    if (question) {
-      question.answers = question.answers.filter(
-        (id: any) => id.toString() !== answerId.toString()
-      );
-      await this.questionRepository.updateById(questionId, {
-        answers: question.answers,
-      });
-    }
+    question.answers = question.answers.filter(
+      (id: any) => id.toString() !== answerId.toString()
+    );
+    await this.questionRepository.updateById(questionId, {
+      answers: question.answers,
+    });
   }
 
   async likeAnswer(answerId: string, userId: EntityId): Promise<IAnswerModel> {
     const answer = await this.answerRepository.likeAnswer(answerId, userId);
     if (!answer) {
-      const exists = await this.answerRepository.findById(answerId);
-      if (!exists)
-        throw new CustomError(AnswerServiceMessages.AnswerNotFound.en, 404);
-      throw new CustomError(AnswerServiceMessages.AlreadyLiked.en, 400);
+      // Answer var ama zaten beğenilmiş
+      throw ApplicationError.businessError(
+        AnswerServiceMessages.AlreadyLiked.en,
+        400
+      );
     }
     return answer;
   }
@@ -83,10 +91,11 @@ export class AnswerManager implements IAnswerService {
   ): Promise<IAnswerModel> {
     const answer = await this.answerRepository.unlikeAnswer(answerId, userId);
     if (!answer) {
-      const exists = await this.answerRepository.findById(answerId);
-      if (!exists)
-        throw new CustomError(AnswerServiceMessages.AnswerNotFound.en, 404);
-      throw new CustomError(AnswerServiceMessages.CannotUndoLike.en, 400);
+      // Answer var ama beğeni yok
+      throw ApplicationError.businessError(
+        AnswerServiceMessages.CannotUndoLike.en,
+        400
+      );
     }
     return answer;
   }
