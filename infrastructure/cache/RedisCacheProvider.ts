@@ -1,9 +1,10 @@
-import { injectable } from 'tsyringe';
+import { inject, injectable } from 'tsyringe';
 import { container } from 'tsyringe';
 import Redis from 'ioredis';
 import { ICacheProvider } from './ICacheProvider';
 export { ICacheProvider } from './ICacheProvider';
 import { CacheConnectionConfig } from '../../services/contracts/IConfigurationService';
+import { ILoggerProvider } from '../logging/ILoggerProvider';
 
 /**
  * Redis-based cache provider with lazy initialization and graceful fallback.
@@ -19,7 +20,7 @@ export class RedisCacheProvider implements ICacheProvider {
   private client: Redis | null = null;
   private initialized: boolean = false;
 
-  constructor() {
+  constructor(@inject('ILoggerProvider') private logger: ILoggerProvider) {
     // Lazy initialization - client will be created on first use
     // This ensures environment config is loaded before connection attempt
   }
@@ -37,8 +38,6 @@ export class RedisCacheProvider implements ICacheProvider {
     const connectionConfig = container.resolve<CacheConnectionConfig>(
       'ICacheConnectionConfig'
     );
-
-    console.log('🔧 Redis Configuration:', connectionConfig);
 
     const redisUrl = connectionConfig.url;
     const redisHost = connectionConfig.host || 'localhost';
@@ -72,13 +71,13 @@ export class RedisCacheProvider implements ICacheProvider {
     const config = this.getRedisConfiguration();
 
     if (config.type === 'cloud') {
-      console.log(`🔗 Redis: Connecting to Cloud (${config.database})`);
+      //this.logger.info(`Redis: Connecting to Cloud (${config.database})`);
       this.client = new Redis(config.url!, {
         maxRetriesPerRequest: 3,
         lazyConnect: true,
       });
     } else {
-      console.log(`🔗 Redis: Connecting to ${config.host}:${config.port}`);
+      //this.logger.info(`Redis: Connecting to ${config.host}:${config.port}`);
       this.client = new Redis({
         host: config.host,
         port: config.port,
@@ -103,12 +102,10 @@ export class RedisCacheProvider implements ICacheProvider {
   private setupEventHandlers(): void {
     if (!this.client) return;
 
-    this.client.once('ready', () => {
-      console.log('✅ Redis connected successfully');
-    });
+    this.client.once('ready', () => {});
 
     this.client.on('error', () => {
-      // Silent - graceful degradation to memory cache
+      console.log('✅ Redis connection error');
     });
   }
 
