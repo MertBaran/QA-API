@@ -83,7 +83,7 @@ export class RedisCacheProvider implements ICacheProvider {
       console.log('✅ Redis connected successfully');
     });
 
-    this.client.on('error', (err) => {
+    this.client.on('error', err => {
       this.isConnected = false;
       console.warn('⚠️ Redis connection error:', err.message);
     });
@@ -94,7 +94,7 @@ export class RedisCacheProvider implements ICacheProvider {
     });
 
     // Try to connect
-    this.client.connect().catch((err) => {
+    this.client.connect().catch(err => {
       console.warn('⚠️ Redis initial connection failed:', err.message);
       console.log('📝 Using memory cache as fallback');
     });
