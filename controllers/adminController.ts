@@ -3,8 +3,8 @@ import { container } from 'tsyringe';
 import { IAdminService } from '../services/contracts/IAdminService';
 import { ILoggerProvider } from '../infrastructure/logging/ILoggerProvider';
 import { IExceptionTracker } from '../infrastructure/error/IExceptionTracker';
-import { ApplicationError } from '../helpers/error/ApplicationError';
-import { asyncErrorWrapper } from '../helpers/error/asyncErrorWrapper';
+import { ApplicationError } from '../infrastructure/error/ApplicationError';
+import { asyncErrorWrapper } from '../infrastructure/error/asyncErrorWrapper';
 import { AuthenticatedRequest } from '../types/auth';
 
 export class AdminController {

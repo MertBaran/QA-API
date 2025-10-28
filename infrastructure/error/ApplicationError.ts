@@ -286,4 +286,34 @@ export class ApplicationError extends Error {
       true
     );
   }
+
+  // Helper methods for error categorization
+  isUserError(): boolean {
+    return [
+      ErrorCategory.USER_ERROR,
+      ErrorCategory.VALIDATION_ERROR,
+      ErrorCategory.AUTHENTICATION_ERROR,
+      ErrorCategory.AUTHORIZATION_ERROR,
+    ].includes(this.category);
+  }
+
+  isSystemError(): boolean {
+    return this.category === ErrorCategory.SYSTEM_ERROR;
+  }
+
+  isBusinessError(): boolean {
+    return this.category === ErrorCategory.BUSINESS_ERROR;
+  }
+
+  isValidationError(): boolean {
+    return this.category === ErrorCategory.VALIDATION_ERROR;
+  }
+
+  isAuthenticationError(): boolean {
+    return this.category === ErrorCategory.AUTHENTICATION_ERROR;
+  }
+
+  isAuthorizationError(): boolean {
+    return this.category === ErrorCategory.AUTHORIZATION_ERROR;
+  }
 }

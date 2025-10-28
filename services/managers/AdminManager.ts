@@ -9,7 +9,7 @@ import { IUserModel } from '../../models/interfaces/IUserModel';
 import { IUserRepository } from '../../repositories/interfaces/IUserRepository';
 import { IUserRoleService } from '../contracts/IUserRoleService';
 import { IRoleService } from '../contracts/IRoleService';
-import CustomError from '../../helpers/error/CustomError';
+import CustomError from '../../infrastructure/error/CustomError';
 import { IAdminService } from '../contracts/IAdminService';
 import { EntityId } from '../../types/database';
 

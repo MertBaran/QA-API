@@ -3,7 +3,7 @@ import {
   INotificationProvider,
   NotificationPayload,
 } from './INotificationProvider';
-import { createSMTPTransporter } from '../../helpers/smtp/smtpConfig';
+import { createSMTPTransporter } from '../../config/smtpConfig';
 
 @injectable()
 export class EmailNotificationProvider implements INotificationProvider {

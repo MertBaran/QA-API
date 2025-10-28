@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import asyncErrorWrapper from 'express-async-handler';
-import { sendJwtToClient } from '../helpers/authorization/tokenHelpers';
+import { sendJwtToClient } from '../infrastructure/auth/tokenHelpers';
 import { injectable, inject } from 'tsyringe';
 import jwt from 'jsonwebtoken';
 import { IAuthService } from '../services/contracts/IAuthService';
@@ -11,7 +11,7 @@ import { IPermissionService } from '../services/contracts/IPermissionService';
 import { AuthConstants } from './constants/ControllerMessages';
 import { ILoggerProvider } from '../infrastructure/logging/ILoggerProvider';
 import { IExceptionTracker } from '../infrastructure/error/IExceptionTracker';
-import { ApplicationError } from '../helpers/error/ApplicationError';
+import { ApplicationError } from '../infrastructure/error/ApplicationError';
 import type { RegisterDTO } from '../types/dto/auth/register.dto';
 import type { LoginDTO } from '../types/dto/auth/login.dto';
 import type { ForgotPasswordDTO } from '../types/dto/auth/forgot-password.dto';

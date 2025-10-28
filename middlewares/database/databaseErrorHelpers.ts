@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import CustomError from '../../helpers/error/CustomError';
+import CustomError from '../../infrastructure/error/CustomError';
 import asyncErrorWrapper from 'express-async-handler';
 import { container } from 'tsyringe';
 import { IUserService } from '../../services/contracts/IUserService';

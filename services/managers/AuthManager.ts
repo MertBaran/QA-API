@@ -1,6 +1,6 @@
 import { IUserModel } from '../../models/interfaces/IUserModel';
-import CustomError from '../../helpers/error/CustomError';
-import { comparePassword } from '../../helpers/input/inputHelpers';
+import CustomError from '../../infrastructure/error/CustomError';
+import { comparePassword } from '../../infrastructure/validation/inputHelpers';
 import { OAuth2Client } from 'google-auth-library';
 import { injectable, inject } from 'tsyringe';
 import { IUserRepository } from '../../repositories/interfaces/IUserRepository';
