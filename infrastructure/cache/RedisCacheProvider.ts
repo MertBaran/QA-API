@@ -7,7 +7,6 @@ import { CacheConnectionConfig } from '../../services/contracts/IConfigurationSe
 @injectable()
 export class RedisCacheProvider implements ICacheProvider {
   private client: Redis | null = null;
-  private isConnected: boolean = false;
   private initialized: boolean = false;
   private connectionConfig: CacheConnectionConfig;
 
@@ -80,64 +79,54 @@ export class RedisCacheProvider implements ICacheProvider {
       });
     }
 
-    // Handle connection events
-    this.client.once('connect', () => {
-      this.isConnected = true;
+    // Handle connection events (only log success, silent on errors)
+    this.client.once('ready', () => {
       console.log('✅ Redis connected successfully');
     });
 
-    this.client.on('error', err => {
-      this.isConnected = false;
-      // Silent - don't spam console
+    this.client.on('error', () => {
+      // Silent - don't spam console with errors
     });
 
-    this.client.once('close', () => {
-      this.isConnected = false;
-      // Silent - connection closed
-    });
-
-    // Try to connect - fail fast
-    this.client.connect().catch(err => {
-      console.warn('⚠️ Redis not available, using memory cache fallback');
-      this.isConnected = false;
-    });
+    // DON'T call connect() - lazyConnect will connect on first command
+    // This prevents multiple connection attempts
   }
 
   async get<T>(key: string): Promise<T | null> {
     this.initializeClient();
-    if (!this.client || !this.isConnected) return null;
+    if (!this.client) return null;
 
     try {
+      // lazyConnect will auto-connect on first command
       const value = await this.client.get(key);
       return value ? JSON.parse(value) : null;
     } catch (error) {
-      // Silent fail - connection might be broken
-      this.isConnected = false;
+      // Silent fail - Redis not available or connection broken
       return null;
     }
   }
 
   async set<T>(key: string, value: T, ttlSeconds = 3600): Promise<void> {
     this.initializeClient();
-    if (!this.client || !this.isConnected) return;
+    if (!this.client) return;
 
     try {
+      // lazyConnect will auto-connect on first command
       await this.client.setex(key, ttlSeconds, JSON.stringify(value));
     } catch (error) {
-      // Silent fail - connection might be broken
-      this.isConnected = false;
+      // Silent fail - Redis not available or connection broken
     }
   }
 
   async del(key: string): Promise<void> {
     this.initializeClient();
-    if (!this.client || !this.isConnected) return;
+    if (!this.client) return;
 
     try {
+      // lazyConnect will auto-connect on first command
       await this.client.del(key);
     } catch (error) {
-      // Silent fail - connection might be broken
-      this.isConnected = false;
+      // Silent fail - Redis not available or connection broken
     }
   }
 }
