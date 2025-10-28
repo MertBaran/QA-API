@@ -44,15 +44,7 @@ export class UserRoleRepository
       'userId',
       userId
     )) as IUserRoleModel[];
-    const userRoleToUpdate = userRole.find(
-      userRole => userRole.roleId === roleId
-    );
-    if (!userRoleToUpdate) {
-      throw ApplicationError.notFoundError(
-        RepositoryConstants.USER_ROLE.NOT_FOUND_ERROR.en
-      );
-    }
-    return (await this.updateById(userRoleToUpdate._id.toString(), {
+    return (await this.dataSource.updateById(userId, {
       isActive: false,
     })) as IUserRoleModel;
   }
@@ -73,5 +65,16 @@ export class UserRoleRepository
       );
     }
     return userRole;
+  }
+
+  async findByUserIdAndActive(userId: EntityId): Promise<IUserRoleModel[]> {
+    const userRoles = await this.findByUserId(userId);
+    return userRoles.filter(userRole => userRole.isActive);
+  }
+
+  async deactivateExpiredRoles(): Promise<number> {
+    // Bu metod şimdilik basit bir implementasyon
+    // Gerçek implementasyonda expired role'leri bulup deaktive eder
+    return 0;
   }
 }
