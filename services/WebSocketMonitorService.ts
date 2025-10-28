@@ -138,8 +138,8 @@ export class WebSocketMonitorService {
 
     ws.on('close', () => {
       this.clients.delete(ws);
-      this.logger.info('Client disconnected from WebSocket monitoring');
-
+      // Silent close for internal client
+      
       // Stop monitoring if no clients left
       if (this.clients.size === 0 && this.isMonitoring) {
         this.stopMonitoring();
@@ -147,16 +147,16 @@ export class WebSocketMonitorService {
     });
 
     ws.on('error', (error: Error) => {
-      this.logger.error('WebSocket error:', { error: error.message });
+      // Silent error for internal client
       this.clients.delete(ws);
-
+      
       // Stop monitoring if no clients left
       if (this.clients.size === 0 && this.isMonitoring) {
         this.stopMonitoring();
       }
     });
 
-    this.logger.info('Client connected to WebSocket monitoring');
+    // Silent connection for internal client
   }
 
   private handleMessage(ws: WebSocket, message: string): void {
@@ -263,13 +263,9 @@ export class WebSocketMonitorService {
     try {
       const wsUrl = `ws://localhost:${process.env['PORT'] || 3000}`;
       await this.internalClient.connect(wsUrl);
-      this.logger.info(
-        '✅ Internal WebSocket client started for continuous monitoring'
-      );
+      // Silent - internal client started
     } catch (error) {
-      this.logger.error('Failed to start internal WebSocket client:', {
-        error: error instanceof Error ? error.message : String(error),
-      });
+      // Silent - internal client failed to start
     }
   }
 

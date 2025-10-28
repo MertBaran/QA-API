@@ -56,11 +56,15 @@ export class RedisCacheProvider implements ICacheProvider {
     const config = this.getRedisConfiguration();
 
     if (config.type === 'cloud') {
+      console.log(`🔗 Redis: Connecting to Cloud (${config.database})`);
+
       this.client = new Redis(config.url!, {
         maxRetriesPerRequest: 3,
         lazyConnect: true,
       });
     } else {
+      console.log(`🔗 Redis: Connecting to Localhost (${config.port})`);
+
       this.client = new Redis({
         host: config.host,
         port: config.port,
@@ -69,7 +73,7 @@ export class RedisCacheProvider implements ICacheProvider {
         enableReadyCheck: false,
         connectTimeout: 5000,
         commandTimeout: 3000,
-        family: 4,
+        family: 4, // Force IPv4
       });
     }
 

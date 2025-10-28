@@ -20,13 +20,13 @@ export class InternalWebSocketClient {
   constructor(@inject('ILoggerProvider') private logger: ILoggerProvider) {}
 
   public connect = (wsUrl: string): void => {
-    this.logger.info(`🔌 Connecting internal WebSocket client to: ${wsUrl}`);
+    // Silent connection - don't log for internal client
     try {
       this.client = new WebSocket(wsUrl);
       this.client.on('open', () => {
         this.isConnected = true;
         this.reconnectAttempts = 0;
-        this.logger.info('✅ Internal WebSocket client connected');
+        // Silent success
       });
 
       this.client.on('message', (data: WebSocket.Data) => {
@@ -34,28 +34,22 @@ export class InternalWebSocketClient {
           const message: WebSocketMessage = JSON.parse(data.toString());
           this.handleMessage(message);
         } catch (error) {
-          this.logger.error('Failed to parse WebSocket message:', {
-            error: error instanceof Error ? error.message : String(error),
-          });
+          // Silent parse error
         }
       });
 
       this.client.on('close', () => {
         this.isConnected = false;
-        this.logger.warn('🔌 Internal WebSocket client disconnected');
+        // Silent close
         this.scheduleReconnect(wsUrl);
       });
 
-      this.client.on('error', (error: Error) => {
-        this.logger.error('Internal WebSocket client error:', {
-          error: error.message,
-        });
+      this.client.on('error', () => {
         this.isConnected = false;
+        // Silent error
       });
     } catch (error) {
-      this.logger.error('Failed to set up internal WebSocket client:', {
-        error: error instanceof Error ? error.message : String(error),
-      });
+      // Silent setup error
       this.scheduleReconnect(wsUrl);
     }
   };
@@ -81,18 +75,14 @@ export class InternalWebSocketClient {
 
   private scheduleReconnect(wsUrl: string): void {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      this.logger.error(
-        'Max reconnection attempts reached for internal WebSocket client'
-      );
+      // Silent - max attempts reached
       return;
     }
 
     this.reconnectAttempts++;
     const delay = this.reconnectDelay * this.reconnectAttempts;
 
-    this.logger.info(
-      `🔄 Scheduling internal WebSocket reconnection attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts} in ${delay}ms`
-    );
+    // Silent reconnect scheduling
 
     this.reconnectTimeout = setTimeout(() => {
       this.connect(wsUrl);
@@ -102,9 +92,7 @@ export class InternalWebSocketClient {
   private handleMessage(message: WebSocketMessage): void {
     // Internal client doesn't need to handle specific messages
     // It just keeps the connection alive for monitoring
-    this.logger.debug('Internal WebSocket client received message:', {
-      type: message.type,
-    });
+    // Silent - don't log every message to avoid console spam
   }
 
   public sendMessage(message: WebSocketMessage): void {
