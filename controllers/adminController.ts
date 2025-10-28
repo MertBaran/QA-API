@@ -1,22 +1,15 @@
 import { Request, Response, NextFunction } from 'express';
 import { container } from 'tsyringe';
 import { IAdminService } from '../services/contracts/IAdminService';
-import { ILoggerProvider } from '../infrastructure/logging/ILoggerProvider';
-import { IExceptionTracker } from '../infrastructure/error/IExceptionTracker';
 import { ApplicationError } from '../infrastructure/error/ApplicationError';
 import { asyncErrorWrapper } from '../infrastructure/error/asyncErrorWrapper';
 import { AuthenticatedRequest } from '../types/auth';
 
 export class AdminController {
   private adminService: IAdminService;
-  private logger: ILoggerProvider;
-  private exceptionTracker: IExceptionTracker;
 
   constructor() {
     this.adminService = container.resolve<IAdminService>('IAdminService');
-    this.logger = container.resolve<ILoggerProvider>('ILoggerProvider');
-    this.exceptionTracker =
-      container.resolve<IExceptionTracker>('IExceptionTracker');
   }
 
   // Kullanıcıları getir
