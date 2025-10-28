@@ -64,6 +64,7 @@ export class PermissionController {
     // Kullanıcının bu role'e zaten sahip olup olmadığını kontrol et
     try {
       await this.userRoleService.findByUserIdAndRoleId(userId, roleId);
+      // Role bulundu, bu duplicate assignment
       throw ApplicationError.businessError(
         'Role already assigned to user',
         400
@@ -73,8 +74,9 @@ export class PermissionController {
         error instanceof ApplicationError &&
         error.category === 'USER_ERROR'
       ) {
-        // Role bulunamadı, devam et
+        // Role bulunamadı, devam et (normal flow)
       } else {
+        // BUSINESS_ERROR veya başka hatalar - re-throw
         throw error;
       }
     }
