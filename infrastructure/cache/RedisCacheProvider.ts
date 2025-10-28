@@ -68,11 +68,22 @@ export class RedisCacheProvider implements ICacheProvider {
       this.client = new Redis({
         host: config.host,
         port: config.port,
-        maxRetriesPerRequest: 1,
         lazyConnect: true,
         enableReadyCheck: false,
-        connectTimeout: 5000,
-        commandTimeout: 3000,
+        // Connection stability settings
+        retryStrategy: (times) => {
+          if (times > 3) {
+            // Stop retrying after 3 attempts
+            return null;
+          }
+          // Wait 1 second between retries
+          return 1000;
+        },
+        reconnectOnError: () => false, // Don't auto-reconnect on error
+        maxRetriesPerRequest: 1,
+        connectTimeout: 10000,
+        commandTimeout: 5000,
+        keepAlive: 30000, // Keep connection alive
         family: 4, // Force IPv4
       });
     }
@@ -136,47 +147,39 @@ export class RedisCacheProvider implements ICacheProvider {
 
   async get<T>(key: string): Promise<T | null> {
     this.initializeClient();
-    if (!this.client) return null;
+    if (!this.client || !this.isConnected) return null;
 
     try {
-      if (!this.client.status || this.client.status !== 'ready') {
-        return null;
-      }
-
       const value = await this.client.get(key);
       return value ? JSON.parse(value) : null;
     } catch (error) {
+      // Silent fail - connection might be broken
+      this.isConnected = false;
       return null;
     }
   }
 
   async set<T>(key: string, value: T, ttlSeconds = 3600): Promise<void> {
     this.initializeClient();
-    if (!this.client) return;
+    if (!this.client || !this.isConnected) return;
 
     try {
-      if (!this.client.status || this.client.status !== 'ready') {
-        return;
-      }
-
       await this.client.setex(key, ttlSeconds, JSON.stringify(value));
     } catch (error) {
-      // Silent fail
+      // Silent fail - connection might be broken
+      this.isConnected = false;
     }
   }
 
   async del(key: string): Promise<void> {
     this.initializeClient();
-    if (!this.client) return;
+    if (!this.client || !this.isConnected) return;
 
     try {
-      if (!this.client.status || this.client.status !== 'ready') {
-        return;
-      }
-
       await this.client.del(key);
     } catch (error) {
-      // Silent fail
+      // Silent fail - connection might be broken
+      this.isConnected = false;
     }
   }
 }
