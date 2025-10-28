@@ -68,7 +68,7 @@ export class UserManager implements IUserService {
 
   async findAll(): Promise<IUserModel[]> {
     const users = await this.userRepository.findAll();
-    if (!users) {
+    if (users === null || users === undefined) {
       throw ApplicationError.notFoundError('Users not found');
     }
     return users;
@@ -76,7 +76,7 @@ export class UserManager implements IUserService {
 
   async findActive(): Promise<IUserModel[]> {
     const users = await this.userRepository.findActive();
-    if (!users) {
+    if (users === null || users === undefined) {
       throw ApplicationError.notFoundError('Users not found');
     }
     return users;
@@ -84,7 +84,7 @@ export class UserManager implements IUserService {
 
   async countAll(): Promise<number> {
     const count = await this.userRepository.countAll();
-    if (!count) {
+    if (count === null || count === undefined) {
       throw ApplicationError.notFoundError('Count not found');
     }
     return count;
