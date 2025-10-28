@@ -49,15 +49,9 @@ export class PermissionController {
 
     // Kullanıcının var olup olmadığını kontrol et
     const user = await this.userService.findById(userId);
-    if (!user) {
-      throw ApplicationError.notFoundError(PermissionConstants.UserNotFound.en);
-    }
 
     // Role'ün var olup olmadığını kontrol et
     const role = await this.roleService.findById(roleId);
-    if (!role) {
-      throw ApplicationError.notFoundError(PermissionConstants.RoleNotFound.en);
-    }
 
     // Role'ün aktif olup olmadığını kontrol et
     if (!role.isActive) {
@@ -70,9 +64,15 @@ export class PermissionController {
     // Kullanıcının bu role'e zaten sahip olup olmadığını kontrol et
     try {
       await this.userRoleService.findByUserIdAndRoleId(userId, roleId);
-      throw ApplicationError.businessError('Role already assigned to user', 400);
+      throw ApplicationError.businessError(
+        'Role already assigned to user',
+        400
+      );
     } catch (error) {
-      if (error instanceof ApplicationError && error.category === 'USER_ERROR') {
+      if (
+        error instanceof ApplicationError &&
+        error.category === 'USER_ERROR'
+      ) {
         // Role bulunamadı, devam et
       } else {
         throw error;

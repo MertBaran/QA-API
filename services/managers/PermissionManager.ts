@@ -28,13 +28,6 @@ export class PermissionManager implements IPermissionService {
       }
 
       const newPermission = await this.permissionRepository.create(permission);
-      if (!newPermission) {
-        throw ApplicationError.systemError(
-          PermissionServiceMessages.PermissionCreateError.en,
-          500
-        );
-      }
-
       return newPermission;
     } catch (error) {
       if (error instanceof ApplicationError) {
@@ -66,11 +59,6 @@ export class PermissionManager implements IPermissionService {
   async findByName(name: string): Promise<IPermissionModel> {
     try {
       const permission = await this.permissionRepository.findByName(name);
-      if (!permission) {
-        throw ApplicationError.notFoundError(
-          PermissionServiceMessages.PermissionNotFound.en
-        );
-      }
       return permission;
     } catch (_error) {
       throw ApplicationError.notFoundError(
@@ -116,11 +104,6 @@ export class PermissionManager implements IPermissionService {
   async deleteById(id: EntityId): Promise<IPermissionModel> {
     try {
       const deleted = await this.permissionRepository.deleteById(id);
-      if (!deleted) {
-        throw ApplicationError.notFoundError(
-          PermissionServiceMessages.PermissionNotFound.en
-        );
-      }
       return deleted;
     } catch (_error) {
       if (_error instanceof ApplicationError) {

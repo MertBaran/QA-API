@@ -37,11 +37,6 @@ export class RoleManager implements IRoleService {
   async findById(id: EntityId): Promise<IRoleModel> {
     try {
       const role = await this.roleRepository.findById(id);
-      if (!role) {
-        throw ApplicationError.notFoundError(
-          RoleServiceMessages.RoleNotFound.en
-        );
-      }
       return role;
     } catch (_error) {
       throw ApplicationError.notFoundError(RoleServiceMessages.RoleNotFound.en);
@@ -51,11 +46,6 @@ export class RoleManager implements IRoleService {
   async findByName(name: string): Promise<IRoleModel> {
     try {
       const role = await this.roleRepository.findByName(name);
-      if (!role) {
-        throw ApplicationError.notFoundError(
-          RoleServiceMessages.RoleNotFound.en
-        );
-      }
       return role;
     } catch (_error) {
       throw ApplicationError.notFoundError(RoleServiceMessages.RoleNotFound.en);
