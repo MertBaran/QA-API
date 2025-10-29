@@ -1,9 +1,6 @@
 import { injectable, inject } from 'tsyringe';
 import { Client } from '@elastic/elasticsearch';
-import {
-  IElasticsearchLogShipper,
-  LogEntry,
-} from './IElasticsearchLogShipper';
+import { IElasticsearchLogShipper, LogEntry } from './IElasticsearchLogShipper';
 import { IElasticsearchClient } from './IElasticsearchClient';
 import { ILoggerProvider } from '../logging/ILoggerProvider';
 import { IConfigurationService } from '../../services/contracts/IConfigurationService';
@@ -134,7 +131,7 @@ export class ElasticsearchLogShipper implements IElasticsearchLogShipper {
           refresh: false, // Don't wait for refresh for better performance
         });
 
-        this.logger.debug(`Shipped ${logsToShip.length} logs to Elasticsearch`);
+        //this.logger.debug(`Shipped ${logsToShip.length} logs to Elasticsearch`);
       }
     } catch (error: any) {
       // Put logs back in buffer if shipping failed
@@ -206,8 +203,6 @@ export class ElasticsearchLogShipper implements IElasticsearchLogShipper {
           },
         },
       });
-
-      this.logger.debug('Elasticsearch log index template created');
     } catch (error: any) {
       // Template might already exist, which is fine
       if (error.statusCode !== 400) {
@@ -223,4 +218,3 @@ export class ElasticsearchLogShipper implements IElasticsearchLogShipper {
     this.isShipperEnabled = true;
   }
 }
-
