@@ -50,7 +50,7 @@ export class UserMongooseDataSource implements IDataSource<IUserModel> {
     const result = await this.model.findById(id);
     if (!result) {
       throw ApplicationError.notFoundError(
-        RepositoryConstants.BASE.FIND_BY_ID_ERROR.en
+        RepositoryConstants.USER.NOT_FOUND.en
       );
     }
     return this.toEntity(result);
@@ -70,7 +70,7 @@ export class UserMongooseDataSource implements IDataSource<IUserModel> {
     );
     if (!result) {
       throw ApplicationError.notFoundError(
-        RepositoryConstants.BASE.UPDATE_BY_ID_ERROR.en
+        RepositoryConstants.USER.UPDATE_BY_ID_NOT_FOUND.en
       );
     }
     return this.toEntity(result);
@@ -80,7 +80,7 @@ export class UserMongooseDataSource implements IDataSource<IUserModel> {
     const result = await this.model.findByIdAndDelete(id);
     if (!result) {
       throw ApplicationError.notFoundError(
-        RepositoryConstants.BASE.DELETE_BY_ID_ERROR.en
+        RepositoryConstants.USER.DELETE_BY_ID_NOT_FOUND.en
       );
     }
     return this.toEntity(result);

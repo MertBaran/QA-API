@@ -76,7 +76,7 @@ export class QuestionMongooseDataSource implements IDataSource<IQuestionModel> {
       .populate('user', 'name email profile_image');
     if (!result) {
       throw ApplicationError.notFoundError(
-        RepositoryConstants.BASE.FIND_BY_ID_ERROR.en
+        RepositoryConstants.QUESTION.NOT_FOUND.en
       );
     }
     return this.toEntity(result);
@@ -99,7 +99,7 @@ export class QuestionMongooseDataSource implements IDataSource<IQuestionModel> {
     );
     if (!result) {
       throw ApplicationError.notFoundError(
-        RepositoryConstants.BASE.UPDATE_BY_ID_ERROR.en
+        RepositoryConstants.QUESTION.UPDATE_BY_ID_NOT_FOUND.en
       );
     }
     return this.toEntity(result);
@@ -109,7 +109,7 @@ export class QuestionMongooseDataSource implements IDataSource<IQuestionModel> {
     const result = await this.model.findByIdAndDelete(id);
     if (!result) {
       throw ApplicationError.notFoundError(
-        RepositoryConstants.BASE.DELETE_BY_ID_ERROR.en
+        RepositoryConstants.QUESTION.DELETE_BY_ID_NOT_FOUND.en
       );
     }
     return this.toEntity(result);

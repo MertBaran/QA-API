@@ -48,6 +48,28 @@ export const NotificationConfigSchema = z.object({
     .default('direct'),
 });
 
+export const ElasticsearchConfigSchema = z.object({
+  ELASTICSEARCH_ENABLED: z
+    .string()
+    .transform(val => val === 'true' || val === '1')
+    .pipe(z.boolean())
+    .default(false),
+  ELASTICSEARCH_URL: z.string().url().default('http://localhost:9200'),
+  ELASTICSEARCH_USERNAME: z.string().optional(),
+  ELASTICSEARCH_PASSWORD: z.string().optional(),
+  ELASTICSEARCH_TLS_ENABLED: z
+    .string()
+    .transform(val => val === 'true' || val === '1')
+    .pipe(z.boolean())
+    .default(false),
+  ELASTICSEARCH_TLS_SKIP_VERIFY: z
+    .string()
+    .transform(val => val === 'true' || val === '1')
+    .pipe(z.boolean())
+    .default(false),
+  ELASTICSEARCH_REQUEST_TIMEOUT: z.string().default('30000'),
+});
+
 export const AppConfigSchema = z.object({
   PORT: z.string().default('3000'),
   NODE_ENV: z.enum(['production', 'development', 'test', 'docker']),
@@ -64,7 +86,8 @@ export const ConfigurationSchema = AppConfigSchema.merge(DatabaseConfigSchema)
   .merge(JWTConfigSchema)
   .merge(SMTPConfigSchema)
   .merge(RabbitMQConfigSchema)
-  .merge(NotificationConfigSchema);
+  .merge(NotificationConfigSchema)
+  .merge(ElasticsearchConfigSchema);
 
 export type Configuration = z.infer<typeof ConfigurationSchema>;
 

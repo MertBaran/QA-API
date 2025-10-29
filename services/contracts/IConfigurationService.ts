@@ -41,6 +41,16 @@ export interface CacheConnectionConfig {
   port: number;
 }
 
+export interface ElasticsearchConnectionConfig {
+  url: string;
+  username?: string;
+  password?: string;
+  tlsEnabled: boolean;
+  tlsSkipVerify: boolean;
+  requestTimeout?: number;
+  enabled: boolean;
+}
+
 export interface IConfigurationService {
   getConfig(): EnvironmentConfig;
   getEnvironment(): string;
@@ -48,6 +58,7 @@ export interface IConfigurationService {
   getCacheConnectionConfig(): CacheConnectionConfig;
   getExceptionTrackingConfig(): EnvironmentConfig['exceptionTracking'];
   getFileLoggingConfig(): EnvironmentConfig['fileLogging'];
+  getElasticsearchConfig(): ElasticsearchConnectionConfig;
   isProduction(): boolean;
   isTest(): boolean;
   isDevelopment(): boolean;

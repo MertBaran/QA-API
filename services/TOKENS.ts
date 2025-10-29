@@ -69,6 +69,15 @@ export const TOKENS = {
   IValidationProvider: 'IValidationProvider',
   IMigrationStrategy: 'IMigrationStrategy',
   ISeedStrategy: 'ISeedStrategy',
+  IElasticsearchClient: 'IElasticsearchClient',
+  IElasticsearchLogShipper: 'IElasticsearchLogShipper',
+  ISearchClient: 'ISearchClient',
+  IIndexClient: 'IIndexClient',
+  IDocumentService: 'IDocumentService',
+  IEntityTypeResolver: 'IEntityTypeResolver',
+  IEntityTypeRegistry: 'IEntityTypeRegistry',
+  IQuestionProjector: 'IQuestionProjector',
+  IAnswerProjector: 'IAnswerProjector',
 } as const;
 
 export type Token = (typeof TOKENS)[keyof typeof TOKENS];

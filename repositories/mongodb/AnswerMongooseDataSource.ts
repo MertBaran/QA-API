@@ -51,6 +51,7 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
             like && like._id ? like._id.toString() : like.toString()
           )
         : [],
+      isAccepted: mongoDoc.isAccepted ?? false,
       createdAt: mongoDoc.createdAt,
     };
   }
@@ -69,7 +70,7 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
       .populate('question', 'title');
     if (!result) {
       throw ApplicationError.notFoundError(
-        RepositoryConstants.BASE.FIND_BY_ID_ERROR.en
+        RepositoryConstants.ANSWER.NOT_FOUND.en
       );
     }
     return this.toEntity(result);
@@ -95,7 +96,7 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
     );
     if (!result) {
       throw ApplicationError.notFoundError(
-        RepositoryConstants.BASE.UPDATE_BY_ID_ERROR.en
+        RepositoryConstants.ANSWER.UPDATE_BY_ID_NOT_FOUND.en
       );
     }
     return this.toEntity(result);
@@ -105,7 +106,7 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
     const result = await this.model.findByIdAndDelete(id);
     if (!result) {
       throw ApplicationError.notFoundError(
-        RepositoryConstants.BASE.DELETE_BY_ID_ERROR.en
+        RepositoryConstants.ANSWER.DELETE_BY_ID_NOT_FOUND.en
       );
     }
     return this.toEntity(result);
