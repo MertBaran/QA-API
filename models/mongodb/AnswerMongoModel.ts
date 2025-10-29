@@ -8,6 +8,7 @@ export interface IAnswerMongo extends Document {
   user: mongoose.Types.ObjectId;
   question: mongoose.Types.ObjectId;
   likes: mongoose.Types.ObjectId[];
+  isAccepted?: boolean;
 }
 
 const AnswerSchema = new Schema<IAnswerMongo>({
@@ -36,6 +37,10 @@ const AnswerSchema = new Schema<IAnswerMongo>({
       ref: 'User',
     },
   ],
+  isAccepted: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 AnswerSchema.pre('save', async function (this: IAnswerMongo, next) {
