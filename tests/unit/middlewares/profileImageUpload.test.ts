@@ -1,4 +1,4 @@
-import CustomError from '../../../helpers/error/CustomError';
+import { ApplicationError } from '../../../infrastructure/error/ApplicationError';
 import profileImageUpload from '../../../middlewares/libraries/profileImageUpload';
 
 describe('profileImageUpload middleware', () => {
@@ -19,8 +19,8 @@ describe('profileImageUpload middleware', () => {
     const req: any = {};
     const cb = jest.fn();
     fileFilter(req, { mimetype: 'application/pdf' }, cb);
-    expect(cb).toHaveBeenCalledWith(expect.any(CustomError));
-    expect((cb.mock.calls[0][0] as CustomError).message).toMatch(
+    expect(cb).toHaveBeenCalledWith(expect.any(ApplicationError));
+    expect((cb.mock.calls[0][0] as ApplicationError).message).toMatch(
       /only jpeg, jpg and png/i
     );
   });

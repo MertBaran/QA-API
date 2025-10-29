@@ -6,7 +6,7 @@ export interface INotificationRepository {
   createNotification(
     notification: Partial<INotificationModel>
   ): Promise<INotificationModel>;
-  getNotificationById(id: string): Promise<INotificationModel | null>;
+  getNotificationById(id: string): Promise<INotificationModel>;
   getNotificationsByUserId(
     userId: string,
     limit?: number,
@@ -23,8 +23,8 @@ export interface INotificationRepository {
   createTemplate(
     template: Partial<INotificationTemplateModel>
   ): Promise<INotificationTemplateModel>;
-  getTemplateById(id: string): Promise<INotificationTemplateModel | null>;
-  getTemplateByName(name: string): Promise<INotificationTemplateModel | null>;
+  getTemplateById(id: string): Promise<INotificationTemplateModel>;
+  getTemplateByName(name: string): Promise<INotificationTemplateModel>;
   getTemplatesByType(
     type: INotificationTemplateModel['type']
   ): Promise<INotificationTemplateModel[]>;

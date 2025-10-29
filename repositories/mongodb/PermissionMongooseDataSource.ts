@@ -4,6 +4,8 @@ import { IPermissionModel } from '../../models/interfaces/IPermissionModel';
 import { IPermissionMongo } from '../../models/mongodb/PermissionMongoModel';
 import { EntityId } from '../../types/database';
 import PermissionMongo from '../../models/mongodb/PermissionMongoModel';
+import { ApplicationError } from '../../infrastructure/error/ApplicationError';
+import { RepositoryConstants } from '../constants/RepositoryMessages';
 
 @injectable()
 export class PermissionMongooseDataSource implements IPermissionDataSource {
@@ -13,9 +15,14 @@ export class PermissionMongooseDataSource implements IPermissionDataSource {
     return this.toEntity(savedPermission);
   }
 
-  async findById(id: EntityId): Promise<IPermissionModel | null> {
+  async findById(id: EntityId): Promise<IPermissionModel> {
     const permission = await PermissionMongo.findById(id);
-    return permission ? this.toEntity(permission) : null;
+    if (!permission) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.FIND_BY_ID_ERROR.en
+      );
+    }
+    return this.toEntity(permission);
   }
 
   async findAll(): Promise<IPermissionModel[]> {
@@ -26,16 +33,26 @@ export class PermissionMongooseDataSource implements IPermissionDataSource {
   async updateById(
     id: EntityId,
     data: Partial<IPermissionModel>
-  ): Promise<IPermissionModel | null> {
+  ): Promise<IPermissionModel> {
     const permission = await PermissionMongo.findByIdAndUpdate(id, data, {
       new: true,
     });
-    return permission ? this.toEntity(permission) : null;
+    if (!permission) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.UPDATE_BY_ID_ERROR.en
+      );
+    }
+    return this.toEntity(permission);
   }
 
-  async deleteById(id: EntityId): Promise<IPermissionModel | null> {
+  async deleteById(id: EntityId): Promise<IPermissionModel> {
     const result = await PermissionMongo.findByIdAndDelete(id);
-    return result ? this.toEntity(result) : null;
+    if (!result) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.DELETE_BY_ID_ERROR.en
+      );
+    }
+    return this.toEntity(result);
   }
 
   async findByField(
@@ -53,9 +70,14 @@ export class PermissionMongooseDataSource implements IPermissionDataSource {
     return permissions.map(permission => this.toEntity(permission));
   }
 
-  async findByName(name: string): Promise<IPermissionModel | null> {
+  async findByName(name: string): Promise<IPermissionModel> {
     const permission = await PermissionMongo.findOne({ name });
-    return permission ? this.toEntity(permission) : null;
+    if (!permission) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.FIND_BY_FIELD_VALUE_ERROR.en
+      );
+    }
+    return this.toEntity(permission);
   }
 
   async findByResource(resource: string): Promise<IPermissionModel[]> {

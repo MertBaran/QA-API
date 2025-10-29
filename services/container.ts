@@ -49,6 +49,7 @@ import { SmartNotificationManager } from './managers/SmartNotificationManager';
 import { SmartNotificationStrategy } from './strategies/SmartNotificationStrategy';
 import { SystemMetricsCollector } from './metrics/SystemMetricsCollector';
 import { WebSocketMonitorService } from './WebSocketMonitorService';
+import { InternalWebSocketClient } from './InternalWebSocketClient';
 import { PermissionManager } from './managers/PermissionManager';
 import { RoleManager } from './managers/RoleManager';
 import { UserRoleManager } from './managers/UserRoleManager';
@@ -64,6 +65,18 @@ import { BookmarkRepository } from '../repositories/BookmarkRepository';
 import { BookmarkMongooseDataSource } from '../repositories/mongodb/BookmarkMongooseDataSource';
 
 import { BookmarkController } from '../controllers/bookmarkController';
+import { ElasticsearchClient } from '../infrastructure/elasticsearch/ElasticsearchClient';
+import { ElasticsearchIndexService } from '../infrastructure/elasticsearch/ElasticsearchIndexService';
+import { ElasticsearchLogShipper } from '../infrastructure/elasticsearch/ElasticsearchLogShipper';
+import { ElasticsearchSyncService } from '../infrastructure/elasticsearch/ElasticsearchSyncService';
+import { EntityTypeResolver } from '../infrastructure/search/EntityTypeResolver';
+import { EntityTypeRegistry } from '../infrastructure/search/EntityType';
+import { QuestionProjector } from '../infrastructure/search/projectors/QuestionProjector';
+import { AnswerProjector } from '../infrastructure/search/projectors/AnswerProjector';
+import { IQuestionModel } from '../models/interfaces/IQuestionModel';
+import { IAnswerModel } from '../models/interfaces/IAnswerModel';
+import { QuestionSearchDoc } from '../infrastructure/search/SearchDocument';
+import { AnswerSearchDoc } from '../infrastructure/search/SearchDocument';
 
 // Register core services first
 container.registerSingleton(TOKENS.BootstrapService, BootstrapService);
@@ -86,6 +99,31 @@ container.registerSingleton(TOKENS.IDatabaseAdapter, MongoDBAdapter);
 container.registerSingleton(TOKENS.IAuditProvider, MongoAuditProvider);
 container.registerSingleton(TOKENS.AuditProvider, MongoAuditProvider);
 container.registerSingleton(TOKENS.IEnvironmentProvider, EnvironmentProvider);
+
+// Register Elasticsearch services
+container.registerSingleton(TOKENS.IElasticsearchClient, ElasticsearchClient);
+container.registerSingleton(
+  TOKENS.IElasticsearchLogShipper,
+  ElasticsearchLogShipper
+);
+
+// Register Search & Index services (soyut interface'ler)
+container.registerSingleton(TOKENS.ISearchClient, ElasticsearchIndexService);
+container.registerSingleton(TOKENS.IIndexClient, ElasticsearchSyncService);
+container.registerSingleton(TOKENS.IDocumentService, ElasticsearchIndexService);
+container.registerSingleton(TOKENS.IEntityTypeRegistry, EntityTypeRegistry);
+container.registerSingleton(TOKENS.IEntityTypeResolver, EntityTypeResolver);
+
+// Register Projectors - Entity'den SearchDocument'a mapping
+// Manager'larda kullanılan token string'leri ile register ediyoruz
+container.registerSingleton(
+  'IProjector<IQuestionModel, QuestionSearchDoc>',
+  QuestionProjector
+);
+container.registerSingleton(
+  'IProjector<IAnswerModel, AnswerSearchDoc>',
+  AnswerProjector
+);
 
 // Register queue providers
 container.registerSingleton(TOKENS.IQueueProvider, RabbitMQProvider);
@@ -156,6 +194,12 @@ container.registerSingleton(
 container.registerSingleton(
   TOKENS.WebSocketMonitorService,
   WebSocketMonitorService
+);
+
+// Register internal WebSocket client
+container.registerSingleton(
+  TOKENS.InternalWebSocketClient,
+  InternalWebSocketClient
 );
 
 // Register notification managers based on technology

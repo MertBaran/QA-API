@@ -12,5 +12,6 @@ export interface IAnswerModel {
   };
   question: EntityId;
   likes: EntityId[];
+  isAccepted: boolean;
   createdAt?: Date;
 }

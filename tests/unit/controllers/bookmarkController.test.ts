@@ -5,7 +5,7 @@ import { FakeBookmarkService } from '../../mocks/services/FakeBookmarkService';
 import { FakeLoggerProvider } from '../../mocks/logger/FakeLoggerProvider';
 import { FakeExceptionTracker } from '../../mocks/error/FakeExceptionTracker';
 import { Request, Response } from 'express';
-import { ApplicationError } from '../../../helpers/error/ApplicationError';
+import { ApplicationError } from '../../../infrastructure/error/ApplicationError';
 
 describe('BookmarkController', () => {
   let bookmarkController: BookmarkController;

@@ -4,12 +4,12 @@ import { IRepository } from './IRepository';
 
 export interface IUserRoleRepository extends IRepository<IUserRoleModel> {
   findByUserId(userId: EntityId): Promise<IUserRoleModel[]>;
-  findByUserIdAndActive(userId: EntityId): Promise<IUserRoleModel[]>;
   findByRoleId(roleId: EntityId): Promise<IUserRoleModel[]>;
   findByUserIdAndRoleId(
     userId: EntityId,
     roleId: EntityId
-  ): Promise<IUserRoleModel | null>;
+  ): Promise<IUserRoleModel>;
+  findByUserIdAndActive(userId: EntityId): Promise<IUserRoleModel[]>;
   assignRoleToUser(
     userId: EntityId,
     roleId: EntityId,
@@ -18,6 +18,6 @@ export interface IUserRoleRepository extends IRepository<IUserRoleModel> {
   removeRoleFromUser(
     userId: EntityId,
     roleId: EntityId
-  ): Promise<IUserRoleModel | null>;
+  ): Promise<IUserRoleModel>;
   deactivateExpiredRoles(): Promise<number>;
 }

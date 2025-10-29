@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import CustomError from '../../helpers/error/CustomError';
+import { ApplicationError } from '../../infrastructure/error/ApplicationError';
 import asyncErrorWrapper from 'express-async-handler';
 import { container } from 'tsyringe';
 import { IUserService } from '../../services/contracts/IUserService';
@@ -16,7 +16,7 @@ const checkUserExist = asyncErrorWrapper(
     const user = await userService.findById(id);
     if (!user) {
       return next(
-        new CustomError(DatabaseMiddlewareMessages.UserNotFound, 404)
+        new ApplicationError(DatabaseMiddlewareMessages.UserNotFound, 404)
       );
     }
     next();
@@ -34,7 +34,7 @@ const checkQuestionExist = asyncErrorWrapper(
     const question = await questionRepository.findById(question_id);
     if (!question) {
       return next(
-        new CustomError(DatabaseMiddlewareMessages.QuestionNotFound, 404)
+        new ApplicationError(DatabaseMiddlewareMessages.QuestionNotFound, 404)
       );
     }
     next();
@@ -65,7 +65,7 @@ const checkQuestionAndAnswerExist = asyncErrorWrapper(
     );
     if (!answer) {
       return next(
-        new CustomError(DatabaseMiddlewareMessages.AnswerNotFound, 404)
+        new ApplicationError(DatabaseMiddlewareMessages.AnswerNotFound, 404)
       );
     }
     next();

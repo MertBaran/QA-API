@@ -6,7 +6,7 @@ import {
   IBookmarkModel,
   BookmarkTargetType,
 } from '../../../models/interfaces/IBookmarkModel';
-import { ApplicationError } from '../../../helpers/error/ApplicationError';
+import { ApplicationError } from '../../../infrastructure/error/ApplicationError';
 import { FakeBookmarkRepository } from '../../mocks/repositories/FakeBookmarkRepository';
 import { FakeLoggerProvider } from '../../mocks/logger/FakeLoggerProvider';
 import { FakeCacheProvider } from '../../mocks/cache/FakeCacheProvider';

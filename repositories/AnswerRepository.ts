@@ -4,7 +4,8 @@ import { EntityId } from '../types/database';
 import { BaseRepository } from './base/BaseRepository';
 import { IAnswerRepository } from './interfaces/IAnswerRepository';
 import { IDataSource } from './interfaces/IDataSource';
-
+import { RepositoryConstants } from './constants/RepositoryMessages';
+import { ApplicationError } from '../infrastructure/error/ApplicationError';
 @injectable()
 export class AnswerRepository
   extends BaseRepository<IAnswerModel>
@@ -30,15 +31,18 @@ export class AnswerRepository
     return all.filter(a => a.user === userId);
   }
 
-  async likeAnswer(
-    answerId: string,
-    userId: EntityId
-  ): Promise<IAnswerModel | null> {
+  async likeAnswer(answerId: string, userId: EntityId): Promise<IAnswerModel> {
     const answer = await this.findById(answerId);
-    if (!answer) return null;
+    if (!answer) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.FIND_BY_ID_ERROR.en
+      );
+    }
     if (answer.likes.includes(userId)) {
-      // Already liked, return null to indicate error
-      return null;
+      throw ApplicationError.businessError(
+        RepositoryConstants.ANSWER.ALREADY_LIKED_ERROR.en,
+        400
+      );
     }
     answer.likes.push(userId);
     return this.updateById(answerId, { likes: answer.likes });
@@ -47,12 +51,18 @@ export class AnswerRepository
   async unlikeAnswer(
     answerId: string,
     userId: EntityId
-  ): Promise<IAnswerModel | null> {
+  ): Promise<IAnswerModel> {
     const answer = await this.findById(answerId);
-    if (!answer) return null;
+    if (!answer) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.FIND_BY_ID_ERROR.en
+      );
+    }
     if (!answer.likes.includes(userId)) {
-      // Not liked, return null to indicate error
-      return null;
+      throw ApplicationError.businessError(
+        RepositoryConstants.ANSWER.NOT_LIKED_ERROR.en,
+        400
+      );
     }
     answer.likes = answer.likes.filter(like => like !== userId);
     return this.updateById(answerId, { likes: answer.likes });

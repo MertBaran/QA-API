@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import asyncErrorWrapper from 'express-async-handler';
 import { container } from 'tsyringe';
-import CustomError from '../../helpers/error/CustomError';
+import { ApplicationError } from '../../infrastructure/error/ApplicationError';
 import { AuthMiddlewareMessages } from '../constants/MiddlewareMessages';
 import { IUserRoleService } from '../../services/contracts/IUserRoleService';
 import { IRoleService } from '../../services/contracts/IRoleService';
@@ -76,13 +76,15 @@ export const requirePermission = (permission: string) => {
   return asyncErrorWrapper(
     async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
       if (!req.user) {
-        return next(new CustomError(AuthMiddlewareMessages.Unauthorized, 401));
+        return next(
+          new ApplicationError(AuthMiddlewareMessages.Unauthorized, 401)
+        );
       }
 
       const userPermissions = await getUserPermissions(req.user.id);
 
       if (!userPermissions.includes(permission)) {
-        return next(new CustomError('Insufficient permissions', 403));
+        return next(new ApplicationError('Insufficient permissions', 403));
       }
 
       next();
@@ -95,7 +97,9 @@ export const requireAnyPermission = (permissions: string[]) => {
   return asyncErrorWrapper(
     async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
       if (!req.user) {
-        return next(new CustomError(AuthMiddlewareMessages.Unauthorized, 401));
+        return next(
+          new ApplicationError(AuthMiddlewareMessages.Unauthorized, 401)
+        );
       }
 
       const userPermissions = await getUserPermissions(req.user.id);
@@ -105,7 +109,7 @@ export const requireAnyPermission = (permissions: string[]) => {
       );
 
       if (!hasAnyPermission) {
-        return next(new CustomError('Insufficient permissions', 403));
+        return next(new ApplicationError('Insufficient permissions', 403));
       }
 
       next();
@@ -118,7 +122,9 @@ export const requireAllPermissions = (permissions: string[]) => {
   return asyncErrorWrapper(
     async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
       if (!req.user) {
-        return next(new CustomError(AuthMiddlewareMessages.Unauthorized, 401));
+        return next(
+          new ApplicationError(AuthMiddlewareMessages.Unauthorized, 401)
+        );
       }
 
       const userPermissions = await getUserPermissions(req.user.id);
@@ -128,7 +134,7 @@ export const requireAllPermissions = (permissions: string[]) => {
       );
 
       if (!hasAllPermissions) {
-        return next(new CustomError('Insufficient permissions', 403));
+        return next(new ApplicationError('Insufficient permissions', 403));
       }
 
       next();

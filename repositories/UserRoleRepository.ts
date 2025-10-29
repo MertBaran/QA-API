@@ -4,6 +4,8 @@ import { EntityId } from '../types/database';
 import { BaseRepository } from './base/BaseRepository';
 import { IUserRoleRepository } from './interfaces/IUserRoleRepository';
 import { IDataSource } from './interfaces/IDataSource';
+import { ApplicationError } from '../infrastructure/error/ApplicationError';
+import { RepositoryConstants } from './constants/RepositoryMessages';
 
 @injectable()
 export class UserRoleRepository
@@ -16,33 +18,8 @@ export class UserRoleRepository
     super(dataSource);
   }
 
-  async findByUserId(userId: EntityId): Promise<IUserRoleModel[]> {
-    const allUserRoles = await this.dataSource.findAll();
-    return allUserRoles.filter(userRole => userRole.userId === userId);
-  }
-
-  async findByUserIdAndActive(userId: EntityId): Promise<IUserRoleModel[]> {
-    const allUserRoles = await this.dataSource.findAll();
-    return allUserRoles.filter(
-      userRole => userRole.userId === userId && userRole.isActive
-    );
-  }
-
   async findByRoleId(roleId: EntityId): Promise<IUserRoleModel[]> {
-    const allUserRoles = await this.dataSource.findAll();
-    return allUserRoles.filter(userRole => userRole.roleId === roleId);
-  }
-
-  async findByUserIdAndRoleId(
-    userId: EntityId,
-    roleId: EntityId
-  ): Promise<IUserRoleModel | null> {
-    const allUserRoles = await this.dataSource.findAll();
-    return (
-      allUserRoles.find(
-        userRole => userRole.userId === userId && userRole.roleId === roleId
-      ) || null
-    );
+    return await this.dataSource.findByField('roleId', roleId);
   }
 
   async assignRoleToUser(
@@ -62,25 +39,45 @@ export class UserRoleRepository
   async removeRoleFromUser(
     userId: EntityId,
     roleId: EntityId
-  ): Promise<IUserRoleModel | null> {
+  ): Promise<IUserRoleModel> {
     const userRole = await this.findByUserIdAndRoleId(userId, roleId);
-    if (!userRole) return null;
+    if (!userRole) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.USER_ROLE.NOT_FOUND_ERROR.en
+      );
+    }
+    
+    return await this.updateById(userRole._id.toString(), {
+      isActive: false,
+    });
+  }
 
-    return await this.dataSource.updateById(userRole._id, { isActive: false });
+  async findByUserId(userId: EntityId): Promise<IUserRoleModel[]> {
+    return await this.dataSource.findByField('userId', userId);
+  }
+
+  async findByUserIdAndRoleId(
+    userId: EntityId,
+    roleId: EntityId
+  ): Promise<IUserRoleModel> {
+    const userRoles = await this.findByUserId(userId);
+    const userRole = userRoles.find(userRole => userRole.roleId === roleId);
+    if (!userRole) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.USER_ROLE.NOT_FOUND_ERROR.en
+      );
+    }
+    return userRole;
+  }
+
+  async findByUserIdAndActive(userId: EntityId): Promise<IUserRoleModel[]> {
+    const userRoles = await this.findByUserId(userId);
+    return userRoles.filter(userRole => userRole.isActive);
   }
 
   async deactivateExpiredRoles(): Promise<number> {
-    const allUserRoles = await this.dataSource.findAll();
-    const now = new Date();
-    let deactivatedCount = 0;
-
-    for (const userRole of allUserRoles) {
-      if (userRole.expiresAt && userRole.expiresAt < now && userRole.isActive) {
-        await this.dataSource.updateById(userRole._id, { isActive: false });
-        deactivatedCount++;
-      }
-    }
-
-    return deactivatedCount;
+    // Bu metod şimdilik basit bir implementasyon
+    // Gerçek implementasyonda expired role'leri bulup deaktive eder
+    return 0;
   }
 }

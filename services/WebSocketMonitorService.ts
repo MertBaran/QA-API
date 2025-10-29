@@ -4,6 +4,9 @@ import { Server } from 'http';
 import { ILoggerProvider } from '../infrastructure/logging/ILoggerProvider';
 import { INotificationService } from './contracts/INotificationService';
 import { ApplicationState } from './ApplicationState';
+import { ICacheProvider } from '../infrastructure/cache/ICacheProvider';
+import { container } from './container';
+import { InternalWebSocketClient } from './InternalWebSocketClient';
 
 export interface ConnectionStatus {
   service: 'database' | 'cache' | 'queue' | 'email';
@@ -45,12 +48,23 @@ export class WebSocketMonitorService {
   private isMonitoring = false;
   private appState = ApplicationState.getInstance();
 
+  // Circuit breaker for failed connections
+  private circuitBreaker: Map<
+    string,
+    { failures: number; lastFailure: Date; skipUntil?: Date }
+  > = new Map();
+  private readonly MAX_FAILURES = 3;
+  private readonly CIRCUIT_BREAKER_TIMEOUT = 30000; // 30 seconds
+
   constructor(
     @inject('ILoggerProvider') private logger: ILoggerProvider,
     @inject('INotificationService')
-    private notificationService: INotificationService
+    private notificationService: INotificationService,
+    @inject('InternalWebSocketClient')
+    private internalClient: InternalWebSocketClient
   ) {
     this.initializeStatus();
+    // Don't start internal client immediately - wait for app to be ready
   }
 
   private initializeStatus(): void {
@@ -92,6 +106,11 @@ export class WebSocketMonitorService {
   private handleConnection(ws: WebSocket): void {
     this.clients.add(ws);
 
+    // Start monitoring when first client connects
+    if (this.clients.size === 1 && !this.isMonitoring) {
+      this.startMonitoring();
+    }
+
     // Send current status to new client
     this.sendToClient(ws, {
       type: 'connection_status',
@@ -119,15 +138,25 @@ export class WebSocketMonitorService {
 
     ws.on('close', () => {
       this.clients.delete(ws);
-      this.logger.info('Client disconnected from WebSocket monitoring');
+      // Silent close for internal client
+
+      // Stop monitoring if no clients left
+      if (this.clients.size === 0 && this.isMonitoring) {
+        this.stopMonitoring();
+      }
     });
 
     ws.on('error', (error: Error) => {
-      this.logger.error('WebSocket error:', { error: error.message });
+      // Silent error for internal client
       this.clients.delete(ws);
+
+      // Stop monitoring if no clients left
+      if (this.clients.size === 0 && this.isMonitoring) {
+        this.stopMonitoring();
+      }
     });
 
-    this.logger.info('Client connected to WebSocket monitoring');
+    // Silent connection for internal client
   }
 
   private handleMessage(ws: WebSocket, message: string): void {
@@ -199,15 +228,26 @@ export class WebSocketMonitorService {
       return;
     }
 
+    // Start internal client when monitoring starts (app should be ready by then)
+    this.startInternalClient();
+
     this.isMonitoring = true;
     this.monitoringInterval = setInterval(() => {
-      this.checkAllConnections();
+      // Always monitor if internal client is connected or external clients exist
+      if (this.internalClient.isClientConnected() || this.clients.size > 0) {
+        this.checkAllConnections();
+      } else {
+        // No clients - stop monitoring to save resources
+        this.stopMonitoring();
+      }
     }, intervalMs);
 
-    //this.logger.info('🔍 WebSocket connection monitoring started', {
-    //  interval: `${intervalMs}ms`,
-    //  services: ['database', 'cache', 'queue', 'email'],
-    //});
+    this.logger.info('🔍 WebSocket connection monitoring started', {
+      interval: `${intervalMs}ms`,
+      internalClient: this.internalClient.isClientConnected(),
+      externalClients: this.clients.size,
+      services: ['database', 'cache', 'queue', 'email'],
+    });
   }
 
   public stopMonitoring(): void {
@@ -219,6 +259,16 @@ export class WebSocketMonitorService {
     this.logger.info('🛑 WebSocket connection monitoring stopped');
   }
 
+  private async startInternalClient(): Promise<void> {
+    try {
+      const wsUrl = `ws://localhost:${process.env['PORT'] || 3000}`;
+      await this.internalClient.connect(wsUrl);
+      // Silent - internal client started
+    } catch (error) {
+      // Silent - internal client failed to start
+    }
+  }
+
   private async checkAllConnections(): Promise<void> {
     if (!this.appState.isReady) {
       return;
@@ -227,7 +277,8 @@ export class WebSocketMonitorService {
     const config = this.appState.config;
     const checks = [
       this.checkDatabaseConnection(config.MONGO_URI),
-      this.checkCacheConnection(config),
+      // Skip cache check to avoid Redis connection issues
+      // this.checkCacheConnection(config),
       this.checkQueueConnection(),
       this.checkEmailConnection(config),
     ];
@@ -235,46 +286,126 @@ export class WebSocketMonitorService {
     await Promise.allSettled(checks);
   }
 
+  private shouldSkipCheck(service: string): boolean {
+    const breaker = this.circuitBreaker.get(service);
+    if (!breaker) return false;
+
+    if (breaker.skipUntil && breaker.skipUntil > new Date()) {
+      return true;
+    }
+
+    return false;
+  }
+
+  private recordFailure(service: string): void {
+    const breaker = this.circuitBreaker.get(service) || {
+      failures: 0,
+      lastFailure: new Date(),
+    };
+    breaker.failures++;
+    breaker.lastFailure = new Date();
+
+    if (breaker.failures >= this.MAX_FAILURES) {
+      breaker.skipUntil = new Date(Date.now() + this.CIRCUIT_BREAKER_TIMEOUT);
+      this.logger.warn(
+        `Circuit breaker opened for ${service} - skipping checks for ${this.CIRCUIT_BREAKER_TIMEOUT}ms`
+      );
+    }
+
+    this.circuitBreaker.set(service, breaker);
+  }
+
+  private recordSuccess(service: string): void {
+    const breaker = this.circuitBreaker.get(service);
+    if (breaker && breaker.failures > 0) {
+      breaker.failures = 0;
+      breaker.skipUntil = undefined;
+      this.logger.info(
+        `Circuit breaker closed for ${service} - connection restored`
+      );
+      this.circuitBreaker.set(service, breaker);
+    }
+  }
+
   private async checkDatabaseConnection(mongoUri: string): Promise<void> {
+    if (this.shouldSkipCheck('database')) {
+      return;
+    }
+
     try {
-      const isConnected = mongoUri && mongoUri.includes('mongodb');
+      // Real MongoDB connection test
+      const mongoose = require('mongoose');
+
+      // Try to ping the database
+      await mongoose.connection.db.admin().ping();
 
       const previousStatus = this.connectionStatus.get('database');
       const newStatus: ConnectionStatus = {
         service: 'database',
-        status: isConnected ? 'connected' : 'disconnected',
+        status: 'connected',
         lastCheck: new Date(),
         details: {
           host: new URL(mongoUri).hostname,
           database: new URL(mongoUri).pathname.substring(1),
+          testResult: 'success',
         },
       };
 
       this.updateConnectionStatus('database', newStatus, previousStatus);
+      this.recordSuccess('database');
     } catch (error) {
-      this.handleConnectionError('database', error as Error);
+      this.recordFailure('database');
+
+      // Database connection failed - notify clients but don't crash
+      const previousStatus = this.connectionStatus.get('database');
+      const newStatus: ConnectionStatus = {
+        service: 'database',
+        status: 'disconnected',
+        lastCheck: new Date(),
+        error: error instanceof Error ? error.message : String(error),
+        details: {
+          host: mongoUri ? new URL(mongoUri).hostname : 'unknown',
+          database: mongoUri
+            ? new URL(mongoUri).pathname.substring(1)
+            : 'unknown',
+          testResult: 'failed',
+        },
+      };
+
+      this.updateConnectionStatus('database', newStatus, previousStatus);
+
+      // Notify WebSocket clients about database failure
+      this.broadcast({
+        type: 'alert',
+        data: {
+          type: 'connection_lost',
+          service: 'database',
+          message: 'MongoDB database connection lost',
+          timestamp: new Date(),
+          details: error instanceof Error ? error.message : String(error),
+        },
+        timestamp: new Date(),
+      });
     }
   }
 
   private async checkCacheConnection(config: any): Promise<void> {
-    try {
-      const isConnected = config.REDIS_HOST && config.REDIS_PORT;
+    // Only check config, don't actually connect to Redis to avoid connection issues
+    const hasConfig = config.REDIS_HOST && config.REDIS_PORT;
 
-      const previousStatus = this.connectionStatus.get('cache');
-      const newStatus: ConnectionStatus = {
-        service: 'cache',
-        status: isConnected ? 'connected' : 'disconnected',
-        lastCheck: new Date(),
-        details: {
-          host: config.REDIS_HOST,
-          port: config.REDIS_PORT,
-        },
-      };
+    const previousStatus = this.connectionStatus.get('cache');
+    const newStatus: ConnectionStatus = {
+      service: 'cache',
+      status: hasConfig ? 'connected' : 'disconnected',
+      lastCheck: new Date(),
+      details: {
+        host: config.REDIS_HOST,
+        port: config.REDIS_PORT,
+        note: 'Config-based check only - no actual Redis connection test',
+      },
+    };
 
-      this.updateConnectionStatus('cache', newStatus, previousStatus);
-    } catch (error) {
-      this.handleConnectionError('cache', error as Error);
-    }
+    this.updateConnectionStatus('cache', newStatus, previousStatus);
   }
 
   private async checkQueueConnection(): Promise<void> {

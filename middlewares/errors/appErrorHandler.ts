@@ -1,7 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { ErrorLogger } from '../../helpers/error/ErrorLogger';
-import { ApplicationError } from '../../helpers/error/ApplicationError';
-import { ErrorCategory } from '../../helpers/error/ErrorTypes';
+import { ApplicationError } from '../../infrastructure/error/ApplicationError';
 import { container } from 'tsyringe';
 import { IEnvironmentProvider } from '../../services/contracts/IEnvironmentProvider';
 import { ILoggerProvider } from '../../infrastructure/logging/ILoggerProvider';
@@ -45,12 +43,7 @@ function handleErrorLogging(appError: ApplicationError, req: Request): void {
       container.resolve<IExceptionTracker>('IExceptionTracker');
 
     // Kullanıcı hatalarını Pino'ya logla (Sentry'ye gönderme)
-    if (
-      appError.category === ErrorCategory.USER_ERROR ||
-      appError.category === ErrorCategory.VALIDATION_ERROR ||
-      appError.category === ErrorCategory.AUTHENTICATION_ERROR ||
-      appError.category === ErrorCategory.AUTHORIZATION_ERROR
-    ) {
+    if (appError.isUserError()) {
       logger.warn('User error occurred', {
         message: appError.message,
         statusCode: appError.statusCode,
@@ -66,9 +59,8 @@ function handleErrorLogging(appError: ApplicationError, req: Request): void {
 
     // Sistem hatalarını Sentry'ye gönder
     if (
-      appError.category === ErrorCategory.SYSTEM_ERROR ||
-      (appError.category === ErrorCategory.BUSINESS_ERROR &&
-        appError.severity === 'CRITICAL')
+      appError.isSystemError() ||
+      (appError.isBusinessError() && appError.severity === 'CRITICAL')
     ) {
       exceptionTracker.captureException(appError, {
         endpoint: req.originalUrl,
@@ -180,7 +172,9 @@ function prepareErrorResponse(error: ApplicationError, req: Request): any {
     'IEnvironmentProvider'
   );
   const nodeEnv = envProvider.getEnvironmentVariable('NODE_ENV', 'development');
+
   const isDevelopment = nodeEnv === 'development';
+  const isTest = nodeEnv === 'test';
   const isProduction = nodeEnv === 'production';
 
   // Base response
@@ -191,7 +185,7 @@ function prepareErrorResponse(error: ApplicationError, req: Request): any {
   };
 
   // Development ortamında ek bilgiler
-  if (isDevelopment) {
+  if (isDevelopment || isTest) {
     response.debug = {
       category: error.category,
       severity: error.severity,
@@ -205,7 +199,7 @@ function prepareErrorResponse(error: ApplicationError, req: Request): any {
   // Production ortamında sadece gerekli bilgiler
   if (isProduction) {
     // Sistem hatalarında genel mesaj göster
-    if (error.category === ErrorCategory.SYSTEM_ERROR) {
+    if (error.category === 'SYSTEM_ERROR') {
       response.error = 'Internal server error';
       response.errorId = generateErrorId();
     }
@@ -213,10 +207,10 @@ function prepareErrorResponse(error: ApplicationError, req: Request): any {
 
   // Kullanıcı hatalarında her zaman detaylı mesaj göster
   if (
-    error.category === ErrorCategory.USER_ERROR ||
-    error.category === ErrorCategory.VALIDATION_ERROR ||
-    error.category === ErrorCategory.AUTHENTICATION_ERROR ||
-    error.category === ErrorCategory.AUTHORIZATION_ERROR
+    error.category === 'USER_ERROR' ||
+    error.category === 'VALIDATION_ERROR' ||
+    error.category === 'AUTHENTICATION_ERROR' ||
+    error.category === 'AUTHORIZATION_ERROR'
   ) {
     response.error = error.message;
   }

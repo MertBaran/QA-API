@@ -1,5 +1,5 @@
 import { getAccessToRoute } from '../../../middlewares/authorization/authMiddleware';
-import CustomError from '../../../helpers/error/CustomError';
+import { ApplicationError } from '../../../infrastructure/error/ApplicationError';
 import jwt from 'jsonwebtoken';
 
 describe('authMiddleware - getAccessToRoute', () => {
@@ -22,8 +22,8 @@ describe('authMiddleware - getAccessToRoute', () => {
 
   it('should call next with error if token is missing', () => {
     getAccessToRoute(req, res, next);
-    expect(next).toHaveBeenCalledWith(expect.any(CustomError));
-    expect((next.mock.calls[0][0] as CustomError).statusCode).toBe(401);
+    expect(next).toHaveBeenCalledWith(expect.any(ApplicationError));
+    expect((next.mock.calls[0][0] as ApplicationError).statusCode).toBe(401);
   });
 
   it('should call next with error if token is invalid', () => {
@@ -32,8 +32,8 @@ describe('authMiddleware - getAccessToRoute', () => {
       (cb as Function)(new Error('invalid'), undefined);
     });
     getAccessToRoute(req, res, next);
-    expect(next).toHaveBeenCalledWith(expect.any(CustomError));
-    expect((next.mock.calls[0][0] as CustomError).statusCode).toBe(401);
+    expect(next).toHaveBeenCalledWith(expect.any(ApplicationError));
+    expect((next.mock.calls[0][0] as ApplicationError).statusCode).toBe(401);
   });
 
   it('should attach user and call next if token is valid', () => {
@@ -50,7 +50,7 @@ describe('authMiddleware - getAccessToRoute', () => {
     process.env['JWT_SECRET_KEY'] = '';
     req.headers.authorization = 'Bearer sometoken';
     getAccessToRoute(req, res, next);
-    expect(next).toHaveBeenCalledWith(expect.any(CustomError));
-    expect((next.mock.calls[0][0] as CustomError).statusCode).toBe(500);
+    expect(next).toHaveBeenCalledWith(expect.any(ApplicationError));
+    expect((next.mock.calls[0][0] as ApplicationError).statusCode).toBe(500);
   });
 });

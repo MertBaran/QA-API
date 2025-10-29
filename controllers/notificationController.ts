@@ -6,7 +6,7 @@ import {
   MultiChannelNotificationPayload,
   UserNotificationPreferences,
 } from '../services/contracts/NotificationPayload';
-import { HelperMessages } from '../helpers/constants/HelperMessages';
+import { HelperMessages } from '../constants/HelperMessages';
 // SupportedLanguage kullanılmıyor, kaldırıldı
 
 interface AuthenticatedRequest extends Request {
