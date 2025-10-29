@@ -54,4 +54,7 @@ performance/results/
 performance/reports/
 
 # Docker ve deployment secrets
-temp-secrets/ 
+temp-secrets/
+
+# TODO dosyaları
+TODO.md 
