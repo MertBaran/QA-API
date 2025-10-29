@@ -284,29 +284,45 @@ services:
       - '15672:15672'
 ```
 
-### Code Structure
+### Project Structure
 
 ```
 QA-API/
-├── controllers/          # Request handlers
-├── services/            # Business logic
-│   ├── managers/        # Business managers
-│   ├── providers/       # External service providers
-│   └── monitoring/      # Monitoring services
-├── repositories/        # Data access layer
-├── models/              # Data models
-├── middlewares/         # Express middlewares
-├── infrastructure/      # External services
-│   ├── cache/          # Cache providers
-│   ├── validation/     # Validation schemas
-│   ├── logging/        # Logging providers
-│   └── audit/          # Audit providers
-├── tests/               # Test suites
-│   ├── unit/           # Unit tests
-│   ├── integration/    # Integration tests
-│   └── mocks/          # Test mocks
-├── scripts/             # Utility scripts
-└── types/               # TypeScript types
+├── config/                         # Configuration files
+│   └── env/                       # Environment configurations
+├── constants/                      # Application constants
+├── controllers/                    # Request handlers
+├── services/                       # Business logic
+│   ├── managers/                  # Business managers
+│   └── contracts/                 # Service contracts/interfaces
+├── repositories/                   # Data access layer
+│   ├── interfaces/                # Repository interfaces
+│   └── mongodb/                   # MongoDB implementations
+├── models/                         # Data models
+│   └── mongodb/                   # MongoDB models
+├── middlewares/                    # Express middlewares
+│   ├── authorization/             # Authorization middleware
+│   └── errors/                    # Error handling
+├── infrastructure/                 # External services & infrastructure
+│   ├── cache/                     # Cache providers
+│   ├── elasticsearch/             # Elasticsearch integration
+│   ├── search/                    # Search & Index (abstraction of elastic)
+│   ├── logging/                   # Logging providers
+│   └── validation/                # Validation schemas
+├── database/                       # Database utilities
+│   ├── migrations/                # Database migrations
+│   └── seeds/                     # Seed data
+├── routers/                        # API route definitions
+├── types/                          # TypeScript type definitions
+│   └── dto/                       # Data Transfer Objects
+├── tests/                          # Test suites
+│   ├── unit/                      # Unit tests
+│   ├── integration/               # Integration tests
+│   └── mocks/                     # Test mocks
+├── scripts/                        # Utility scripts
+├── performance/                    # Performance testing
+├── k8s/                            # Kubernetes configurations
+└── public/                         # Public assets
 ```
 
 ## Tech Stack
