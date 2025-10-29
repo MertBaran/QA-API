@@ -8,6 +8,12 @@ import { HealthCheckController } from '../controllers/healthController';
 import { WebSocketMonitorService } from './WebSocketMonitorService';
 import routers from '../routers';
 import { appErrorHandler } from '../middlewares/errors/appErrorHandler';
+import { IQuestionModel } from '../models/interfaces/IQuestionModel';
+import { IAnswerModel } from '../models/interfaces/IAnswerModel';
+import {
+  QuestionSearchDoc,
+  AnswerSearchDoc,
+} from '../infrastructure/search/SearchDocument';
 
 export class ApplicationSetup {
   private app: Application;
@@ -185,6 +191,62 @@ export class ApplicationSetup {
           cacheError instanceof Error ? cacheError.message : String(cacheError)
         );
         console.warn('💡 Application will use memory cache as fallback');
+      }
+
+      // EntityType'lar model dosyalarında export edildiğinde otomatik register edilir
+      // Side-effect registration sayesinde ApplicationSetup'ın model'lere bağımlı olmasına gerek yok
+
+      // Initialize Elasticsearch if enabled
+      try {
+        const configService = container.resolve<any>('IConfigurationService');
+        const esConfig = configService.getElasticsearchConfig();
+
+        if (esConfig.enabled) {
+          console.log('🔍 Initializing Elasticsearch...');
+          const elasticsearchClient = container.resolve<any>(
+            'IElasticsearchClient'
+          );
+          const isConnected = await elasticsearchClient.isConnected();
+
+          if (isConnected) {
+            console.log('✅ Elasticsearch connected successfully');
+
+            // Start log shipper
+            const logShipper = container.resolve<any>(
+              'IElasticsearchLogShipper'
+            );
+            // Enable before checking - enable() sets the flag used by isEnabled()
+            (logShipper as any).enable?.();
+            if (logShipper.isEnabled()) {
+              await logShipper.start();
+              console.log('✅ Elasticsearch log shipper started');
+            }
+
+            // Initialize indexes - Self-registering projectors
+            const searchClient = container.resolve<any>('ISearchClient');
+
+            // Projector'ları resolve et (constructor'da kendi index'lerini register ederler)
+            container.resolve<any>(
+              'IProjector<IQuestionModel, QuestionSearchDoc>'
+            );
+            container.resolve<any>('IProjector<IAnswerModel, AnswerSearchDoc>');
+
+            // Register edilmiş tüm index'leri initialize et
+            await searchClient.initializeRegisteredIndexes();
+            console.log('✅ Elasticsearch indexes initialized');
+          } else {
+            console.warn(
+              '⚠️ Elasticsearch is enabled but connection failed, continuing without Elasticsearch'
+            );
+          }
+        } else {
+          console.log('ℹ️  Elasticsearch is disabled');
+        }
+      } catch (esError) {
+        console.warn(
+          '⚠️ Elasticsearch initialization failed, continuing without Elasticsearch:',
+          esError instanceof Error ? esError.message : String(esError)
+        );
       }
 
       // Connection monitoring WebSocket ile yapılacak (setInterval kaldırıldı)

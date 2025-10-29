@@ -4,6 +4,7 @@ import {
   EnvironmentConfig,
   DatabaseConnectionConfig,
   CacheConnectionConfig,
+  ElasticsearchConnectionConfig,
 } from '../contracts/IConfigurationService';
 import { container } from 'tsyringe';
 import { ICacheProvider } from '../../infrastructure/cache/ICacheProvider';
@@ -136,6 +137,37 @@ export class ConfigurationManager implements IConfigurationService {
 
   public getFileLoggingConfig(): EnvironmentConfig['fileLogging'] {
     return this.config.fileLogging;
+  }
+
+  public getElasticsearchConfig(): ElasticsearchConnectionConfig {
+    return {
+      enabled: this.environmentProvider.getEnvironmentVariableAsBoolean(
+        'ELASTICSEARCH_ENABLED',
+        false
+      ),
+      url: this.environmentProvider.getEnvironmentVariable(
+        'ELASTICSEARCH_URL',
+        'http://localhost:9200'
+      ),
+      username: this.environmentProvider.getEnvironmentVariable(
+        'ELASTICSEARCH_USERNAME'
+      ),
+      password: this.environmentProvider.getEnvironmentVariable(
+        'ELASTICSEARCH_PASSWORD'
+      ),
+      tlsEnabled: this.environmentProvider.getEnvironmentVariableAsBoolean(
+        'ELASTICSEARCH_TLS_ENABLED',
+        false
+      ),
+      tlsSkipVerify: this.environmentProvider.getEnvironmentVariableAsBoolean(
+        'ELASTICSEARCH_TLS_SKIP_VERIFY',
+        false
+      ),
+      requestTimeout: this.environmentProvider.getEnvironmentVariableAsNumber(
+        'ELASTICSEARCH_REQUEST_TIMEOUT',
+        30000
+      ),
+    };
   }
 
   public logEnvironmentInfo(): void {

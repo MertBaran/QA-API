@@ -45,6 +45,11 @@ export const RepositoryConstants = {
 
   // User Repository Messages
   USER: {
+    NOT_FOUND: {
+      tr: 'Kullanıcı bulunamadı',
+      en: 'User not found',
+      de: 'Benutzer nicht gefunden',
+    },
     CREATE_ERROR: {
       tr: 'Veritabanı hatası: UserMongooseDataSource.create',
       en: 'Database error in UserMongooseDataSource.create',
@@ -60,10 +65,20 @@ export const RepositoryConstants = {
       en: 'Database error in UserMongooseDataSource.findAll',
       de: 'Datenbankfehler in UserMongooseDataSource.findAll',
     },
+    UPDATE_BY_ID_NOT_FOUND: {
+      tr: 'Güncellenecek kullanıcı bulunamadı',
+      en: 'User not found for update',
+      de: 'Benutzer zum Aktualisieren nicht gefunden',
+    },
     UPDATE_BY_ID_ERROR: {
       tr: 'Veritabanı hatası: UserMongooseDataSource.updateById',
       en: 'Database error in UserMongooseDataSource.updateById',
       de: 'Datenbankfehler in UserMongooseDataSource.updateById',
+    },
+    DELETE_BY_ID_NOT_FOUND: {
+      tr: 'Silinecek kullanıcı bulunamadı',
+      en: 'User not found for delete',
+      de: 'Benutzer zum Löschen nicht gefunden',
     },
     DELETE_BY_ID_ERROR: {
       tr: 'Veritabanı hatası: UserMongooseDataSource.deleteById',
@@ -94,6 +109,11 @@ export const RepositoryConstants = {
 
   // Question Repository Messages
   QUESTION: {
+    NOT_FOUND: {
+      tr: 'Soru bulunamadı',
+      en: 'Question not found',
+      de: 'Frage nicht gefunden',
+    },
     CREATE_ERROR: {
       tr: 'Veritabanı hatası: QuestionMongooseDataSource.create',
       en: 'Database error in QuestionMongooseDataSource.create',
@@ -109,10 +129,20 @@ export const RepositoryConstants = {
       en: 'Database error in QuestionMongooseDataSource.findAll',
       de: 'Datenbankfehler in QuestionMongooseDataSource.findAll',
     },
+    UPDATE_BY_ID_NOT_FOUND: {
+      tr: 'Güncellenecek soru bulunamadı',
+      en: 'Question not found for update',
+      de: 'Frage zum Aktualisieren nicht gefunden',
+    },
     UPDATE_BY_ID_ERROR: {
       tr: 'Veritabanı hatası: QuestionMongooseDataSource.updateById',
       en: 'Database error in QuestionMongooseDataSource.updateById',
       de: 'Datenbankfehler in QuestionMongooseDataSource.updateById',
+    },
+    DELETE_BY_ID_NOT_FOUND: {
+      tr: 'Silinecek soru bulunamadı',
+      en: 'Question not found for delete',
+      de: 'Frage zum Löschen nicht gefunden',
     },
     DELETE_BY_ID_ERROR: {
       tr: 'Veritabanı hatası: QuestionMongooseDataSource.deleteById',
@@ -133,6 +163,11 @@ export const RepositoryConstants = {
 
   // Answer Repository Messages
   ANSWER: {
+    NOT_FOUND: {
+      tr: 'Cevap bulunamadı',
+      en: 'Answer not found',
+      de: 'Antwort nicht gefunden',
+    },
     CREATE_ERROR: {
       tr: 'Veritabanı hatası: AnswerMongooseDataSource.create',
       en: 'Database error in AnswerMongooseDataSource.create',
@@ -148,10 +183,20 @@ export const RepositoryConstants = {
       en: 'Database error in AnswerMongooseDataSource.findAll',
       de: 'Datenbankfehler in AnswerMongooseDataSource.findAll',
     },
+    UPDATE_BY_ID_NOT_FOUND: {
+      tr: 'Güncellenecek cevap bulunamadı',
+      en: 'Answer not found for update',
+      de: 'Antwort zum Aktualisieren nicht gefunden',
+    },
     UPDATE_BY_ID_ERROR: {
       tr: 'Veritabanı hatası: AnswerMongooseDataSource.updateById',
       en: 'Database error in AnswerMongooseDataSource.updateById',
       de: 'Datenbankfehler in AnswerMongooseDataSource.updateById',
+    },
+    DELETE_BY_ID_NOT_FOUND: {
+      tr: 'Silinecek cevap bulunamadı',
+      en: 'Answer not found for delete',
+      de: 'Antwort zum Löschen nicht gefunden',
     },
     DELETE_BY_ID_ERROR: {
       tr: 'Veritabanı hatası: AnswerMongooseDataSource.deleteById',
