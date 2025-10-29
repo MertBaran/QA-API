@@ -5,8 +5,8 @@
 - Node.js 18+
 - MongoDB 6+
 - Redis 7+
-- Elasticsearch 8+ (optional, for full-text search and log aggregation)
-- RabbitMQ 3.9+ (optional, for queue-based notifications)
+- Elasticsearch 8+
+- RabbitMQ 3.9+
 
 ### Installation
 
