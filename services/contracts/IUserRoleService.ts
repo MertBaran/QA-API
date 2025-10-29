@@ -4,6 +4,10 @@ import { EntityId } from '../../types/database';
 export interface IUserRoleService {
   getUserRoles(userId: EntityId): Promise<IUserRoleModel[]>;
   getUserActiveRoles(userId: EntityId): Promise<IUserRoleModel[]>;
+  findByUserIdAndRoleId(
+    userId: EntityId,
+    roleId: EntityId
+  ): Promise<IUserRoleModel>;
   assignRoleToUser(
     userId: EntityId,
     roleId: EntityId,
@@ -12,7 +16,7 @@ export interface IUserRoleService {
   removeRoleFromUser(
     userId: EntityId,
     roleId: EntityId
-  ): Promise<IUserRoleModel | null>;
+  ): Promise<IUserRoleModel>;
   hasRole(userId: EntityId, roleId: EntityId): Promise<boolean>;
   hasAnyRole(userId: EntityId, roleIds: EntityId[]): Promise<boolean>;
   hasAllRoles(userId: EntityId, roleIds: EntityId[]): Promise<boolean>;

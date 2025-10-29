@@ -1,7 +1,7 @@
 import { injectable } from 'tsyringe';
 import { NotificationChannel } from '../contracts/NotificationChannel';
 import { NotificationPayload } from '../contracts/NotificationPayload';
-import { createSMTPTransporter } from '../../helpers/smtp/smtpConfig';
+import { createSMTPTransporter } from '../../config/smtpConfig';
 import { ILoggerProvider } from '../../infrastructure/logging/ILoggerProvider';
 
 @injectable()

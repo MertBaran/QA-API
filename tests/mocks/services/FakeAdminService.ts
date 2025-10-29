@@ -158,4 +158,23 @@ export class FakeAdminService implements IAdminService {
         this.users.splice(index, 1);
       }
     });
+
+  updateUserRoles = jest
+    .fn()
+    .mockImplementation(async (userId: EntityId, roles: string[]): Promise<IUserModel> => {
+      const user = this.users.find(u => u._id === userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+      return user;
+    });
+
+  getUserStats = jest
+    .fn()
+    .mockImplementation(async (): Promise<any> => {
+      return {
+        totalUsers: this.users.length,
+        activeUsers: this.users.length
+      };
+    });
 }

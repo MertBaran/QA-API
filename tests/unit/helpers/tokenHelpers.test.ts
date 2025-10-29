@@ -1,7 +1,7 @@
 import {
   isTokenIncluded,
   getAccessTokenFromHeader,
-} from '../../../helpers/authorization/tokenHelpers';
+} from '../../../infrastructure/auth/tokenHelpers';
 
 describe('tokenHelpers Unit Tests', () => {
   describe('isTokenIncluded', () => {

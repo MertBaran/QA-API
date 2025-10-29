@@ -1,7 +1,7 @@
 import multer from 'multer';
 import path from 'path';
 import { Request } from 'express';
-import CustomError from '../../helpers/error/CustomError';
+import { ApplicationError } from '../../infrastructure/error';
 import { UploadMiddlewareMessages } from '../constants/MiddlewareMessages';
 
 interface AuthenticatedRequest extends Request {
@@ -38,7 +38,9 @@ const fileFilter = (
 ) => {
   const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
   if (!allowedTypes.includes(file.mimetype)) {
-    return cb(new CustomError(UploadMiddlewareMessages.InvalidFileType, 400));
+    return cb(
+      new ApplicationError(UploadMiddlewareMessages.InvalidFileType, 400)
+    );
   }
 
   return cb(null, true);

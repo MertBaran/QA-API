@@ -1,6 +1,6 @@
 import { EntityId } from '../../types/database';
 import { IDataSource } from '../interfaces/IDataSource';
-import CustomError from '../../helpers/error/CustomError';
+import { ApplicationError } from '../../infrastructure/error/ApplicationError';
 import { RepositoryConstants } from '../constants/RepositoryMessages';
 
 export abstract class BaseRepository<TEntity> {
@@ -14,23 +14,32 @@ export abstract class BaseRepository<TEntity> {
     return await this.dataSource.create(data);
   }
 
-  async findById(id: EntityId): Promise<TEntity | null> {
-    return await this.dataSource.findById(id.toString());
+  async findById(id: EntityId): Promise<TEntity> {
+    const entity = await this.dataSource.findById(id.toString());
+    if (!entity) {
+      throw ApplicationError.notFoundError('Resource not found');
+    }
+    return entity;
   }
 
   async findAll(): Promise<TEntity[]> {
     return await this.dataSource.findAll();
   }
 
-  async updateById(
-    id: EntityId,
-    data: Partial<TEntity>
-  ): Promise<TEntity | null> {
-    return await this.dataSource.updateById(id.toString(), data);
+  async updateById(id: EntityId, data: Partial<TEntity>): Promise<TEntity> {
+    const entity = await this.dataSource.updateById(id.toString(), data);
+    if (!entity) {
+      throw ApplicationError.notFoundError('Resource not found');
+    }
+    return entity;
   }
 
-  async deleteById(id: EntityId): Promise<TEntity | null> {
-    return await this.dataSource.deleteById(id.toString());
+  async deleteById(id: EntityId): Promise<TEntity> {
+    const entity = await this.dataSource.deleteById(id.toString());
+    if (!entity) {
+      throw ApplicationError.notFoundError('Resource not found');
+    }
+    return entity;
   }
 
   public async countAll(): Promise<number> {

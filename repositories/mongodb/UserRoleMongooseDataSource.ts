@@ -2,7 +2,7 @@ import { injectable } from 'tsyringe';
 import { IEntityModel } from '../interfaces/IEntityModel';
 import { IUserRoleModel } from '../../models/interfaces/IUserRoleModel';
 import { IDataSource } from '../interfaces/IDataSource';
-import CustomError from '../../helpers/error/CustomError';
+import { ApplicationError } from '../../infrastructure/error/ApplicationError';
 import { RepositoryConstants } from '../constants/RepositoryMessages';
 
 @injectable()
@@ -36,9 +36,14 @@ export class UserRoleMongooseDataSource implements IDataSource<IUserRoleModel> {
     return this.toEntity(result);
   }
 
-  async findById(id: string): Promise<IUserRoleModel | null> {
+  async findById(id: string): Promise<IUserRoleModel> {
     const result = await this.model.findById(id);
-    return result ? this.toEntity(result) : null;
+    if (!result) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.FIND_BY_ID_ERROR.en
+      );
+    }
+    return this.toEntity(result);
   }
 
   async findAll(): Promise<IUserRoleModel[]> {
@@ -49,17 +54,27 @@ export class UserRoleMongooseDataSource implements IDataSource<IUserRoleModel> {
   async updateById(
     id: string,
     data: Partial<IUserRoleModel>
-  ): Promise<IUserRoleModel | null> {
+  ): Promise<IUserRoleModel> {
     const { _id, ...rest } = data;
     const result = await this.model.findByIdAndUpdate(id, rest, {
       new: true,
     });
-    return result ? this.toEntity(result) : null;
+    if (!result) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.UPDATE_BY_ID_ERROR.en
+      );
+    }
+    return this.toEntity(result);
   }
 
-  async deleteById(id: string): Promise<IUserRoleModel | null> {
+  async deleteById(id: string): Promise<IUserRoleModel> {
     const result = await this.model.findByIdAndDelete(id);
-    return result ? this.toEntity(result) : null;
+    if (!result) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.DELETE_BY_ID_ERROR.en
+      );
+    }
+    return this.toEntity(result);
   }
 
   async findByField(

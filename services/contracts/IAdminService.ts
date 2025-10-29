@@ -6,7 +6,7 @@ export interface IAdminService {
   blockUser(userId: EntityId): Promise<IUserModel>;
   deleteUser(userId: EntityId): Promise<void>;
   getAllUsers(): Promise<IUserModel[]>;
-  getSingleUser(userId: EntityId): Promise<IUserModel | null>;
+  getSingleUser(userId: EntityId): Promise<IUserModel>;
 
   // Admin paneli özel işlemler
   getUsersForAdmin(

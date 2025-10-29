@@ -128,4 +128,26 @@ export class FakeAdminManager implements IAdminService {
 
     return user;
   }
+
+  async deleteUserByAdmin(userId: EntityId): Promise<void> {
+    this.users = this.users.filter(u => u._id !== userId);
+  }
+
+  async updateUserRoles(
+    userId: EntityId,
+    roles: string[]
+  ): Promise<IUserModel> {
+    const user = this.users.find(u => u._id === userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return user;
+  }
+
+  async getUserStats(): Promise<any> {
+    return {
+      totalUsers: this.users.length,
+      activeUsers: this.users.length,
+    };
+  }
 }

@@ -9,7 +9,7 @@ import { IUserModel } from '../../models/interfaces/IUserModel';
 import { IUserRepository } from '../../repositories/interfaces/IUserRepository';
 import { IUserRoleService } from '../contracts/IUserRoleService';
 import { IRoleService } from '../contracts/IRoleService';
-import CustomError from '../../helpers/error/CustomError';
+import { ApplicationError } from '../../infrastructure/error/ApplicationError';
 import { IAdminService } from '../contracts/IAdminService';
 import { EntityId } from '../../types/database';
 
@@ -22,13 +22,21 @@ export class AdminManager implements IAdminService {
   ) {}
 
   // IAdminService: tek kullanıcı getir
-  async getSingleUser(userId: EntityId): Promise<IUserModel | null> {
-    return await this.userRepository.findById(userId);
+  async getSingleUser(userId: EntityId): Promise<IUserModel> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw ApplicationError.notFoundError('User not found');
+    }
+    return user;
   }
 
   // IAdminService: tüm kullanıcıları getir
   async getAllUsers(): Promise<IUserModel[]> {
-    return await this.userRepository.findAll();
+    const users = await this.userRepository.findAll();
+    if (!users) {
+      throw ApplicationError.notFoundError('Users not found');
+    }
+    return users;
   }
 
   // IAdminService: kullanıcıyı engelle
@@ -37,7 +45,7 @@ export class AdminManager implements IAdminService {
       blocked: true,
     } as Partial<IUserModel>);
     if (!user) {
-      throw new CustomError('User not found', 404);
+      throw ApplicationError.notFoundError('User not found');
     }
     return user;
   }
@@ -46,7 +54,7 @@ export class AdminManager implements IAdminService {
   async deleteUser(userId: EntityId): Promise<void> {
     const deleted = await this.userRepository.deleteById(String(userId));
     if (!deleted) {
-      throw new CustomError('User not found', 404);
+      throw ApplicationError.notFoundError('User not found');
     }
   }
 
@@ -170,7 +178,7 @@ export class AdminManager implements IAdminService {
   ): Promise<IUserModel> {
     const user = await this.userRepository.updateById(userId, userData);
     if (!user) {
-      throw new CustomError('User not found', 404);
+      throw ApplicationError.notFoundError('User not found');
     }
     return user;
   }
@@ -179,7 +187,7 @@ export class AdminManager implements IAdminService {
   async deleteUserByAdmin(userId: string): Promise<void> {
     const deleted = await this.userRepository.deleteById(userId);
     if (!deleted) {
-      throw new CustomError('User not found', 404);
+      throw ApplicationError.notFoundError('User not found');
     }
   }
 
@@ -187,7 +195,7 @@ export class AdminManager implements IAdminService {
   async toggleUserBlock(userId: string, blocked: boolean): Promise<IUserModel> {
     const user = await this.userRepository.updateById(userId, { blocked });
     if (!user) {
-      throw new CustomError('User not found', 404);
+      throw ApplicationError.notFoundError('User not found');
     }
     return user;
   }
@@ -199,7 +207,7 @@ export class AdminManager implements IAdminService {
       roles,
     } as any);
     if (!user) {
-      throw new CustomError('User not found', 404);
+      throw ApplicationError.notFoundError('User not found');
     }
     return user;
   }

@@ -8,7 +8,7 @@ import type { SuccessResponseDTO } from '../types/dto/common/success-response.dt
 // IUserModel kullanılmıyor, kaldırıldı
 import type { UserResponseDTO } from '../types/dto/user/user-response.dto';
 import type { IdParamDTO } from '../types/dto/common/id-param.dto';
-import CustomError from '../helpers/error/CustomError';
+import { ApplicationError } from '../infrastructure/error/ApplicationError';
 
 @injectable()
 export class UserController {
@@ -25,9 +25,6 @@ export class UserController {
     ): Promise<void> => {
       const { id } = req.params;
       const user = await this.adminService.getSingleUser(id);
-      if (!user) {
-        return next(new CustomError(UserConstants.UserNotFound.en, 404));
-      }
 
       // UserRole tablosundan role'leri çek
       const userRoles = await this.userRoleService.getUserActiveRoles(user._id);

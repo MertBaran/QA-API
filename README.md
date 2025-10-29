@@ -5,6 +5,7 @@
 - Node.js 18+
 - MongoDB 6+
 - Redis 7+
+- Elasticsearch 8+ (optional, for full-text search and log aggregation)
 - RabbitMQ 3.9+ (optional, for queue-based notifications)
 
 ### Installation
@@ -20,7 +21,7 @@ npm install
 cp config/env/config.env.example config/env/config.env
 # Edit config.env with your settings
 
-# Setup notification templates (optional)
+# Setup notification templates
 npm run setup:templates
 
 # Start development server
@@ -181,9 +182,15 @@ SMTP_USER=your-email@gmail.com
 SMTP_PASS=your-app-password
 SMTP_FROM=noreply@yourdomain.com
 
-# RabbitMQ (Optional)
+# RabbitMQ
 RABBITMQ_URL=amqp://localhost:5672
 RABBITMQ_QUEUE=notifications
+
+# Elasticsearch
+ELASTICSEARCH_ENABLED=true
+ELASTICSEARCH_URL=http://localhost:9200
+ELASTICSEARCH_USERNAME=elastic
+ELASTICSEARCH_PASSWORD=elasticpassword
 
 # Notification Settings
 NOTIFICATION_STRATEGY=smart        # direct, queue, smart
@@ -220,12 +227,12 @@ GET /health          // Full check - detailed service information
   "services": {
     "database": { "status": "connected", "responseTime": 15 },
     "cache": { "status": "connected", "responseTime": 5 },
+    "search": { "status": "connected", "responseTime": 10 },
     "queue": { "status": "connected", "responseTime": 10 },
     "email": { "status": "connected", "responseTime": 25 }
   }
 }
 ```
-
 
 ## 🐳 Docker & Deployment
 
@@ -244,6 +251,7 @@ services:
     depends_on:
       - mongodb
       - redis
+      - elasticsearch
       - rabbitmq
 
   mongodb:
@@ -257,6 +265,17 @@ services:
     image: redis:7-alpine
     ports:
       - '6379:6379'
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    ports:
+      - '9200:9200'
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - ELASTIC_PASSWORD=elasticpassword
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
 
   rabbitmq:
     image: rabbitmq:3.9-management
@@ -295,7 +314,8 @@ QA-API/
 - **Backend**: TypeScript, Node.js, Express
 - **Database**: MongoDB with Mongoose
 - **Cache**: Redis
-- **Message Queue**: RabbitMQ (optional)
+- **Search**: Elasticsearch
+- **Message Queue**: RabbitMQ
 - **Testing**: Jest
 - **Containerization**: Docker
 - **Real-time**: WebSocket
@@ -306,14 +326,12 @@ QA-API/
 ![Node.js](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white)
 ![Redis](https://img.shields.io/badge/redis-%23DD0031.svg?style=for-the-badge&logo=redis&logoColor=white)
+![Elasticsearch](https://img.shields.io/badge/-Elasticsearch-005571?style=for-the-badge&logo=elasticsearch)
 ![RabbitMQ](https://img.shields.io/badge/RabbitMQ-FF6600?style=for-the-badge&logo=rabbitmq&logoColor=white)
 ![Jest](https://img.shields.io/badge/-jest-%23C21325?style=for-the-badge&logo=jest&logoColor=white)
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 ![WebSocket](https://img.shields.io/badge/WebSocket-000000?style=for-the-badge&logo=websocket&logoColor=white)
 
-
 </div>
-
-
 
 </div>

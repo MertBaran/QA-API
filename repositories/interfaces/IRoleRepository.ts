@@ -3,25 +3,25 @@ import { EntityId } from '../../types/database';
 import { IRepository } from './IRepository';
 
 export interface IRoleRepository extends IRepository<IRoleModel> {
-  findByName(name: string): Promise<IRoleModel | null>;
+  findByName(name: string): Promise<IRoleModel>;
   findSystemRoles(): Promise<IRoleModel[]>;
   findActive(): Promise<IRoleModel[]>;
   assignPermission(
     roleId: EntityId,
     permissionId: EntityId
-  ): Promise<IRoleModel | null>;
+  ): Promise<IRoleModel>;
   removePermission(
     roleId: EntityId,
     permissionId: EntityId
-  ): Promise<IRoleModel | null>;
+  ): Promise<IRoleModel>;
   getPermissionById(permissionId: EntityId): Promise<any>;
   getAllPermissions(): Promise<any[]>;
   addPermissionsToRole(
     roleId: EntityId,
     permissionIds: EntityId[]
-  ): Promise<IRoleModel | null>;
+  ): Promise<IRoleModel>;
   removePermissionsFromRole(
     roleId: EntityId,
     permissionIds: EntityId[]
-  ): Promise<IRoleModel | null>;
+  ): Promise<IRoleModel>;
 }

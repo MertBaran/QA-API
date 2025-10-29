@@ -1,7 +1,7 @@
 import { injectable } from 'tsyringe';
 import { INotificationChannelHandler } from '../contracts/INotificationChannelHandler';
 import { NotificationPayload } from '../contracts/NotificationPayload';
-import { createSMTPTransporter } from '../../helpers/smtp/smtpConfig';
+import { createSMTPTransporter } from '../../config/smtpConfig';
 
 @injectable()
 export class EmailNotificationHandler implements INotificationChannelHandler {

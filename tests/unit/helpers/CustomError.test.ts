@@ -1,10 +1,10 @@
-import CustomError from '../../../helpers/error/CustomError';
+import { ApplicationError } from '../../../infrastructure/error/ApplicationError';
 
-describe('CustomError Unit Tests', () => {
+describe('ApplicationError Unit Tests', () => {
   it('should create an error with message and statusCode', () => {
-    const err = new CustomError('Test error', 404);
+    const err = ApplicationError.notFoundError('Test error');
     expect(err).toBeInstanceOf(Error);
-    expect(err).toBeInstanceOf(CustomError);
+    expect(err).toBeInstanceOf(ApplicationError);
     expect(err.message).toBe('Test error');
     expect(err.statusCode).toBe(404);
   });

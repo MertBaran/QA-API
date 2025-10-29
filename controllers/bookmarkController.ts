@@ -4,7 +4,7 @@ import { injectable, inject } from 'tsyringe';
 import { IBookmarkService } from '../services/contracts/IBookmarkService';
 import { ILoggerProvider } from '../infrastructure/logging/ILoggerProvider';
 import { IExceptionTracker } from '../infrastructure/error/IExceptionTracker';
-import { ApplicationError } from '../helpers/error/ApplicationError';
+import { ApplicationError } from '../infrastructure/error/ApplicationError';
 
 interface AuthenticatedRequest<T = any> extends Request<{}, any, T> {
   user?: {

@@ -5,16 +5,28 @@ import { EntityId } from '../../../types/database';
 export class FakeUserRepository implements IUserRepository {
   private users: IUserModel[] = [];
 
-  async findById(userId: EntityId): Promise<IUserModel | null> {
-    return this.users.find(user => user._id === userId) || null;
+  async findById(userId: EntityId): Promise<IUserModel> {
+    const user = this.users.find(user => user._id === userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return user;
   }
 
-  async findByEmail(email: string): Promise<IUserModel | null> {
-    return this.users.find(user => user.email === email) || null;
+  async findByEmail(email: string): Promise<IUserModel> {
+    const user = this.users.find(user => user.email === email);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return user;
   }
 
-  async findByEmailWithPassword(email: string): Promise<IUserModel | null> {
-    return this.users.find(user => user.email === email) || null;
+  async findByEmailWithPassword(email: string): Promise<IUserModel> {
+    const user = this.users.find(user => user.email === email);
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return user;
   }
 
   async create(userData: Partial<IUserModel>): Promise<IUserModel> {
@@ -36,21 +48,34 @@ export class FakeUserRepository implements IUserRepository {
   async updateById(
     userId: EntityId,
     data: Partial<IUserModel>
-  ): Promise<IUserModel | null> {
+  ): Promise<IUserModel> {
     const index = this.users.findIndex(user => user._id === userId);
-    if (index === -1) return null;
+    if (index === -1) {
+      throw new Error('User not found');
+    }
 
-    this.users[index] = { ...this.users[index], ...data } as IUserModel;
+    const existingUser = this.users[index];
+    if (!existingUser) {
+      throw new Error('User not found');
+    }
+
+    this.users[index] = { ...existingUser, ...data } as IUserModel;
     return this.users[index];
   }
 
-  async deleteById(userId: EntityId): Promise<IUserModel | null> {
+  async deleteById(userId: EntityId): Promise<IUserModel> {
     const index = this.users.findIndex(user => user._id === userId);
-    if (index === -1) return null;
+    if (index === -1) {
+      throw new Error('User not found');
+    }
 
     const user = this.users[index];
+    if (!user) {
+      throw new Error('User not found');
+    }
+
     this.users.splice(index, 1);
-    return user || null; // Return null if user is undefined
+    return user;
   }
 
   async findAll(): Promise<IUserModel[]> {
@@ -65,14 +90,17 @@ export class FakeUserRepository implements IUserRepository {
     return this.users.length;
   }
 
-  async findByResetToken(token: string): Promise<IUserModel | null> {
-    return (
-      this.users.find(user => (user as any).resetPasswordToken === token) ||
-      null
+  async findByResetToken(token: string): Promise<IUserModel> {
+    const user = this.users.find(
+      user => (user as any).resetPasswordToken === token
     );
+    if (!user) {
+      throw new Error('User not found');
+    }
+    return user;
   }
 
-  async clearResetToken(userId: EntityId): Promise<IUserModel | null> {
+  async clearResetToken(userId: EntityId): Promise<IUserModel> {
     return this.updateById(userId, {
       resetPasswordToken: undefined,
       resetPasswordExpire: undefined,
@@ -83,7 +111,7 @@ export class FakeUserRepository implements IUserRepository {
     userId: EntityId,
     resetToken: string,
     resetExpire: Date
-  ): Promise<IUserModel | null> {
+  ): Promise<IUserModel> {
     return this.updateById(userId, {
       resetPasswordToken: resetToken,
       resetPasswordExpire: resetExpire,
