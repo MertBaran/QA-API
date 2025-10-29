@@ -215,8 +215,9 @@ export class ApplicationSetup {
             const logShipper = container.resolve<any>(
               'IElasticsearchLogShipper'
             );
+            // Enable before checking - enable() sets the flag used by isEnabled()
+            (logShipper as any).enable?.();
             if (logShipper.isEnabled()) {
-              (logShipper as any).enable?.();
               await logShipper.start();
               console.log('✅ Elasticsearch log shipper started');
             }

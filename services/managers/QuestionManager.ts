@@ -205,7 +205,7 @@ export class QuestionManager implements IQuestionService {
           QuestionServiceMessages.QuestionNotFound.en
         );
       throw ApplicationError.businessError(
-        QuestionServiceMessages.NotLikedYet.en,
+        QuestionServiceMessages.AlreadyLiked.en,
         400
       );
     }

@@ -167,8 +167,11 @@ export class ElasticsearchIndexService
           properties[field] = { type: 'keyword' };
         } else if (field === 'createdAt') {
           properties[field] = { type: 'date' };
-        } else if (field === 'views' || field === 'likes') {
+        } else if (field === 'views') {
           properties[field] = { type: 'integer' };
+        } else if (field === 'likes') {
+          // likes is string[] (user IDs), not integer
+          properties[field] = { type: 'keyword' };
         } else if (field === 'isAccepted') {
           properties[field] = { type: 'boolean' };
         } else {

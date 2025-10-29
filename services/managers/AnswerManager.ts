@@ -10,7 +10,8 @@ import { IIndexClient } from '../../infrastructure/search/IIndexClient';
 import { ISearchClient } from '../../infrastructure/search/ISearchClient';
 import { ILoggerProvider } from '../../infrastructure/logging/ILoggerProvider';
 import { IProjector } from '../../infrastructure/search/IProjector';
-import { AnswerSearchDoc } from '../../infrastructure/search/SearchDocument';
+import { AnswerSearchDoc, QuestionSearchDoc } from '../../infrastructure/search/SearchDocument';
+import { IQuestionModel } from '../../models/interfaces/IQuestionModel';
 
 @injectable()
 export class AnswerManager implements IAnswerService {
@@ -24,6 +25,8 @@ export class AnswerManager implements IAnswerService {
     private searchClient: ISearchClient,
     @inject('IProjector<IAnswerModel, AnswerSearchDoc>')
     private answerProjector: IProjector<IAnswerModel, AnswerSearchDoc>,
+    @inject('IProjector<IQuestionModel, QuestionSearchDoc>')
+    private questionProjector: IProjector<IQuestionModel, QuestionSearchDoc>,
     @inject('ILoggerProvider')
     private logger: ILoggerProvider
   ) {}
@@ -48,12 +51,23 @@ export class AnswerManager implements IAnswerService {
     });
 
     // Project entity to SearchDocument and index
-    const searchDoc = this.answerProjector.project(answer);
+    const answerSearchDoc = this.answerProjector.project(answer);
     await this.indexClient.sync(
       this.answerProjector.indexName,
       'index',
-      searchDoc
+      answerSearchDoc
     );
+
+    // Update question index - answers array changed
+    const updatedQuestion = await this.questionRepository.findById(questionId);
+    if (updatedQuestion) {
+      const questionSearchDoc = this.questionProjector.project(updatedQuestion);
+      await this.indexClient.sync(
+        this.questionProjector.indexName,
+        'update',
+        questionSearchDoc
+      );
+    }
 
     return answer;
   }
@@ -147,12 +161,27 @@ export class AnswerManager implements IAnswerService {
     );
 
     const question = await this.questionRepository.findById(questionId);
+    if (!question) {
+      return;
+    }
+
     question.answers = question.answers.filter(
       (id: any) => id.toString() !== answerId.toString()
     );
     await this.questionRepository.updateById(questionId, {
       answers: question.answers,
     });
+
+    // Update question index - answers array changed
+    const updatedQuestion = await this.questionRepository.findById(questionId);
+    if (updatedQuestion) {
+      const questionSearchDoc = this.questionProjector.project(updatedQuestion);
+      await this.indexClient.sync(
+        this.questionProjector.indexName,
+        'update',
+        questionSearchDoc
+      );
+    }
   }
 
   async likeAnswer(answerId: string, userId: EntityId): Promise<IAnswerModel> {
