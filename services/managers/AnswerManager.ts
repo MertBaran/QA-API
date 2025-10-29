@@ -5,12 +5,18 @@ import { IAnswerRepository } from '../../repositories/interfaces/IAnswerReposito
 import { EntityId } from '../../types/database';
 import { IQuestionRepository } from '../../repositories/interfaces/IQuestionRepository';
 import { IAnswerService } from '../contracts/IAnswerService';
-import { AnswerServiceMessages } from '../constants/ServiceMessages';
+import {
+  AnswerServiceMessages,
+  QuestionServiceMessages,
+} from '../constants/ServiceMessages';
 import { IIndexClient } from '../../infrastructure/search/IIndexClient';
 import { ISearchClient } from '../../infrastructure/search/ISearchClient';
 import { ILoggerProvider } from '../../infrastructure/logging/ILoggerProvider';
 import { IProjector } from '../../infrastructure/search/IProjector';
-import { AnswerSearchDoc, QuestionSearchDoc } from '../../infrastructure/search/SearchDocument';
+import {
+  AnswerSearchDoc,
+  QuestionSearchDoc,
+} from '../../infrastructure/search/SearchDocument';
 import { IQuestionModel } from '../../models/interfaces/IQuestionModel';
 
 @injectable()
@@ -40,7 +46,7 @@ export class AnswerManager implements IAnswerService {
     const question = await this.questionRepository.findById(questionId);
     if (!question) {
       throw ApplicationError.notFoundError(
-        AnswerServiceMessages.QuestionNotFound.en
+        QuestionServiceMessages.QuestionNotFound.en
       );
     }
 

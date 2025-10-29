@@ -1,11 +1,6 @@
 /**
- * Barrel Export - Tüm model interface'leri ve EntityType metadata'larını otomatik toplar
- * Yeni bir searchable entity eklendiğinde, buraya export eklenmesi yeterlidir
+ * Barrel Export - Tüm model interface'lerini toplar
  */
-
-// EntityType metadata export'ları - Convention: *EntityTypeMetadata
-export { QuestionEntityTypeMetadata } from './IQuestionModel';
-export { AnswerEntityTypeMetadata } from './IAnswerModel';
 
 // Model interface export'ları
 export type { IQuestionModel } from './IQuestionModel';
