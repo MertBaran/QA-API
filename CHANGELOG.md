@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.3] - 2024-10-30
+
+### Added
+
+- Elasticsearch integration for full-text search and log aggregation
+- SearchDocument pattern with Projector interfaces for entity-to-document mapping
+- ISearchClient and IIndexClient abstractions for search operations
+- Turkish analyzer for Elasticsearch with ngram support for partial matching
+- Elasticsearch log shipper for centralized log management
+
+### Fixed
+
+- User-friendly repository error messages (NOT_FOUND instead of generic database errors)
+- QuestionNotFound import issue in AnswerManager
+- isAccepted field added to IAnswerModel and AnswerMongoModel
+- Optional createdAt handling in AnswerProjector
+- Elasticsearch likes field mapping (keyword instead of integer)
+- Log shipper initialization order
+
+### Changed
+
+- Repository error messages now include entity-specific NOT_FOUND messages
+- QuestionManager and AnswerManager use Elasticsearch for search operations
+- Search results return directly from Elasticsearch without MongoDB fallback (when search succeeds)
+- Updated README with Elasticsearch setup instructions
+
 ## [1.2.0] - 2024-12-19
 
 ### Added
