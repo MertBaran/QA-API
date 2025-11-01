@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.4] - 2025-11-01
+
+### Added
+
+- GET /api/answers/user/:userId endpoint to fetch answers by user ID
+- Standalone answer router for user-specific answer operations
+- Question enrichment for answers in AnswerManager
+
+### Fixed
+
+- Bookmark date handling to ensure proper Date object conversion
+- Answer creation to properly return enriched data
+
+### Changed
+
+- AnswerManager now enriches answers with question information
+- Improved answer search fallback to MongoDB
+
 ## [1.3.3] - 2024-10-30
 
 ### Added
