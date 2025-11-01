@@ -30,12 +30,14 @@ export class QuestionMongooseDataSource implements IDataSource<IQuestionModel> {
             name: mongoDoc.user.name,
             email: mongoDoc.user.email,
             profile_image: mongoDoc.user.profile_image,
+            title: mongoDoc.user.title,
           }
         : {
             _id: mongoDoc.user.toString(),
             name: 'Anonim',
             email: '',
             profile_image: '',
+            title: undefined,
           };
 
     return {
@@ -67,13 +69,17 @@ export class QuestionMongooseDataSource implements IDataSource<IQuestionModel> {
     const result = await this.model.create(
       createData as unknown as Partial<IQuestionMongo>
     );
-    return this.toEntity(result);
+    // Populate user info for immediate use
+    const populatedResult = await (this.model as any)
+      .findById(result._id)
+      .populate('user', 'name email profile_image title');
+    return this.toEntity(populatedResult);
   }
 
   async findById(id: string): Promise<IQuestionModel> {
     const result = await this.model
       .findById(id)
-      .populate('user', 'name email profile_image');
+      .populate('user', 'name email profile_image title');
     if (!result) {
       throw ApplicationError.notFoundError(
         RepositoryConstants.QUESTION.NOT_FOUND.en
@@ -83,7 +89,9 @@ export class QuestionMongooseDataSource implements IDataSource<IQuestionModel> {
   }
 
   async findAll(): Promise<IQuestionModel[]> {
-    const results = await this.model.find();
+    const results = await this.model
+      .find()
+      .populate('user', 'name email profile_image title');
     return results.map((doc: any) => this.toEntity(doc));
   }
 
@@ -102,7 +110,11 @@ export class QuestionMongooseDataSource implements IDataSource<IQuestionModel> {
         RepositoryConstants.QUESTION.UPDATE_BY_ID_NOT_FOUND.en
       );
     }
-    return this.toEntity(result);
+    // Populate user info for immediate use
+    const populatedResult = await (this.model as any)
+      .findById(result._id)
+      .populate('user', 'name email profile_image title');
+    return this.toEntity(populatedResult);
   }
 
   async deleteById(id: string): Promise<IQuestionModel> {
@@ -175,7 +187,7 @@ export class QuestionMongooseDataSource implements IDataSource<IQuestionModel> {
         .sort(sort)
         .skip(skip)
         .limit(limit)
-        .populate('user', 'name email profile_image')
+        .populate('user', 'name email profile_image title')
         .lean(),
       this.model.countDocuments(query),
     ]);

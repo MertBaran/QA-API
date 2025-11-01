@@ -11,6 +11,11 @@ export interface IAnswerModel {
     profile_image?: string;
   };
   question: EntityId;
+  questionInfo?: {
+    _id: string;
+    title?: string;
+    slug?: string;
+  };
   likes: EntityId[];
   isAccepted: boolean;
   createdAt?: Date;

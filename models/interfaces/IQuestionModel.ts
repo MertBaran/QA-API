@@ -15,6 +15,7 @@ export interface IQuestionModel {
     name: string;
     email: string;
     profile_image?: string;
+    title?: string;
   };
   likes: EntityId[];
   answers: EntityId[];
