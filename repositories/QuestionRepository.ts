@@ -36,6 +36,16 @@ export class QuestionRepository
     return all.filter(q => q.user === userId);
   }
 
+  async findByIds(ids: EntityId[]): Promise<IQuestionModel[]> {
+    if (!ids.length) {
+      return [];
+    }
+    const uniqueIds = Array.from(new Set(ids.map(id => id.toString())));
+    return this.dataSource.findByFields({
+      _id: { $in: uniqueIds },
+    } as unknown as Partial<IQuestionModel>);
+  }
+
   async findBySlug(slug: string): Promise<IQuestionModel> {
     const all = await this.dataSource.findAll();
     const question = all.find(q => q.slug === slug);

@@ -145,6 +145,14 @@ export class BookmarkMongooseDataSource implements IDataSource<IBookmarkModel> {
   }
 
   private mapToModel(mongoBookmark: IBookmarkMongo): IBookmarkModel {
+    // Ensure createdAt and updatedAt are Date objects
+    const createdAt = mongoBookmark.createdAt instanceof Date 
+      ? mongoBookmark.createdAt 
+      : new Date(mongoBookmark.createdAt);
+    const updatedAt = mongoBookmark.updatedAt instanceof Date 
+      ? mongoBookmark.updatedAt 
+      : new Date(mongoBookmark.updatedAt);
+
     return {
       _id: mongoBookmark._id.toString(),
       user_id: mongoBookmark.user_id.toString(),
@@ -161,8 +169,8 @@ export class BookmarkMongooseDataSource implements IDataSource<IBookmarkModel> {
       tags: mongoBookmark.tags,
       notes: mongoBookmark.notes,
       is_public: mongoBookmark.is_public,
-      createdAt: mongoBookmark.createdAt,
-      updatedAt: mongoBookmark.updatedAt,
+      createdAt,
+      updatedAt,
     };
   }
 }

@@ -34,18 +34,29 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
             profile_image: '',
           };
 
+    const questionDoc = mongoDoc.question;
+    const questionId =
+      questionDoc && questionDoc._id
+        ? questionDoc._id.toString()
+        : questionDoc
+          ? questionDoc.toString()
+          : '';
+    const questionInfo =
+      questionDoc && questionDoc.title
+        ? {
+            _id: questionId,
+            title: questionDoc.title,
+            slug: questionDoc.slug,
+          }
+        : undefined;
+
     return {
       _id: mongoDoc._id.toString(),
       content: mongoDoc.content,
       user: userInfo._id,
       userInfo,
-      question:
-        mongoDoc.question && mongoDoc.question.title
-          ? {
-              _id: mongoDoc.question._id.toString(),
-              title: mongoDoc.question.title,
-            }
-          : mongoDoc.question.toString(),
+      question: questionId,
+      questionInfo,
       likes: Array.isArray(mongoDoc.likes)
         ? mongoDoc.likes.map((like: any) =>
             like && like._id ? like._id.toString() : like.toString()
@@ -60,14 +71,19 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
     // Omit _id to avoid type conflict
     const { _id, ...rest } = data;
     const result = await this.model.create(rest as Partial<IAnswerMongo>);
-    return this.toEntity(result);
+    // Populate user info for immediate use
+    const populatedResult = await (this.model as any)
+      .findById(result._id)
+      .populate('user', 'name email profile_image')
+      .populate('question', 'title slug');
+    return this.toEntity(populatedResult);
   }
 
   async findById(id: string): Promise<IAnswerModel> {
     const result = await (this.model as any)
       .findById(id)
       .populate('user', 'name email profile_image')
-      .populate('question', 'title');
+      .populate('question', 'title slug');
     if (!result) {
       throw ApplicationError.notFoundError(
         RepositoryConstants.ANSWER.NOT_FOUND.en
@@ -79,7 +95,8 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
   async findAll(): Promise<IAnswerModel[]> {
     const results = await this.model
       .find()
-      .populate('user', 'name email profile_image');
+      .populate('user', 'name email profile_image')
+      .populate('question', 'title slug');
     return results.map((doc: any) => this.toEntity(doc));
   }
 
@@ -99,7 +116,12 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
         RepositoryConstants.ANSWER.UPDATE_BY_ID_NOT_FOUND.en
       );
     }
-    return this.toEntity(result);
+    // Populate user info for immediate use
+    const populatedResult = await (this.model as any)
+      .findById(result._id)
+      .populate('user', 'name email profile_image')
+      .populate('question', 'title slug');
+    return this.toEntity(populatedResult);
   }
 
   async deleteById(id: string): Promise<IAnswerModel> {
@@ -116,7 +138,10 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
     field: keyof IAnswerModel,
     value: any
   ): Promise<IAnswerModel[]> {
-    const results = await this.model.find({ [field]: value });
+    const results = await this.model
+      .find({ [field]: value })
+      .populate('user', 'name email profile_image')
+      .populate('question', 'title slug');
     return results.map((doc: any) => this.toEntity(doc));
   }
 

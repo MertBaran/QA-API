@@ -1,9 +1,8 @@
 import { z } from 'zod';
 
-export const createAnswerSchema = z.object({
-  content: z.string().min(10),
+const baseAnswerSchema = z.object({
+  content: z.string().min(5),
 });
 
-export const updateAnswerSchema = z.object({
-  content: z.string().min(10),
-});
+export const createAnswerSchema = baseAnswerSchema;
+export const updateAnswerSchema = baseAnswerSchema;

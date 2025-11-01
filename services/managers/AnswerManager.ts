@@ -75,6 +75,7 @@ export class AnswerManager implements IAnswerService {
       );
     }
 
+    // Return answer (already populated from create)
     return answer;
   }
 
@@ -95,7 +96,7 @@ export class AnswerManager implements IAnswerService {
         }
       );
       // Elasticsearch'ten gelen SearchDocument'ları direkt Entity'lere dönüştür
-      return result.hits.map(
+      const answers = result.hits.map(
         (doc): IAnswerModel => ({
           _id: doc._id as EntityId,
           content: doc.content,
@@ -107,6 +108,7 @@ export class AnswerManager implements IAnswerService {
           createdAt: doc.createdAt || new Date(),
         })
       );
+      return this.enrichWithQuestionInfo(answers);
     } catch (error: any) {
       this.logger.warn(
         'Search failed for answers by question, falling back to MongoDB',
@@ -117,7 +119,8 @@ export class AnswerManager implements IAnswerService {
     }
 
     // Fallback to MongoDB
-    return await this.answerRepository.findByQuestion(questionId);
+    const answers = await this.answerRepository.findByQuestion(questionId);
+    return this.enrichWithQuestionInfo(answers);
   }
 
   async getAnswerById(answerId: string): Promise<IAnswerModel> {
@@ -252,7 +255,7 @@ export class AnswerManager implements IAnswerService {
         }
       );
       // Elasticsearch'ten gelen SearchDocument'ları direkt Entity'lere dönüştür
-      return result.hits.map(
+      const answers = result.hits.map(
         (doc): IAnswerModel => ({
           _id: doc._id as EntityId,
           content: doc.content,
@@ -264,6 +267,7 @@ export class AnswerManager implements IAnswerService {
           createdAt: doc.createdAt || new Date(),
         })
       );
+      return this.enrichWithQuestionInfo(answers);
     } catch (error: any) {
       this.logger.warn(
         'Search failed for answers by user, falling back to MongoDB',
@@ -275,6 +279,64 @@ export class AnswerManager implements IAnswerService {
 
     // Fallback to MongoDB
     return await this.answerRepository.findByUser(userId);
+  }
+
+  private async enrichWithQuestionInfo(
+    answers: IAnswerModel[]
+  ): Promise<IAnswerModel[]> {
+    if (!answers.length) {
+      return answers;
+    }
+
+    const questionIds = Array.from(
+      new Set(
+        answers
+          .map(answer => {
+            const question: any = answer.question;
+            if (!question) {
+              return null;
+            }
+            if (typeof question === 'object') {
+              return question._id ? question._id.toString() : null;
+            }
+            return question.toString();
+          })
+          .filter((id): id is string => Boolean(id))
+      )
+    );
+
+    if (!questionIds.length) {
+      return answers;
+    }
+
+    const questions = await this.questionRepository.findByIds(questionIds);
+    if (!questions.length) {
+      return answers;
+    }
+
+    const questionMap = new Map(
+      questions.map(question => [question._id.toString(), question])
+    );
+
+    return answers.map(answer => {
+      const questionId =
+        typeof answer.question === 'object'
+          ? (answer.question as any)._id?.toString()
+          : answer.question?.toString();
+      const question = questionId ? questionMap.get(questionId) : undefined;
+      if (!question) {
+        return answer;
+      }
+      return {
+        ...answer,
+        question: questionId as EntityId,
+        questionInfo: {
+          _id: question._id.toString(),
+          title: question.title,
+          slug: question.slug,
+        },
+      };
+    });
   }
 
   async getAnswersWithPopulatedData(

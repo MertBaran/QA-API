@@ -16,6 +16,7 @@ export interface IQuestionRepository extends IRepository<IQuestionModel> {
   ): Promise<IQuestionModel>;
   searchByTitle(title: string): Promise<IQuestionModel[]>;
   findByIdWithPopulate(id: EntityId): Promise<IQuestionModel>;
+  findByIds(ids: EntityId[]): Promise<IQuestionModel[]>;
   findPaginated(
     filters: PaginationQueryDTO
   ): Promise<PaginatedResponse<IQuestionModel>>;
