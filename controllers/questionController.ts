@@ -5,7 +5,10 @@ import { IQuestionService } from '../services/contracts/IQuestionService';
 import { QuestionConstants } from './constants/ControllerMessages';
 import type { SuccessResponseDTO } from '../types/dto/common/success-response.dto';
 import type { IQuestionModel } from '../models/interfaces/IQuestionModel';
-import type { IdParamDTO } from '../types/dto/common/id-param.dto';
+import type {
+  IdParamDTO,
+  UserIdParamDTO,
+} from '../types/dto/common/id-param.dto';
 import type { CreateQuestionDTO } from '../types/dto/question/create-question.dto';
 import type { UpdateQuestionDTO } from '../types/dto/question/update-question.dto';
 import type {
@@ -133,6 +136,18 @@ export class QuestionController {
         req.user!.id
       );
       res.status(200).json({ success: true, data: question });
+    }
+  );
+
+  getQuestionsByUser = asyncErrorWrapper(
+    async (
+      req: Request<UserIdParamDTO>,
+      res: Response<SuccessResponseDTO<IQuestionModel[]>>,
+      _next: NextFunction
+    ): Promise<void> => {
+      const { userId } = req.params;
+      const questions = await this.questionService.getQuestionsByUser(userId);
+      res.status(200).json({ success: true, data: questions });
     }
   );
 }

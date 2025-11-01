@@ -72,6 +72,34 @@ QuestionSchema.pre('save', function (next) {
   next();
 });
 
+QuestionSchema.pre(
+  'deleteOne',
+  { document: true, query: false },
+  async function (this: IQuestionMongo, next) {
+    try {
+      // Delete all answers for this question
+      const AnswerMongo = require('./AnswerMongoModel').default;
+      await AnswerMongo.deleteMany({ question: this._id });
+      next();
+    } catch (err) {
+      return next(err as any);
+    }
+  }
+);
+
+QuestionSchema.pre('findOneAndDelete', async function (next) {
+  try {
+    const AnswerMongo = require('./AnswerMongoModel').default;
+    const questionId = this.getQuery()._id;
+    if (questionId) {
+      await AnswerMongo.deleteMany({ question: questionId });
+    }
+    next();
+  } catch (err) {
+    return next(err as any);
+  }
+});
+
 QuestionSchema.methods['makeSlug'] = function (): string {
   let title = this['title'];
   // Remove all non-alphanumeric and non-space characters

@@ -27,8 +27,7 @@ export class AnswerRepository
   }
 
   async findByUser(userId: EntityId): Promise<IAnswerModel[]> {
-    const all = await this.dataSource.findAll();
-    return all.filter(a => a.user === userId);
+    return await this.dataSource.findByField('user', userId);
   }
 
   async likeAnswer(answerId: string, userId: EntityId): Promise<IAnswerModel> {
