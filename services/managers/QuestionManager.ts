@@ -113,8 +113,10 @@ export class QuestionManager implements IQuestionService {
             likes: (doc.likes || []).map(id => id as EntityId),
             dislikes: (doc.dislikes || []).map(id => id as EntityId),
             answers: (doc.answers || []).map(id => id as EntityId),
-            parentFormId: doc.parentFormId,
-            relatedForms: (doc.relatedForms || []).map(id => id as EntityId),
+            parentContentId: doc.parentContentId,
+            relatedContents: (doc.relatedContents || []).map(
+              id => id as EntityId
+            ),
           })
         );
 
@@ -353,8 +355,10 @@ export class QuestionManager implements IQuestionService {
           likes: (doc.likes || []).map(id => id as EntityId),
           dislikes: (doc.dislikes || []).map(id => id as EntityId),
           answers: (doc.answers || []).map(id => id as EntityId),
-          parentFormId: doc.parentFormId,
-          relatedForms: (doc.relatedForms || []).map(id => id as EntityId),
+          parentContentId: doc.parentContentId,
+          relatedContents: (doc.relatedContents || []).map(
+            id => id as EntityId
+          ),
         })
       );
     } catch (error: any) {

@@ -23,8 +23,8 @@ export interface QuestionSearchDoc {
   likes: string[];
   dislikes: string[];
   answers: string[];
-  parentFormId?: string;
-  relatedForms?: string[];
+  parentContentId?: string;
+  relatedContents?: string[];
 }
 
 // Answer Search Document
