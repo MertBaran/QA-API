@@ -1,16 +1,5 @@
 # Question & Answers Platform API
 
-## Quick Start
-
-**Looking for a Postman collection?** Find it in the [`postman/`](./postman/) directory.
-
-```bash
-# Import the collection into Postman
-postman/QA-API.postman_collection.json
-```
-
-The collection includes all API endpoints, request examples, and automatic token management. Just update the `baseUrl` variable if needed.
-
 ### Prerequisites
 
 - Node.js 18+
@@ -51,6 +40,15 @@ docker run -p 3000:3000 --env-file config/env/config.env qa-api
 ```
 
 ## API Endpoints
+
+**Looking for a Postman collection?** Find it in the [`postman/`](./postman/) directory.
+
+```bash
+# Import the collection into Postman
+postman/QA-API.postman_collection.json
+```
+
+The collection includes all API endpoints, request examples, and automatic token management. Just update the `baseUrl` variable if needed.
 
 ### Authentication
 
