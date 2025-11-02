@@ -3,6 +3,7 @@ import { IQuestionRepository } from '../../repositories/interfaces/IQuestionRepo
 import { IQuestionModel } from '../../models/interfaces/IQuestionModel';
 import { ApplicationError } from '../../infrastructure/error/ApplicationError';
 import { EntityId } from '../../types/database';
+import { ContentType } from '../../types/content/RelationType';
 import { ICacheProvider } from '../../infrastructure/cache/ICacheProvider';
 import { IQuestionService } from '../contracts/IQuestionService';
 import { QuestionServiceMessages } from '../constants/ServiceMessages';
@@ -38,6 +39,7 @@ export class QuestionManager implements IQuestionService {
   ): Promise<IQuestionModel> {
     const question = await this.questionRepository.create({
       ...questionData,
+      contentType: ContentType.QUESTION,
       user: userId,
     });
     await this.cacheProvider.del('questions:all');
@@ -98,6 +100,7 @@ export class QuestionManager implements IQuestionService {
         const questions = searchResult.hits.map(
           (doc): IQuestionModel => ({
             _id: doc._id as EntityId,
+            contentType: ContentType.QUESTION,
             title: doc.title,
             content: doc.content,
             slug: doc.slug,
@@ -107,8 +110,11 @@ export class QuestionManager implements IQuestionService {
             createdAt: doc.createdAt,
             user: doc.user as EntityId,
             userInfo: doc.userInfo,
-            likes: doc.likes.map(id => id as EntityId),
-            answers: doc.answers.map(id => id as EntityId),
+            likes: (doc.likes || []).map(id => id as EntityId),
+            dislikes: (doc.dislikes || []).map(id => id as EntityId),
+            answers: (doc.answers || []).map(id => id as EntityId),
+            parentFormId: doc.parentFormId,
+            relatedForms: (doc.relatedForms || []).map(id => id as EntityId),
           })
         );
 
@@ -252,8 +258,74 @@ export class QuestionManager implements IQuestionService {
     return question;
   }
 
+  async dislikeQuestion(
+    questionId: EntityId,
+    userId: EntityId
+  ): Promise<IQuestionModel> {
+    const question = await this.questionRepository.dislikeQuestion(
+      questionId,
+      userId
+    );
+    if (!question) {
+      const exists = await this.questionRepository.findById(questionId);
+      if (!exists)
+        throw ApplicationError.notFoundError(
+          QuestionServiceMessages.QuestionNotFound.en
+        );
+      throw ApplicationError.businessError(
+        QuestionServiceMessages.AlreadyLiked.en,
+        400
+      );
+    }
+
+    // Project entity to SearchDocument and update index
+    const searchDoc = this.questionProjector.project(question);
+    await this.indexClient.sync(
+      this.questionProjector.indexName,
+      'update',
+      searchDoc
+    );
+
+    return question;
+  }
+
+  async undoDislikeQuestion(
+    questionId: EntityId,
+    userId: EntityId
+  ): Promise<IQuestionModel> {
+    const question = await this.questionRepository.undoDislikeQuestion(
+      questionId,
+      userId
+    );
+    if (!question) {
+      const exists = await this.questionRepository.findById(questionId);
+      if (!exists)
+        throw ApplicationError.notFoundError(
+          QuestionServiceMessages.QuestionNotFound.en
+        );
+      throw ApplicationError.businessError(
+        QuestionServiceMessages.NotLikedYet.en,
+        400
+      );
+    }
+
+    // Project entity to SearchDocument and update index
+    const searchDoc = this.questionProjector.project(question);
+    await this.indexClient.sync(
+      this.questionProjector.indexName,
+      'update',
+      searchDoc
+    );
+
+    return question;
+  }
+
   async getQuestionsByUser(userId: EntityId): Promise<IQuestionModel[]> {
     return await this.questionRepository.findByUser(userId);
+  }
+
+  async getQuestionsByParent(parentId: EntityId): Promise<IQuestionModel[]> {
+    return await this.questionRepository.findByParent(parentId);
   }
 
   async searchQuestions(searchTerm: string): Promise<IQuestionModel[]> {
@@ -268,6 +340,7 @@ export class QuestionManager implements IQuestionService {
       return result.hits.map(
         (doc): IQuestionModel => ({
           _id: doc._id as EntityId,
+          contentType: ContentType.QUESTION,
           title: doc.title,
           content: doc.content,
           slug: doc.slug,
@@ -277,8 +350,11 @@ export class QuestionManager implements IQuestionService {
           createdAt: doc.createdAt,
           user: doc.user as EntityId,
           userInfo: doc.userInfo,
-          likes: doc.likes.map(id => id as EntityId),
-          answers: doc.answers.map(id => id as EntityId),
+          likes: (doc.likes || []).map(id => id as EntityId),
+          dislikes: (doc.dislikes || []).map(id => id as EntityId),
+          answers: (doc.answers || []).map(id => id as EntityId),
+          parentFormId: doc.parentFormId,
+          relatedForms: (doc.relatedForms || []).map(id => id as EntityId),
         })
       );
     } catch (error: any) {

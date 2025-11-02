@@ -3,6 +3,7 @@ import { IAnswerModel } from '../../models/interfaces/IAnswerModel';
 import { ApplicationError } from '../../infrastructure/error/ApplicationError';
 import { IAnswerRepository } from '../../repositories/interfaces/IAnswerRepository';
 import { EntityId } from '../../types/database';
+import { ContentType } from '../../types/content/RelationType';
 import { IQuestionRepository } from '../../repositories/interfaces/IQuestionRepository';
 import { IAnswerService } from '../contracts/IAnswerService';
 import {
@@ -99,11 +100,13 @@ export class AnswerManager implements IAnswerService {
       const answers = result.hits.map(
         (doc): IAnswerModel => ({
           _id: doc._id as EntityId,
+          contentType: ContentType.ANSWER,
           content: doc.content,
           user: doc.userId as EntityId,
           userInfo: doc.userInfo,
           question: doc.questionId as EntityId,
-          likes: doc.likes.map(id => id as EntityId),
+          likes: (doc.likes || []).map(id => id as EntityId),
+          dislikes: (doc.dislikes || []).map(id => id as EntityId),
           isAccepted: doc.isAccepted,
           createdAt: doc.createdAt || new Date(),
         })
@@ -204,6 +207,34 @@ export class AnswerManager implements IAnswerService {
     }
 
     // Project entity to SearchDocument and update index
+    try {
+      const searchDoc = this.answerProjector.project(answer);
+      await this.indexClient.sync(
+        this.answerProjector.indexName,
+        'update',
+        searchDoc
+      );
+    } catch (error) {
+      // Silently handle Elasticsearch sync error
+    }
+
+    return answer;
+  }
+
+  async undoLikeAnswer(
+    answerId: string,
+    userId: EntityId
+  ): Promise<IAnswerModel> {
+    const answer = await this.answerRepository.unlikeAnswer(answerId, userId);
+    if (!answer) {
+      // Answer var ama beğeni yok
+      throw ApplicationError.businessError(
+        AnswerServiceMessages.CannotUndoLike.en,
+        400
+      );
+    }
+
+    // Project entity to SearchDocument and update index
     const searchDoc = this.answerProjector.project(answer);
     await this.indexClient.sync(
       this.answerProjector.indexName,
@@ -214,11 +245,38 @@ export class AnswerManager implements IAnswerService {
     return answer;
   }
 
-  async undoLikeAnswer(
+  async dislikeAnswer(
     answerId: string,
     userId: EntityId
   ): Promise<IAnswerModel> {
-    const answer = await this.answerRepository.unlikeAnswer(answerId, userId);
+    const answer = await this.answerRepository.dislikeAnswer(answerId, userId);
+    if (!answer) {
+      // Answer var ama beğeni yok
+      throw ApplicationError.businessError(
+        AnswerServiceMessages.CannotUndoLike.en,
+        400
+      );
+    }
+
+    // Project entity to SearchDocument and update index
+    const searchDoc = this.answerProjector.project(answer);
+    await this.indexClient.sync(
+      this.answerProjector.indexName,
+      'update',
+      searchDoc
+    );
+
+    return answer;
+  }
+
+  async undoDislikeAnswer(
+    answerId: string,
+    userId: EntityId
+  ): Promise<IAnswerModel> {
+    const answer = await this.answerRepository.undoDislikeAnswer(
+      answerId,
+      userId
+    );
     if (!answer) {
       // Answer var ama beğeni yok
       throw ApplicationError.businessError(
@@ -258,11 +316,13 @@ export class AnswerManager implements IAnswerService {
       const answers = result.hits.map(
         (doc): IAnswerModel => ({
           _id: doc._id as EntityId,
+          contentType: ContentType.ANSWER,
           content: doc.content,
           user: doc.userId as EntityId,
           userInfo: doc.userInfo,
           question: doc.questionId as EntityId,
-          likes: doc.likes.map(id => id as EntityId),
+          likes: (doc.likes || []).map(id => id as EntityId),
+          dislikes: (doc.dislikes || []).map(id => id as EntityId),
           isAccepted: doc.isAccepted,
           createdAt: doc.createdAt || new Date(),
         })

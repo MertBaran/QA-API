@@ -22,6 +22,15 @@ export interface IQuestionService {
     questionId: EntityId,
     userId: EntityId
   ): Promise<IQuestionModel>;
+  dislikeQuestion(
+    questionId: EntityId,
+    userId: EntityId
+  ): Promise<IQuestionModel>;
+  undoDislikeQuestion(
+    questionId: EntityId,
+    userId: EntityId
+  ): Promise<IQuestionModel>;
   getQuestionsByUser(userId: EntityId): Promise<IQuestionModel[]>;
+  getQuestionsByParent(parentId: EntityId): Promise<IQuestionModel[]>;
   searchQuestions(searchTerm: string): Promise<IQuestionModel[]>;
 }
