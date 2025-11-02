@@ -21,7 +21,10 @@ export interface QuestionSearchDoc {
     profile_image?: string;
   };
   likes: string[];
+  dislikes: string[];
   answers: string[];
+  parentFormId?: string;
+  relatedForms?: string[];
 }
 
 // Answer Search Document
@@ -37,6 +40,7 @@ export interface AnswerSearchDoc {
     profile_image?: string;
   };
   likes: string[];
+  dislikes: string[];
   isAccepted: boolean;
   createdAt: Date;
 }

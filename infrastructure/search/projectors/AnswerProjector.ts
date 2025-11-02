@@ -40,6 +40,7 @@ export class AnswerProjector
       userId: String(entity.user),
       userInfo: entity.userInfo,
       likes: entity.likes.map(id => String(id)),
+      dislikes: entity.dislikes.map(id => String(id)),
       isAccepted: entity.isAccepted,
       createdAt: entity.createdAt || new Date(),
     };

@@ -45,7 +45,10 @@ export class QuestionProjector
       user: String(entity.user),
       userInfo: entity.userInfo,
       likes: entity.likes.map(id => String(id)),
+      dislikes: entity.dislikes.map(id => String(id)),
       answers: entity.answers.map(id => String(id)),
+      parentFormId: entity.parentFormId,
+      relatedForms: (entity.relatedForms || []).map(id => String(id)),
     };
   }
 }
