@@ -1,6 +1,7 @@
 import { injectable } from 'tsyringe';
 import { IEntityModel } from '../interfaces/IEntityModel';
 import { IAnswerModel } from '../../models/interfaces/IAnswerModel';
+import { ContentType } from '../../types/content/RelationType';
 import { IDataSource } from '../interfaces/IDataSource';
 import { IAnswerMongo } from '../../models/mongodb/AnswerMongoModel';
 import { ApplicationError } from '../../infrastructure/error/ApplicationError';
@@ -52,6 +53,7 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
 
     return {
       _id: mongoDoc._id.toString(),
+      contentType: ContentType.ANSWER,
       content: mongoDoc.content,
       user: userInfo._id,
       userInfo,
@@ -62,8 +64,20 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
             like && like._id ? like._id.toString() : like.toString()
           )
         : [],
+      dislikes: Array.isArray(mongoDoc.dislikes)
+        ? mongoDoc.dislikes.map((dislike: any) =>
+            dislike && dislike._id ? dislike._id.toString() : dislike.toString()
+          )
+        : [],
       isAccepted: mongoDoc.isAccepted ?? false,
       createdAt: mongoDoc.createdAt,
+      updatedAt: mongoDoc.updatedAt,
+      parentFormId: mongoDoc.parentFormId?.toString(),
+      relatedForms: Array.isArray(mongoDoc.relatedForms)
+        ? mongoDoc.relatedForms.map((form: any) =>
+            form && form._id ? form._id.toString() : form.toString()
+          )
+        : [],
     };
   }
 
@@ -89,7 +103,8 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
         RepositoryConstants.ANSWER.NOT_FOUND.en
       );
     }
-    return this.toEntity(result);
+    const entity = this.toEntity(result);
+    return entity;
   }
 
   async findAll(): Promise<IAnswerModel[]> {
@@ -97,7 +112,8 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
       .find()
       .populate('user', 'name email profile_image')
       .populate('question', 'title slug');
-    return results.map((doc: any) => this.toEntity(doc));
+    const entities = results.map((doc: any) => this.toEntity(doc));
+    return entities;
   }
 
   async updateById(
@@ -121,7 +137,8 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
       .findById(result._id)
       .populate('user', 'name email profile_image')
       .populate('question', 'title slug');
-    return this.toEntity(populatedResult);
+    const entity = this.toEntity(populatedResult);
+    return entity;
   }
 
   async deleteById(id: string): Promise<IAnswerModel> {
@@ -141,7 +158,8 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
     const results = await this.model
       .find({ [field]: value })
       .populate('user', 'name email profile_image')
-      .populate('question', 'title slug');
+      .populate('question', 'title slug')
+      .sort({ createdAt: -1 }); // Sort by createdAt descending (newest first)
     return results.map((doc: any) => this.toEntity(doc));
   }
 
