@@ -41,6 +41,11 @@ router.get(
   questionController.getQuestionsByUser
 );
 router.get(
+  '/parent/:id',
+  validator.validateParams!(IdParamSchema),
+  questionController.getQuestionsByParent
+);
+router.get(
   '/:id',
   validator.validateParams!(IdParamSchema),
   checkQuestionExist,
@@ -72,6 +77,24 @@ router.get(
     checkQuestionExist,
   ],
   questionController.undoLikeQuestion
+);
+router.get(
+  '/:id/dislike',
+  [
+    getAccessToRoute,
+    validator.validateParams!(IdParamSchema),
+    checkQuestionExist,
+  ],
+  questionController.dislikeQuestion
+);
+router.get(
+  '/:id/undo_dislike',
+  [
+    getAccessToRoute,
+    validator.validateParams!(IdParamSchema),
+    checkQuestionExist,
+  ],
+  questionController.undoDislikeQuestion
 );
 router.put(
   '/:id/edit',

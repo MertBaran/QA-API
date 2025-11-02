@@ -13,6 +13,8 @@ export interface IAnswerService {
   deleteAnswer(answerId: string, questionId: string): Promise<void>;
   likeAnswer(answerId: string, userId: EntityId): Promise<IAnswerModel>;
   undoLikeAnswer(answerId: string, userId: EntityId): Promise<IAnswerModel>;
+  dislikeAnswer(answerId: string, userId: EntityId): Promise<IAnswerModel>;
+  undoDislikeAnswer(answerId: string, userId: EntityId): Promise<IAnswerModel>;
   getAnswersByUser(userId: EntityId): Promise<IAnswerModel[]>;
   getAnswersWithPopulatedData(questionId: EntityId): Promise<IAnswerModel[]>;
 }

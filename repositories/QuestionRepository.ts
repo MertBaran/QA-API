@@ -33,7 +33,13 @@ export class QuestionRepository
 
   async findByUser(userId: EntityId): Promise<IQuestionModel[]> {
     const all = await this.dataSource.findAll();
-    return all.filter(q => q.user === userId);
+    const filtered = all.filter(q => q.user === userId);
+    // Sort by createdAt descending (newest first)
+    return filtered.sort((a, b) => {
+      const dateA = new Date(a.createdAt || 0).getTime();
+      const dateB = new Date(b.createdAt || 0).getTime();
+      return dateB - dateA;
+    });
   }
 
   async findByIds(ids: EntityId[]): Promise<IQuestionModel[]> {
@@ -97,9 +103,61 @@ export class QuestionRepository
     return this.updateById(questionId, { likes: question.likes });
   }
 
+  async dislikeQuestion(
+    questionId: EntityId,
+    userId: EntityId
+  ): Promise<IQuestionModel> {
+    const question = await this.findById(questionId);
+    if (!question) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.FIND_BY_ID_ERROR.en
+      );
+    }
+    if (question.dislikes.includes(userId)) {
+      throw ApplicationError.businessError(
+        RepositoryConstants.ANSWER.ALREADY_LIKED_ERROR.en,
+        400
+      );
+    }
+    // Remove from likes if exists
+    if (question.likes.includes(userId)) {
+      question.likes = question.likes.filter(like => like !== userId);
+    }
+    question.dislikes.push(userId);
+    return this.updateById(questionId, {
+      likes: question.likes,
+      dislikes: question.dislikes,
+    });
+  }
+
+  async undoDislikeQuestion(
+    questionId: EntityId,
+    userId: EntityId
+  ): Promise<IQuestionModel> {
+    const question = await this.findById(questionId);
+    if (!question) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.FIND_BY_ID_ERROR.en
+      );
+    }
+    if (!question.dislikes.includes(userId)) {
+      throw ApplicationError.businessError(
+        RepositoryConstants.ANSWER.NOT_LIKED_ERROR.en,
+        400
+      );
+    }
+    question.dislikes = question.dislikes.filter(dislike => dislike !== userId);
+    return this.updateById(questionId, { dislikes: question.dislikes });
+  }
+
   async searchByTitle(title: string): Promise<IQuestionModel[]> {
     const all = await this.dataSource.findAll();
     return all.filter(q => q.title.toLowerCase().includes(title.toLowerCase()));
+  }
+
+  async findByParent(parentId: EntityId): Promise<IQuestionModel[]> {
+    const all = await this.dataSource.findAll();
+    return all.filter(q => q.parentContentId === parentId);
   }
 
   async findPaginated(

@@ -20,6 +20,14 @@ export interface IAnswerRepository {
     answerId: EntityId,
     userId: EntityId
   ): Promise<IAnswerModel | null>;
+  dislikeAnswer(
+    answerId: EntityId,
+    userId: EntityId
+  ): Promise<IAnswerModel | null>;
+  undoDislikeAnswer(
+    answerId: EntityId,
+    userId: EntityId
+  ): Promise<IAnswerModel | null>;
   findAnswersByQuestionWithPopulate(
     questionId: EntityId
   ): Promise<IAnswerModel[]>;

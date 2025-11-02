@@ -139,6 +139,36 @@ export class QuestionController {
     }
   );
 
+  dislikeQuestion = asyncErrorWrapper(
+    async (
+      req: AuthenticatedRequest<IdParamDTO>,
+      res: Response<SuccessResponseDTO<IQuestionModel>>,
+      _next: NextFunction
+    ): Promise<void> => {
+      const { id } = req.params;
+      const question = await this.questionService.dislikeQuestion(
+        id,
+        req.user!.id
+      );
+      res.status(200).json({ success: true, data: question });
+    }
+  );
+
+  undoDislikeQuestion = asyncErrorWrapper(
+    async (
+      req: AuthenticatedRequest<IdParamDTO>,
+      res: Response<SuccessResponseDTO<IQuestionModel>>,
+      _next: NextFunction
+    ): Promise<void> => {
+      const { id } = req.params;
+      const question = await this.questionService.undoDislikeQuestion(
+        id,
+        req.user!.id
+      );
+      res.status(200).json({ success: true, data: question });
+    }
+  );
+
   getQuestionsByUser = asyncErrorWrapper(
     async (
       req: Request<UserIdParamDTO>,
@@ -147,6 +177,18 @@ export class QuestionController {
     ): Promise<void> => {
       const { userId } = req.params;
       const questions = await this.questionService.getQuestionsByUser(userId);
+      res.status(200).json({ success: true, data: questions });
+    }
+  );
+
+  getQuestionsByParent = asyncErrorWrapper(
+    async (
+      req: Request<IdParamDTO>,
+      res: Response<SuccessResponseDTO<IQuestionModel[]>>,
+      _next: NextFunction
+    ): Promise<void> => {
+      const { id } = req.params;
+      const questions = await this.questionService.getQuestionsByParent(id);
       res.status(200).json({ success: true, data: questions });
     }
   );

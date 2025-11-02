@@ -21,7 +21,10 @@ export interface QuestionSearchDoc {
     profile_image?: string;
   };
   likes: string[];
+  dislikes: string[];
   answers: string[];
+  parentContentId?: string;
+  relatedContents?: string[];
 }
 
 // Answer Search Document
@@ -37,6 +40,7 @@ export interface AnswerSearchDoc {
     profile_image?: string;
   };
   likes: string[];
+  dislikes: string[];
   isAccepted: boolean;
   createdAt: Date;
 }

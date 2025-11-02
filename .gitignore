@@ -56,8 +56,8 @@ performance/reports/
 # Docker ve deployment secrets
 temp-secrets/
 
-# Postman collections
-postman/
-
 # TODO dosyaları
 TODO.md 
+
+# examples
+examples/
