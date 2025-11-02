@@ -2,10 +2,10 @@ import { EntityId } from '../database';
 import { ContentType } from './RelationType';
 
 /**
- * Soyut içerik form interface
+ * Soyut içerik interface
  * Question ve Answer'ın ortak özelliklerini içerir
  */
-export interface IContentForm {
+export interface IContent {
   _id: EntityId;
   contentType: ContentType;
   content: string;
@@ -21,14 +21,14 @@ export interface IContentForm {
   likes: EntityId[];
   dislikes: EntityId[];
   // İlişki özellikleri
-  parentFormId?: EntityId; // Hangi içeriğe bağlı (form hiyerarşisi)
-  relatedForms?: EntityId[]; // İlgili içerikler
+  parentContentId?: EntityId; // Hangi içeriğe bağlı (form hiyerarşisi)
+  relatedContents?: EntityId[]; // İlgili içerikler
 }
 
 /**
- * ContentForm repository interface
+ * Content repository interface
  */
-export interface IContentFormRepository<T extends IContentForm> {
+export interface IContentRepository<T extends IContent> {
   findById(id: EntityId): Promise<T | null>;
   findByUser(userId: EntityId): Promise<T[]>;
   findAll(): Promise<T[]>;
@@ -38,4 +38,3 @@ export interface IContentFormRepository<T extends IContentForm> {
   findByParent(parentId: EntityId): Promise<T[]>;
   findRelated(contentId: EntityId): Promise<T[]>;
 }
-
