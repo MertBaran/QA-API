@@ -67,6 +67,50 @@ export class AnswerRepository
     return this.updateById(answerId, { likes: answer.likes });
   }
 
+  async dislikeAnswer(answerId: string, userId: EntityId): Promise<IAnswerModel> {
+    const answer = await this.findById(answerId);
+    if (!answer) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.FIND_BY_ID_ERROR.en
+      );
+    }
+    if (answer.dislikes.includes(userId)) {
+      throw ApplicationError.businessError(
+        RepositoryConstants.ANSWER.ALREADY_LIKED_ERROR.en,
+        400
+      );
+    }
+    // Remove from likes if exists
+    if (answer.likes.includes(userId)) {
+      answer.likes = answer.likes.filter(like => like !== userId);
+    }
+    answer.dislikes.push(userId);
+    return this.updateById(answerId, { 
+      likes: answer.likes,
+      dislikes: answer.dislikes 
+    });
+  }
+
+  async undoDislikeAnswer(
+    answerId: string,
+    userId: EntityId
+  ): Promise<IAnswerModel> {
+    const answer = await this.findById(answerId);
+    if (!answer) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.FIND_BY_ID_ERROR.en
+      );
+    }
+    if (!answer.dislikes.includes(userId)) {
+      throw ApplicationError.businessError(
+        RepositoryConstants.ANSWER.NOT_LIKED_ERROR.en,
+        400
+      );
+    }
+    answer.dislikes = answer.dislikes.filter(dislike => dislike !== userId);
+    return this.updateById(answerId, { dislikes: answer.dislikes });
+  }
+
   async findAnswersByQuestionWithPopulate(
     questionId: EntityId
   ): Promise<IAnswerModel[]> {
