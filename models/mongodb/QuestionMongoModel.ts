@@ -15,8 +15,8 @@ export interface IQuestionMongo extends Document {
   likes: mongoose.Types.ObjectId[];
   dislikes: mongoose.Types.ObjectId[];
   answers: mongoose.Types.ObjectId[];
-  parentFormId?: mongoose.Types.ObjectId;
-  relatedForms?: mongoose.Types.ObjectId[];
+  parentContentId?: mongoose.Types.ObjectId;
+  relatedContents?: mongoose.Types.ObjectId[];
   makeSlug(): string;
 }
 
@@ -81,10 +81,10 @@ const QuestionSchema = new Schema<IQuestionMongo>({
       ref: 'Answer',
     },
   ],
-  parentFormId: {
+  parentContentId: {
     type: mongoose.Schema.Types.ObjectId,
   },
-  relatedForms: [
+  relatedContents: [
     {
       type: mongoose.Schema.Types.ObjectId,
     },

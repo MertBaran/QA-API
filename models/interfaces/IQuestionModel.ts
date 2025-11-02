@@ -1,10 +1,10 @@
 import { EntityId } from '../../types/database';
-import { IContentForm } from '../../types/content/IContentForm';
+import { IContent } from '../../types/content/IContent';
 import { ContentType } from '../../types/content/RelationType';
 
-export interface IQuestionModel extends IContentForm {
-  // IContentForm'dan gelenler:
-  // _id, contentType, content, user, createdAt, updatedAt, userInfo, likes, dislikes, parentFormId, relatedForms
+export interface IQuestionModel extends IContent {
+  // IContent'den gelenler:
+  // _id, contentType, content, user, createdAt, updatedAt, userInfo, likes, dislikes, parentContentId, relatedContents
 
   // Question'a özel alanlar
   title: string;
@@ -14,6 +14,6 @@ export interface IQuestionModel extends IContentForm {
   views?: number;
   answers: EntityId[];
 
-  // IContentForm'daki contentType için default
+  // IContent'teki contentType için default
   contentType: ContentType.QUESTION;
 }

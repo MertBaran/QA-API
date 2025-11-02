@@ -10,8 +10,8 @@ export interface IAnswerMongo extends Document {
   likes: mongoose.Types.ObjectId[];
   dislikes: mongoose.Types.ObjectId[];
   isAccepted?: boolean;
-  parentFormId?: mongoose.Types.ObjectId;
-  relatedForms?: mongoose.Types.ObjectId[];
+  parentContentId?: mongoose.Types.ObjectId;
+  relatedContents?: mongoose.Types.ObjectId[];
 }
 
 const AnswerSchema = new Schema<IAnswerMongo>({
@@ -53,10 +53,10 @@ const AnswerSchema = new Schema<IAnswerMongo>({
     type: Boolean,
     default: false,
   },
-  parentFormId: {
+  parentContentId: {
     type: mongoose.Schema.Types.ObjectId,
   },
-  relatedForms: [
+  relatedContents: [
     {
       type: mongoose.Schema.Types.ObjectId,
     },

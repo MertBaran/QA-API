@@ -1,10 +1,10 @@
 import { EntityId } from '../../types/database';
-import { IContentForm } from '../../types/content/IContentForm';
+import { IContent } from '../../types/content/IContent';
 import { ContentType } from '../../types/content/RelationType';
 
-export interface IAnswerModel extends IContentForm {
-  // IContentForm'dan gelenler:
-  // _id, contentType, content, user, createdAt, updatedAt, userInfo, likes, dislikes, parentFormId, relatedForms
+export interface IAnswerModel extends IContent {
+  // IContent'den gelenler:
+  // _id, contentType, content, user, createdAt, updatedAt, userInfo, likes, dislikes, parentContentId, relatedContents
 
   // Answer'a özel alanlar
   question: EntityId;
@@ -15,6 +15,6 @@ export interface IAnswerModel extends IContentForm {
   };
   isAccepted: boolean;
 
-  // IContentForm'daki contentType için default
+  // IContent'teki contentType için default
   contentType: ContentType.ANSWER;
 }
