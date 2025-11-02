@@ -1,22 +1,20 @@
 import { EntityId } from '../../types/database';
+import { IContentForm } from '../../types/content/IContentForm';
+import { ContentType } from '../../types/content/RelationType';
 
-export interface IAnswerModel {
-  _id: EntityId;
-  content: string;
-  user: EntityId;
-  userInfo?: {
-    _id: string;
-    name: string;
-    email: string;
-    profile_image?: string;
-  };
+export interface IAnswerModel extends IContentForm {
+  // IContentForm'dan gelenler:
+  // _id, contentType, content, user, createdAt, updatedAt, userInfo, likes, dislikes, parentFormId, relatedForms
+
+  // Answer'a özel alanlar
   question: EntityId;
   questionInfo?: {
     _id: string;
     title?: string;
     slug?: string;
   };
-  likes: EntityId[];
   isAccepted: boolean;
-  createdAt?: Date;
+
+  // IContentForm'daki contentType için default
+  contentType: ContentType.ANSWER;
 }

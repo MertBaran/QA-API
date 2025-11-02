@@ -3,19 +3,29 @@ import slugify from 'slugify';
 
 export interface IQuestionMongo extends Document {
   _id: mongoose.Types.ObjectId;
+  contentType: string;
   title: string;
   content: string;
   slug: string;
   category: string;
   tags: string[];
   createdAt: Date;
+  updatedAt?: Date;
   user: mongoose.Types.ObjectId;
   likes: mongoose.Types.ObjectId[];
+  dislikes: mongoose.Types.ObjectId[];
   answers: mongoose.Types.ObjectId[];
+  parentFormId?: mongoose.Types.ObjectId;
+  relatedForms?: mongoose.Types.ObjectId[];
   makeSlug(): string;
 }
 
 const QuestionSchema = new Schema<IQuestionMongo>({
+  contentType: {
+    type: String,
+    default: 'question',
+    required: true,
+  },
   title: {
     type: String,
     required: [true, 'Please provide a title'],
@@ -45,6 +55,9 @@ const QuestionSchema = new Schema<IQuestionMongo>({
     type: Date,
     default: Date.now,
   },
+  updatedAt: {
+    type: Date,
+  },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
@@ -56,17 +69,37 @@ const QuestionSchema = new Schema<IQuestionMongo>({
       ref: 'User',
     },
   ],
+  dislikes: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+  ],
   answers: [
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Answer',
     },
   ],
+  parentFormId: {
+    type: mongoose.Schema.Types.ObjectId,
+  },
+  relatedForms: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+    },
+  ],
 });
 
 QuestionSchema.pre('save', function (next) {
+  // Update updatedAt on each save
+  if (this.isModified()) {
+    this.updatedAt = new Date();
+  }
+
+  // Only generate slug if title is modified
   if (!this.isModified('title')) {
-    next();
+    return next();
   }
   this.slug = this.makeSlug();
   next();
