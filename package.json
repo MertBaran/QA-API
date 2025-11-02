@@ -54,6 +54,9 @@
     "db:setup": "ts-node scripts/database-cli.ts setup",
     "db:admin": "ts-node scripts/database-cli.ts admin",
     "db:status": "ts-node scripts/database-cli.ts status",
+    "reindex:questions": "ts-node scripts/reindex-elasticsearch.ts questions",
+    "reindex:answers": "ts-node scripts/reindex-elasticsearch.ts answers",
+    "reindex:all": "ts-node scripts/reindex-elasticsearch.ts all",
     "seed:test-questions": "ts-node scripts/seed-test-questions.ts"
   },
   "keywords": [
