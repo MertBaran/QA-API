@@ -63,6 +63,9 @@ import { UserRoleMongooseDataSource } from '../repositories/mongodb/UserRoleMong
 import { BookmarkManager } from './managers/BookmarkManager';
 import { BookmarkRepository } from '../repositories/BookmarkRepository';
 import { BookmarkMongooseDataSource } from '../repositories/mongodb/BookmarkMongooseDataSource';
+import { ContentRelationMongooseDataSource } from '../repositories/mongodb/ContentRelationMongooseDataSource';
+import { ContentRelationRepository } from '../repositories/ContentRelationRepository';
+import ContentRelationMongo from '../models/mongodb/ContentRelationMongoModel';
 
 import { BookmarkController } from '../controllers/bookmarkController';
 import { ElasticsearchClient } from '../infrastructure/elasticsearch/ElasticsearchClient';
@@ -148,6 +151,10 @@ container.registerSingleton(
   TOKENS.IBookmarkDataSource,
   BookmarkMongooseDataSource
 );
+container.registerSingleton(
+  TOKENS.IContentRelationDataSource,
+  ContentRelationMongooseDataSource
+);
 
 // Register repositories
 container.registerSingleton(TOKENS.IUserRepository, UserRepository);
@@ -161,6 +168,7 @@ container.registerSingleton(TOKENS.IPermissionRepository, PermissionRepository);
 container.registerSingleton(TOKENS.IRoleRepository, RoleRepository);
 container.registerSingleton(TOKENS.IUserRoleRepository, UserRoleRepository);
 container.registerSingleton(TOKENS.IBookmarkRepository, BookmarkRepository);
+container.registerSingleton(TOKENS.IContentRelationRepository, ContentRelationRepository);
 
 // Register managers as services
 container.registerSingleton(TOKENS.IAuthService, AuthManager);
@@ -233,6 +241,7 @@ container.register(TOKENS.IUserModel, { useValue: UserMongo });
 container.register(TOKENS.IQuestionModel, { useValue: QuestionMongo });
 container.register(TOKENS.IAnswerModel, { useValue: AnswerMongo });
 container.register(TOKENS.INotificationModel, { useValue: NotificationMongo });
+container.register('IContentRelationModel', { useValue: ContentRelationMongo });
 container.register(TOKENS.INotificationTemplateModel, {
   useValue: NotificationTemplateMongo,
 });
