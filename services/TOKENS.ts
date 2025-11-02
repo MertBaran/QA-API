@@ -78,6 +78,9 @@ export const TOKENS = {
   IEntityTypeRegistry: 'IEntityTypeRegistry',
   IQuestionProjector: 'IQuestionProjector',
   IAnswerProjector: 'IAnswerProjector',
+  IContentRelationDataSource: 'IContentRelationDataSource',
+  IContentRelationRepository: 'IContentRelationRepository',
+  IContentRelationService: 'IContentRelationService',
 } as const;
 
 export type Token = (typeof TOKENS)[keyof typeof TOKENS];

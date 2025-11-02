@@ -3,6 +3,7 @@ import { IAnswerModel } from '../../models/interfaces/IAnswerModel';
 import { ApplicationError } from '../../infrastructure/error/ApplicationError';
 import { IAnswerRepository } from '../../repositories/interfaces/IAnswerRepository';
 import { EntityId } from '../../types/database';
+import { ContentType } from '../../types/content/RelationType';
 import { IQuestionRepository } from '../../repositories/interfaces/IQuestionRepository';
 import { IAnswerService } from '../contracts/IAnswerService';
 import {
@@ -75,6 +76,7 @@ export class AnswerManager implements IAnswerService {
       );
     }
 
+    // Return answer (already populated from create)
     return answer;
   }
 
@@ -95,18 +97,21 @@ export class AnswerManager implements IAnswerService {
         }
       );
       // Elasticsearch'ten gelen SearchDocument'ları direkt Entity'lere dönüştür
-      return result.hits.map(
+      const answers = result.hits.map(
         (doc): IAnswerModel => ({
           _id: doc._id as EntityId,
+          contentType: ContentType.ANSWER,
           content: doc.content,
           user: doc.userId as EntityId,
           userInfo: doc.userInfo,
           question: doc.questionId as EntityId,
-          likes: doc.likes.map(id => id as EntityId),
+          likes: (doc.likes || []).map(id => id as EntityId),
+          dislikes: (doc.dislikes || []).map(id => id as EntityId),
           isAccepted: doc.isAccepted,
           createdAt: doc.createdAt || new Date(),
         })
       );
+      return this.enrichWithQuestionInfo(answers);
     } catch (error: any) {
       this.logger.warn(
         'Search failed for answers by question, falling back to MongoDB',
@@ -117,7 +122,8 @@ export class AnswerManager implements IAnswerService {
     }
 
     // Fallback to MongoDB
-    return await this.answerRepository.findByQuestion(questionId);
+    const answers = await this.answerRepository.findByQuestion(questionId);
+    return this.enrichWithQuestionInfo(answers);
   }
 
   async getAnswerById(answerId: string): Promise<IAnswerModel> {
@@ -201,6 +207,34 @@ export class AnswerManager implements IAnswerService {
     }
 
     // Project entity to SearchDocument and update index
+    try {
+      const searchDoc = this.answerProjector.project(answer);
+      await this.indexClient.sync(
+        this.answerProjector.indexName,
+        'update',
+        searchDoc
+      );
+    } catch (error) {
+      // Silently handle Elasticsearch sync error
+    }
+
+    return answer;
+  }
+
+  async undoLikeAnswer(
+    answerId: string,
+    userId: EntityId
+  ): Promise<IAnswerModel> {
+    const answer = await this.answerRepository.unlikeAnswer(answerId, userId);
+    if (!answer) {
+      // Answer var ama beğeni yok
+      throw ApplicationError.businessError(
+        AnswerServiceMessages.CannotUndoLike.en,
+        400
+      );
+    }
+
+    // Project entity to SearchDocument and update index
     const searchDoc = this.answerProjector.project(answer);
     await this.indexClient.sync(
       this.answerProjector.indexName,
@@ -211,11 +245,38 @@ export class AnswerManager implements IAnswerService {
     return answer;
   }
 
-  async undoLikeAnswer(
+  async dislikeAnswer(
     answerId: string,
     userId: EntityId
   ): Promise<IAnswerModel> {
-    const answer = await this.answerRepository.unlikeAnswer(answerId, userId);
+    const answer = await this.answerRepository.dislikeAnswer(answerId, userId);
+    if (!answer) {
+      // Answer var ama beğeni yok
+      throw ApplicationError.businessError(
+        AnswerServiceMessages.CannotUndoLike.en,
+        400
+      );
+    }
+
+    // Project entity to SearchDocument and update index
+    const searchDoc = this.answerProjector.project(answer);
+    await this.indexClient.sync(
+      this.answerProjector.indexName,
+      'update',
+      searchDoc
+    );
+
+    return answer;
+  }
+
+  async undoDislikeAnswer(
+    answerId: string,
+    userId: EntityId
+  ): Promise<IAnswerModel> {
+    const answer = await this.answerRepository.undoDislikeAnswer(
+      answerId,
+      userId
+    );
     if (!answer) {
       // Answer var ama beğeni yok
       throw ApplicationError.businessError(
@@ -252,18 +313,21 @@ export class AnswerManager implements IAnswerService {
         }
       );
       // Elasticsearch'ten gelen SearchDocument'ları direkt Entity'lere dönüştür
-      return result.hits.map(
+      const answers = result.hits.map(
         (doc): IAnswerModel => ({
           _id: doc._id as EntityId,
+          contentType: ContentType.ANSWER,
           content: doc.content,
           user: doc.userId as EntityId,
           userInfo: doc.userInfo,
           question: doc.questionId as EntityId,
-          likes: doc.likes.map(id => id as EntityId),
+          likes: (doc.likes || []).map(id => id as EntityId),
+          dislikes: (doc.dislikes || []).map(id => id as EntityId),
           isAccepted: doc.isAccepted,
           createdAt: doc.createdAt || new Date(),
         })
       );
+      return this.enrichWithQuestionInfo(answers);
     } catch (error: any) {
       this.logger.warn(
         'Search failed for answers by user, falling back to MongoDB',
@@ -275,6 +339,64 @@ export class AnswerManager implements IAnswerService {
 
     // Fallback to MongoDB
     return await this.answerRepository.findByUser(userId);
+  }
+
+  private async enrichWithQuestionInfo(
+    answers: IAnswerModel[]
+  ): Promise<IAnswerModel[]> {
+    if (!answers.length) {
+      return answers;
+    }
+
+    const questionIds = Array.from(
+      new Set(
+        answers
+          .map(answer => {
+            const question: any = answer.question;
+            if (!question) {
+              return null;
+            }
+            if (typeof question === 'object') {
+              return question._id ? question._id.toString() : null;
+            }
+            return question.toString();
+          })
+          .filter((id): id is string => Boolean(id))
+      )
+    );
+
+    if (!questionIds.length) {
+      return answers;
+    }
+
+    const questions = await this.questionRepository.findByIds(questionIds);
+    if (!questions.length) {
+      return answers;
+    }
+
+    const questionMap = new Map(
+      questions.map(question => [question._id.toString(), question])
+    );
+
+    return answers.map(answer => {
+      const questionId =
+        typeof answer.question === 'object'
+          ? (answer.question as any)._id?.toString()
+          : answer.question?.toString();
+      const question = questionId ? questionMap.get(questionId) : undefined;
+      if (!question) {
+        return answer;
+      }
+      return {
+        ...answer,
+        question: questionId as EntityId,
+        questionInfo: {
+          _id: question._id.toString(),
+          title: question.title,
+          slug: question.slug,
+        },
+      };
+    });
   }
 
   async getAnswersWithPopulatedData(

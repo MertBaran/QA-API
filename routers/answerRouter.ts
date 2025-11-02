@@ -56,6 +56,18 @@ router.get(
 );
 
 router.get(
+  '/:answer_id/dislike',
+  [getAccessToRoute, checkQuestionAndAnswerExist],
+  answerController.dislikeAnswer
+);
+
+router.get(
+  '/:answer_id/undo_dislike',
+  [getAccessToRoute, checkQuestionAndAnswerExist],
+  answerController.undoDislikeAnswer
+);
+
+router.get(
   '/',
   validator.validateParams(QuestionIdParamSchema),
   answerController.getAllAnswersByQuestion

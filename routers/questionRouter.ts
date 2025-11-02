@@ -10,7 +10,10 @@ import {
 import { checkQuestionExist } from '../middlewares/database/databaseErrorHelpers';
 import { AuditMiddleware } from '../middlewares/audit/auditMiddleware';
 import { IValidationProvider } from '../infrastructure/validation/IValidationProvider';
-import { IdParamSchema } from '../types/dto/common/id-param.dto';
+import {
+  IdParamSchema,
+  UserIdParamSchema,
+} from '../types/dto/common/id-param.dto';
 import {
   createQuestionSchema,
   updateQuestionSchema,
@@ -31,6 +34,16 @@ router.get(
   '/paginated',
   validator.validateQuery(PaginationQuerySchema) as any,
   questionController.getQuestionsPaginated
+);
+router.get(
+  '/user/:userId',
+  validator.validateParams!(UserIdParamSchema),
+  questionController.getQuestionsByUser
+);
+router.get(
+  '/parent/:id',
+  validator.validateParams!(IdParamSchema),
+  questionController.getQuestionsByParent
 );
 router.get(
   '/:id',
@@ -64,6 +77,24 @@ router.get(
     checkQuestionExist,
   ],
   questionController.undoLikeQuestion
+);
+router.get(
+  '/:id/dislike',
+  [
+    getAccessToRoute,
+    validator.validateParams!(IdParamSchema),
+    checkQuestionExist,
+  ],
+  questionController.dislikeQuestion
+);
+router.get(
+  '/:id/undo_dislike',
+  [
+    getAccessToRoute,
+    validator.validateParams!(IdParamSchema),
+    checkQuestionExist,
+  ],
+  questionController.undoDislikeQuestion
 );
 router.put(
   '/:id/edit',

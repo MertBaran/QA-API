@@ -5,7 +5,10 @@ import { IQuestionService } from '../services/contracts/IQuestionService';
 import { QuestionConstants } from './constants/ControllerMessages';
 import type { SuccessResponseDTO } from '../types/dto/common/success-response.dto';
 import type { IQuestionModel } from '../models/interfaces/IQuestionModel';
-import type { IdParamDTO } from '../types/dto/common/id-param.dto';
+import type {
+  IdParamDTO,
+  UserIdParamDTO,
+} from '../types/dto/common/id-param.dto';
 import type { CreateQuestionDTO } from '../types/dto/question/create-question.dto';
 import type { UpdateQuestionDTO } from '../types/dto/question/update-question.dto';
 import type {
@@ -133,6 +136,60 @@ export class QuestionController {
         req.user!.id
       );
       res.status(200).json({ success: true, data: question });
+    }
+  );
+
+  dislikeQuestion = asyncErrorWrapper(
+    async (
+      req: AuthenticatedRequest<IdParamDTO>,
+      res: Response<SuccessResponseDTO<IQuestionModel>>,
+      _next: NextFunction
+    ): Promise<void> => {
+      const { id } = req.params;
+      const question = await this.questionService.dislikeQuestion(
+        id,
+        req.user!.id
+      );
+      res.status(200).json({ success: true, data: question });
+    }
+  );
+
+  undoDislikeQuestion = asyncErrorWrapper(
+    async (
+      req: AuthenticatedRequest<IdParamDTO>,
+      res: Response<SuccessResponseDTO<IQuestionModel>>,
+      _next: NextFunction
+    ): Promise<void> => {
+      const { id } = req.params;
+      const question = await this.questionService.undoDislikeQuestion(
+        id,
+        req.user!.id
+      );
+      res.status(200).json({ success: true, data: question });
+    }
+  );
+
+  getQuestionsByUser = asyncErrorWrapper(
+    async (
+      req: Request<UserIdParamDTO>,
+      res: Response<SuccessResponseDTO<IQuestionModel[]>>,
+      _next: NextFunction
+    ): Promise<void> => {
+      const { userId } = req.params;
+      const questions = await this.questionService.getQuestionsByUser(userId);
+      res.status(200).json({ success: true, data: questions });
+    }
+  );
+
+  getQuestionsByParent = asyncErrorWrapper(
+    async (
+      req: Request<IdParamDTO>,
+      res: Response<SuccessResponseDTO<IQuestionModel[]>>,
+      _next: NextFunction
+    ): Promise<void> => {
+      const { id } = req.params;
+      const questions = await this.questionService.getQuestionsByParent(id);
+      res.status(200).json({ success: true, data: questions });
     }
   );
 }

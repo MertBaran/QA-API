@@ -1,7 +1,6 @@
 import { z } from 'zod';
+import { updateAnswerSchema } from '../../../infrastructure/validation/schemas/answerSchemas';
 
-export const UpdateAnswerSchema = z.object({
-  content: z.string().min(10, 'content must be at least 10 characters'),
-});
+export const UpdateAnswerSchema = updateAnswerSchema;
 
 export type UpdateAnswerDTO = z.infer<typeof UpdateAnswerSchema>;

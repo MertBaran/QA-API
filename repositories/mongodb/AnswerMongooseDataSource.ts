@@ -1,6 +1,7 @@
 import { injectable } from 'tsyringe';
 import { IEntityModel } from '../interfaces/IEntityModel';
 import { IAnswerModel } from '../../models/interfaces/IAnswerModel';
+import { ContentType } from '../../types/content/RelationType';
 import { IDataSource } from '../interfaces/IDataSource';
 import { IAnswerMongo } from '../../models/mongodb/AnswerMongoModel';
 import { ApplicationError } from '../../infrastructure/error/ApplicationError';
@@ -34,25 +35,49 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
             profile_image: '',
           };
 
+    const questionDoc = mongoDoc.question;
+    const questionId =
+      questionDoc && questionDoc._id
+        ? questionDoc._id.toString()
+        : questionDoc
+          ? questionDoc.toString()
+          : '';
+    const questionInfo =
+      questionDoc && questionDoc.title
+        ? {
+            _id: questionId,
+            title: questionDoc.title,
+            slug: questionDoc.slug,
+          }
+        : undefined;
+
     return {
       _id: mongoDoc._id.toString(),
+      contentType: ContentType.ANSWER,
       content: mongoDoc.content,
       user: userInfo._id,
       userInfo,
-      question:
-        mongoDoc.question && mongoDoc.question.title
-          ? {
-              _id: mongoDoc.question._id.toString(),
-              title: mongoDoc.question.title,
-            }
-          : mongoDoc.question.toString(),
+      question: questionId,
+      questionInfo,
       likes: Array.isArray(mongoDoc.likes)
         ? mongoDoc.likes.map((like: any) =>
             like && like._id ? like._id.toString() : like.toString()
           )
         : [],
+      dislikes: Array.isArray(mongoDoc.dislikes)
+        ? mongoDoc.dislikes.map((dislike: any) =>
+            dislike && dislike._id ? dislike._id.toString() : dislike.toString()
+          )
+        : [],
       isAccepted: mongoDoc.isAccepted ?? false,
       createdAt: mongoDoc.createdAt,
+      updatedAt: mongoDoc.updatedAt,
+      parentContentId: mongoDoc.parentContentId?.toString(),
+      relatedContents: Array.isArray(mongoDoc.relatedContents)
+        ? mongoDoc.relatedContents.map((content: any) =>
+            content && content._id ? content._id.toString() : content.toString()
+          )
+        : [],
     };
   }
 
@@ -60,27 +85,35 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
     // Omit _id to avoid type conflict
     const { _id, ...rest } = data;
     const result = await this.model.create(rest as Partial<IAnswerMongo>);
-    return this.toEntity(result);
+    // Populate user info for immediate use
+    const populatedResult = await (this.model as any)
+      .findById(result._id)
+      .populate('user', 'name email profile_image')
+      .populate('question', 'title slug');
+    return this.toEntity(populatedResult);
   }
 
   async findById(id: string): Promise<IAnswerModel> {
     const result = await (this.model as any)
       .findById(id)
       .populate('user', 'name email profile_image')
-      .populate('question', 'title');
+      .populate('question', 'title slug');
     if (!result) {
       throw ApplicationError.notFoundError(
         RepositoryConstants.ANSWER.NOT_FOUND.en
       );
     }
-    return this.toEntity(result);
+    const entity = this.toEntity(result);
+    return entity;
   }
 
   async findAll(): Promise<IAnswerModel[]> {
     const results = await this.model
       .find()
-      .populate('user', 'name email profile_image');
-    return results.map((doc: any) => this.toEntity(doc));
+      .populate('user', 'name email profile_image')
+      .populate('question', 'title slug');
+    const entities = results.map((doc: any) => this.toEntity(doc));
+    return entities;
   }
 
   async updateById(
@@ -99,7 +132,13 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
         RepositoryConstants.ANSWER.UPDATE_BY_ID_NOT_FOUND.en
       );
     }
-    return this.toEntity(result);
+    // Populate user info for immediate use
+    const populatedResult = await (this.model as any)
+      .findById(result._id)
+      .populate('user', 'name email profile_image')
+      .populate('question', 'title slug');
+    const entity = this.toEntity(populatedResult);
+    return entity;
   }
 
   async deleteById(id: string): Promise<IAnswerModel> {
@@ -116,7 +155,11 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
     field: keyof IAnswerModel,
     value: any
   ): Promise<IAnswerModel[]> {
-    const results = await this.model.find({ [field]: value });
+    const results = await this.model
+      .find({ [field]: value })
+      .populate('user', 'name email profile_image')
+      .populate('question', 'title slug')
+      .sort({ createdAt: -1 }); // Sort by createdAt descending (newest first)
     return results.map((doc: any) => this.toEntity(doc));
   }
 

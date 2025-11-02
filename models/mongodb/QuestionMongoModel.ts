@@ -3,19 +3,29 @@ import slugify from 'slugify';
 
 export interface IQuestionMongo extends Document {
   _id: mongoose.Types.ObjectId;
+  contentType: string;
   title: string;
   content: string;
   slug: string;
   category: string;
   tags: string[];
   createdAt: Date;
+  updatedAt?: Date;
   user: mongoose.Types.ObjectId;
   likes: mongoose.Types.ObjectId[];
+  dislikes: mongoose.Types.ObjectId[];
   answers: mongoose.Types.ObjectId[];
+  parentContentId?: mongoose.Types.ObjectId;
+  relatedContents?: mongoose.Types.ObjectId[];
   makeSlug(): string;
 }
 
 const QuestionSchema = new Schema<IQuestionMongo>({
+  contentType: {
+    type: String,
+    default: 'question',
+    required: true,
+  },
   title: {
     type: String,
     required: [true, 'Please provide a title'],
@@ -45,6 +55,9 @@ const QuestionSchema = new Schema<IQuestionMongo>({
     type: Date,
     default: Date.now,
   },
+  updatedAt: {
+    type: Date,
+  },
   user: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
@@ -56,20 +69,68 @@ const QuestionSchema = new Schema<IQuestionMongo>({
       ref: 'User',
     },
   ],
+  dislikes: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+  ],
   answers: [
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Answer',
     },
   ],
+  parentContentId: {
+    type: mongoose.Schema.Types.ObjectId,
+  },
+  relatedContents: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+    },
+  ],
 });
 
 QuestionSchema.pre('save', function (next) {
+  // Update updatedAt on each save
+  if (this.isModified()) {
+    this.updatedAt = new Date();
+  }
+
+  // Only generate slug if title is modified
   if (!this.isModified('title')) {
-    next();
+    return next();
   }
   this.slug = this.makeSlug();
   next();
+});
+
+QuestionSchema.pre(
+  'deleteOne',
+  { document: true, query: false },
+  async function (this: IQuestionMongo, next) {
+    try {
+      // Delete all answers for this question
+      const AnswerMongo = require('./AnswerMongoModel').default;
+      await AnswerMongo.deleteMany({ question: this._id });
+      next();
+    } catch (err) {
+      return next(err as any);
+    }
+  }
+);
+
+QuestionSchema.pre('findOneAndDelete', async function (next) {
+  try {
+    const AnswerMongo = require('./AnswerMongoModel').default;
+    const questionId = this.getQuery()._id;
+    if (questionId) {
+      await AnswerMongo.deleteMany({ question: questionId });
+    }
+    next();
+  } catch (err) {
+    return next(err as any);
+  }
 });
 
 QuestionSchema.methods['makeSlug'] = function (): string {

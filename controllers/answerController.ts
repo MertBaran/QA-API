@@ -6,6 +6,7 @@ import { AnswerConstants } from './constants/ControllerMessages';
 
 import type { QuestionIdParamDTO } from '../types/dto/common/question-id-param.dto';
 import type { AnswerIdParamDTO } from '../types/dto/common/answer-id-param.dto';
+import type { UserIdParamDTO } from '../types/dto/common/id-param.dto';
 import type { CreateAnswerDTO } from '../types/dto/answer/create-answer.dto';
 import type { UpdateAnswerDTO } from '../types/dto/answer/update-answer.dto';
 import type { SuccessResponseDTO } from '../types/dto/common/success-response.dto';
@@ -130,6 +131,50 @@ export class AnswerController {
         req.user!.id
       );
       res.status(200).json({ success: true, data: answer });
+    }
+  );
+
+  dislikeAnswer = asyncErrorWrapper(
+    async (
+      req: AuthenticatedRequest<AnswerIdParamDTO>,
+      res: Response,
+      _next: NextFunction
+    ): Promise<void> => {
+      const { answer_id } = req.params;
+      const question_id = (req.params as any).question_id;
+      const answer = await this.answerService.dislikeAnswer(
+        answer_id,
+        req.user!.id
+      );
+      res.status(200).json({ success: true, data: answer });
+    }
+  );
+
+  undoDislikeAnswer = asyncErrorWrapper(
+    async (
+      req: AuthenticatedRequest<AnswerIdParamDTO>,
+      res: Response,
+      _next: NextFunction
+    ): Promise<void> => {
+      const { answer_id } = req.params;
+      const question_id = (req.params as any).question_id;
+      const answer = await this.answerService.undoDislikeAnswer(
+        answer_id,
+        req.user!.id
+      );
+      res.status(200).json({ success: true, data: answer });
+    }
+  );
+
+  getAnswersByUser = asyncErrorWrapper(
+    async (
+      req: Request<UserIdParamDTO>,
+      res: Response<SuccessResponseDTO<IAnswerModel[]>>,
+      _next: NextFunction
+    ): Promise<void> => {
+      const { userId } = req.params;
+      const answers = await this.answerService.getAnswersByUser(userId);
+      res.status(200).json({ success: true, data: answers });
     }
   );
 }

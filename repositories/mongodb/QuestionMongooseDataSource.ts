@@ -1,6 +1,7 @@
 import { injectable } from 'tsyringe';
 import { IEntityModel } from '../interfaces/IEntityModel';
 import { IQuestionModel } from '../../models/interfaces/IQuestionModel';
+import { ContentType } from '../../types/content/RelationType';
 import { IDataSource } from '../interfaces/IDataSource';
 import { IQuestionMongo } from '../../models/mongodb/QuestionMongoModel';
 import { ApplicationError } from '../../infrastructure/error/ApplicationError';
@@ -30,26 +31,46 @@ export class QuestionMongooseDataSource implements IDataSource<IQuestionModel> {
             name: mongoDoc.user.name,
             email: mongoDoc.user.email,
             profile_image: mongoDoc.user.profile_image,
+            title: mongoDoc.user.title,
           }
-        : {
-            _id: mongoDoc.user.toString(),
-            name: 'Anonim',
-            email: '',
-            profile_image: '',
-          };
+        : mongoDoc.user && typeof mongoDoc.user === 'string'
+          ? {
+              _id: mongoDoc.user.toString(),
+              name: 'Anonim',
+              email: '',
+              profile_image: '',
+              title: undefined,
+            }
+          : {
+              _id: 'unknown',
+              name: 'Anonim',
+              email: '',
+              profile_image: '',
+              title: undefined,
+            };
 
     return {
       _id: mongoDoc._id.toString(),
+      contentType: ContentType.QUESTION,
       title: mongoDoc.title,
       content: mongoDoc.content,
       slug: mongoDoc.slug,
       category: mongoDoc.category || 'General',
       tags: mongoDoc.tags || [],
+      views: mongoDoc.views,
       createdAt: mongoDoc.createdAt,
+      updatedAt: mongoDoc.updatedAt,
       user: userInfo._id,
       userInfo,
-      likes: mongoDoc.likes.map((like: any) => like.toString()),
-      answers: mongoDoc.answers.map((answer: any) => answer.toString()),
+      likes: (mongoDoc.likes || []).map((like: any) => like.toString()),
+      dislikes: (mongoDoc.dislikes || []).map((dislike: any) =>
+        dislike.toString()
+      ),
+      answers: (mongoDoc.answers || []).map((answer: any) => answer.toString()),
+      parentContentId: mongoDoc.parentContentId?.toString(),
+      relatedContents: (mongoDoc.relatedContents || []).map((content: any) =>
+        content.toString()
+      ),
     };
   }
 
@@ -62,18 +83,25 @@ export class QuestionMongooseDataSource implements IDataSource<IQuestionModel> {
       user: rest.user, // user zaten string olarak geliyor, mongoose otomatik çevirir
       likes: rest.likes || [],
       answers: rest.answers || [],
+      dislikes: rest.dislikes || [],
+      parentContentId: rest.parentContentId,
+      relatedContents: rest.relatedContents || [],
     };
 
     const result = await this.model.create(
       createData as unknown as Partial<IQuestionMongo>
     );
-    return this.toEntity(result);
+    // Populate user info for immediate use
+    const populatedResult = await (this.model as any)
+      .findById(result._id)
+      .populate('user', 'name email profile_image title');
+    return this.toEntity(populatedResult);
   }
 
   async findById(id: string): Promise<IQuestionModel> {
     const result = await this.model
       .findById(id)
-      .populate('user', 'name email profile_image');
+      .populate('user', 'name email profile_image title');
     if (!result) {
       throw ApplicationError.notFoundError(
         RepositoryConstants.QUESTION.NOT_FOUND.en
@@ -83,7 +111,9 @@ export class QuestionMongooseDataSource implements IDataSource<IQuestionModel> {
   }
 
   async findAll(): Promise<IQuestionModel[]> {
-    const results = await this.model.find();
+    const results = await this.model
+      .find()
+      .populate('user', 'name email profile_image title');
     return results.map((doc: any) => this.toEntity(doc));
   }
 
@@ -102,7 +132,11 @@ export class QuestionMongooseDataSource implements IDataSource<IQuestionModel> {
         RepositoryConstants.QUESTION.UPDATE_BY_ID_NOT_FOUND.en
       );
     }
-    return this.toEntity(result);
+    // Populate user info for immediate use
+    const populatedResult = await (this.model as any)
+      .findById(result._id)
+      .populate('user', 'name email profile_image title');
+    return this.toEntity(populatedResult);
   }
 
   async deleteById(id: string): Promise<IQuestionModel> {
@@ -112,21 +146,28 @@ export class QuestionMongooseDataSource implements IDataSource<IQuestionModel> {
         RepositoryConstants.QUESTION.DELETE_BY_ID_NOT_FOUND.en
       );
     }
-    return this.toEntity(result);
+    const populatedResult = await (this.model as any)
+      .findById(result._id)
+      .populate('user', 'name email profile_image title');
+    return this.toEntity(populatedResult || result);
   }
 
   async findByField(
     field: keyof IQuestionModel,
     value: any
   ): Promise<IQuestionModel[]> {
-    const results = await this.model.find({ [field]: value });
+    const results = await this.model
+      .find({ [field]: value })
+      .populate('user', 'name email profile_image title');
     return results.map((doc: any) => this.toEntity(doc));
   }
 
   async findByFields(
     fields: Partial<IQuestionModel>
   ): Promise<IQuestionModel[]> {
-    const results = await this.model.find(fields);
+    const results = await this.model
+      .find(fields)
+      .populate('user', 'name email profile_image title');
     return results.map((doc: any) => this.toEntity(doc));
   }
 
@@ -169,16 +210,18 @@ export class QuestionMongooseDataSource implements IDataSource<IQuestionModel> {
     const skip = (page - 1) * limit;
 
     // Execute queries
-    const [questions, totalItems] = await Promise.all([
+    const [questionDocs, totalItems] = await Promise.all([
       this.model
         .find(query)
         .sort(sort)
         .skip(skip)
         .limit(limit)
-        .populate('user', 'name email profile_image')
-        .lean(),
+        .populate('user', 'name email profile_image title'),
       this.model.countDocuments(query),
     ]);
+
+    // Convert to entities
+    const questions = questionDocs.map((doc: any) => this.toEntity(doc));
 
     // Calculate pagination info
     const totalPages = Math.ceil(totalItems / limit);
@@ -186,7 +229,7 @@ export class QuestionMongooseDataSource implements IDataSource<IQuestionModel> {
     const hasPreviousPage = page > 1;
 
     return {
-      data: questions.map((doc: any) => this.toEntity(doc)),
+      data: questions,
       pagination: {
         currentPage: page,
         totalPages,

@@ -1,25 +1,31 @@
 import mongoose, { Document, Schema } from 'mongoose';
-import QuestionMongo from './QuestionMongoModel';
 
 export interface IAnswerMongo extends Document {
   _id: mongoose.Types.ObjectId;
   content: string;
   createdAt: Date;
+  updatedAt?: Date;
   user: mongoose.Types.ObjectId;
   question: mongoose.Types.ObjectId;
   likes: mongoose.Types.ObjectId[];
+  dislikes: mongoose.Types.ObjectId[];
   isAccepted?: boolean;
+  parentContentId?: mongoose.Types.ObjectId;
+  relatedContents?: mongoose.Types.ObjectId[];
 }
 
 const AnswerSchema = new Schema<IAnswerMongo>({
   content: {
     type: String,
     required: [true, 'Please provide a content'],
-    minlength: [10, 'Please provide a content at least 10 characters'],
+    minlength: [5, 'Please provide a content at least 5 characters'],
   },
   createdAt: {
     type: Date,
     default: Date.now,
+  },
+  updatedAt: {
+    type: Date,
   },
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -37,15 +43,37 @@ const AnswerSchema = new Schema<IAnswerMongo>({
       ref: 'User',
     },
   ],
+  dislikes: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+  ],
   isAccepted: {
     type: Boolean,
     default: false,
   },
+  parentContentId: {
+    type: mongoose.Schema.Types.ObjectId,
+  },
+  relatedContents: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+    },
+  ],
 });
 
 AnswerSchema.pre('save', async function (this: IAnswerMongo, next) {
-  if (!this.isModified('user')) return next();
+  // Update updatedAt on each save
+  if (this.isModified() && !this.isNew) {
+    this.updatedAt = new Date();
+  }
+
+  // Only process question relation if this is a new answer
+  if (!this.isNew || !this.isModified('user')) return next();
+
   try {
+    const QuestionMongo = require('./QuestionMongoModel').default;
     const question = await QuestionMongo.findById(this.question);
     if (question) {
       question.answers.push(this._id);
@@ -62,10 +90,11 @@ AnswerSchema.pre(
   { document: true, query: false },
   async function (this: IAnswerMongo, next) {
     try {
+      const QuestionMongo = require('./QuestionMongoModel').default;
       const question = await QuestionMongo.findById(this.question);
       if (question) {
         question.answers = question.answers.filter(
-          answerId => answerId.toString() !== this._id.toString()
+          (answerId: any) => answerId.toString() !== this._id.toString()
         );
         await question.save();
       }
