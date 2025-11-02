@@ -57,6 +57,8 @@
     "reindex:questions": "ts-node scripts/reindex-elasticsearch.ts questions",
     "reindex:answers": "ts-node scripts/reindex-elasticsearch.ts answers",
     "reindex:all": "ts-node scripts/reindex-elasticsearch.ts all",
+    "reindex": "ts-node scripts/reindex-elasticsearch.ts all",
+    "migrate:field-names": "ts-node scripts/migrate-field-names.ts",
     "seed:test-questions": "ts-node scripts/seed-test-questions.ts"
   },
   "keywords": [
