@@ -67,9 +67,9 @@ export class QuestionMongooseDataSource implements IDataSource<IQuestionModel> {
         dislike.toString()
       ),
       answers: (mongoDoc.answers || []).map((answer: any) => answer.toString()),
-      parentFormId: mongoDoc.parentFormId?.toString(),
-      relatedForms: (mongoDoc.relatedForms || []).map((form: any) =>
-        form.toString()
+      parentContentId: mongoDoc.parentContentId?.toString(),
+      relatedContents: (mongoDoc.relatedContents || []).map((content: any) =>
+        content.toString()
       ),
     };
   }
@@ -84,8 +84,8 @@ export class QuestionMongooseDataSource implements IDataSource<IQuestionModel> {
       likes: rest.likes || [],
       answers: rest.answers || [],
       dislikes: rest.dislikes || [],
-      parentFormId: rest.parentFormId,
-      relatedForms: rest.relatedForms || [],
+      parentContentId: rest.parentContentId,
+      relatedContents: rest.relatedContents || [],
     };
 
     const result = await this.model.create(

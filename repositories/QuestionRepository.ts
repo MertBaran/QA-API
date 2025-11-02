@@ -157,7 +157,7 @@ export class QuestionRepository
 
   async findByParent(parentId: EntityId): Promise<IQuestionModel[]> {
     const all = await this.dataSource.findAll();
-    return all.filter(q => q.parentFormId === parentId);
+    return all.filter(q => q.parentContentId === parentId);
   }
 
   async findPaginated(

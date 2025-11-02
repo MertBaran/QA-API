@@ -72,10 +72,10 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
       isAccepted: mongoDoc.isAccepted ?? false,
       createdAt: mongoDoc.createdAt,
       updatedAt: mongoDoc.updatedAt,
-      parentFormId: mongoDoc.parentFormId?.toString(),
-      relatedForms: Array.isArray(mongoDoc.relatedForms)
-        ? mongoDoc.relatedForms.map((form: any) =>
-            form && form._id ? form._id.toString() : form.toString()
+      parentContentId: mongoDoc.parentContentId?.toString(),
+      relatedContents: Array.isArray(mongoDoc.relatedContents)
+        ? mongoDoc.relatedContents.map((content: any) =>
+            content && content._id ? content._id.toString() : content.toString()
           )
         : [],
     };
