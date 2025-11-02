@@ -680,7 +680,13 @@
             "url": {
               "raw": "{{baseUrl}}/api/questions/:question_id/answers/:answer_id",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "questions", ":question_id", "answers", ":answer_id"],
+              "path": [
+                "api",
+                "questions",
+                ":question_id",
+                "answers",
+                ":answer_id"
+              ],
               "variable": [
                 {
                   "key": "question_id",
@@ -794,7 +800,14 @@
             "url": {
               "raw": "{{baseUrl}}/api/questions/:question_id/answers/:answer_id/edit",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "questions", ":question_id", "answers", ":answer_id", "edit"],
+              "path": [
+                "api",
+                "questions",
+                ":question_id",
+                "answers",
+                ":answer_id",
+                "edit"
+              ],
               "variable": [
                 {
                   "key": "question_id",
@@ -826,7 +839,14 @@
             "url": {
               "raw": "{{baseUrl}}/api/questions/:question_id/answers/:answer_id/delete",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "questions", ":question_id", "answers", ":answer_id", "delete"],
+              "path": [
+                "api",
+                "questions",
+                ":question_id",
+                "answers",
+                ":answer_id",
+                "delete"
+              ],
               "variable": [
                 {
                   "key": "question_id",
@@ -858,7 +878,14 @@
             "url": {
               "raw": "{{baseUrl}}/api/questions/:question_id/answers/:answer_id/like",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "questions", ":question_id", "answers", ":answer_id", "like"],
+              "path": [
+                "api",
+                "questions",
+                ":question_id",
+                "answers",
+                ":answer_id",
+                "like"
+              ],
               "variable": [
                 {
                   "key": "question_id",
@@ -890,7 +917,14 @@
             "url": {
               "raw": "{{baseUrl}}/api/questions/:question_id/answers/:answer_id/undo_like",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "questions", ":question_id", "answers", ":answer_id", "undo_like"],
+              "path": [
+                "api",
+                "questions",
+                ":question_id",
+                "answers",
+                ":answer_id",
+                "undo_like"
+              ],
               "variable": [
                 {
                   "key": "question_id",
@@ -922,7 +956,14 @@
             "url": {
               "raw": "{{baseUrl}}/api/questions/:question_id/answers/:answer_id/dislike",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "questions", ":question_id", "answers", ":answer_id", "dislike"],
+              "path": [
+                "api",
+                "questions",
+                ":question_id",
+                "answers",
+                ":answer_id",
+                "dislike"
+              ],
               "variable": [
                 {
                   "key": "question_id",
@@ -954,7 +995,14 @@
             "url": {
               "raw": "{{baseUrl}}/api/questions/:question_id/answers/:answer_id/undo_dislike",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "questions", ":question_id", "answers", ":answer_id", "undo_dislike"],
+              "path": [
+                "api",
+                "questions",
+                ":question_id",
+                "answers",
+                ":answer_id",
+                "undo_dislike"
+              ],
               "variable": [
                 {
                   "key": "question_id",
@@ -1571,7 +1619,14 @@
             "url": {
               "raw": "{{baseUrl}}/api/bookmarks/collections/:collectionId/items/:bookmarkId",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "bookmarks", "collections", ":collectionId", "items", ":bookmarkId"],
+              "path": [
+                "api",
+                "bookmarks",
+                "collections",
+                ":collectionId",
+                "items",
+                ":bookmarkId"
+              ],
               "variable": [
                 {
                   "key": "collectionId",
@@ -1603,7 +1658,14 @@
             "url": {
               "raw": "{{baseUrl}}/api/bookmarks/collections/:collectionId/items/:bookmarkId",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "bookmarks", "collections", ":collectionId", "items", ":bookmarkId"],
+              "path": [
+                "api",
+                "bookmarks",
+                "collections",
+                ":collectionId",
+                "items",
+                ":bookmarkId"
+              ],
               "variable": [
                 {
                   "key": "collectionId",
@@ -2287,4 +2349,3 @@
     }
   ]
 }
-
