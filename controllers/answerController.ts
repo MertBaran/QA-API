@@ -134,6 +134,38 @@ export class AnswerController {
     }
   );
 
+  dislikeAnswer = asyncErrorWrapper(
+    async (
+      req: AuthenticatedRequest<AnswerIdParamDTO>,
+      res: Response,
+      _next: NextFunction
+    ): Promise<void> => {
+      const { answer_id } = req.params;
+      const question_id = (req.params as any).question_id;
+      const answer = await this.answerService.dislikeAnswer(
+        answer_id,
+        req.user!.id
+      );
+      res.status(200).json({ success: true, data: answer });
+    }
+  );
+
+  undoDislikeAnswer = asyncErrorWrapper(
+    async (
+      req: AuthenticatedRequest<AnswerIdParamDTO>,
+      res: Response,
+      _next: NextFunction
+    ): Promise<void> => {
+      const { answer_id } = req.params;
+      const question_id = (req.params as any).question_id;
+      const answer = await this.answerService.undoDislikeAnswer(
+        answer_id,
+        req.user!.id
+      );
+      res.status(200).json({ success: true, data: answer });
+    }
+  );
+
   getAnswersByUser = asyncErrorWrapper(
     async (
       req: Request<UserIdParamDTO>,
