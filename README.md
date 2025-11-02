@@ -1,5 +1,16 @@
 # Question & Answers Platform API
 
+## Quick Start
+
+**Looking for a Postman collection?** Find it in the [`postman/`](./postman/) directory.
+
+```bash
+# Import the collection into Postman
+postman/QA-API.postman_collection.json
+```
+
+The collection includes all API endpoints, request examples, and automatic token management. Just update the `baseUrl` variable if needed.
+
 ### Prerequisites
 
 - Node.js 18+
@@ -44,79 +55,127 @@ docker run -p 3000:3000 --env-file config/env/config.env qa-api
 ### Authentication
 
 ```
-POST   /api/auth/register              # User registration
-POST   /api/auth/login                 # User login
-POST   /api/auth/loginGoogle           # Google OAuth login
-GET    /api/auth/logout                # User logout
-POST   /api/auth/forgotpassword        # Password reset request
-PUT    /api/auth/resetpassword         # Password reset
-GET    /api/auth/profile               # Get user profile
-PUT    /api/auth/edit                  # Edit user profile
+POST   /api/auth/register                   # User registration
+POST   /api/auth/login                      # User login (auto-saves token)
+POST   /api/auth/loginGoogle                # Google OAuth login
+GET    /api/auth/logout                     # User logout
+POST   /api/auth/forgotpassword             # Password reset request
+PUT    /api/auth/resetpassword              # Password reset
+GET    /api/auth/profile                    # Get user profile
+PUT    /api/auth/edit                       # Edit user profile
+POST   /api/auth/upload                     # Upload profile image
+GET    /api/auth/check-admin-permissions    # Check admin permissions
 ```
 
 ### Questions
 
 ```
-GET    /api/questions                  # List questions
-POST   /api/questions/ask              # Create question
+GET    /api/questions                  # List all questions
+GET    /api/questions/paginated        # Get paginated questions (with filters, search, sort)
 GET    /api/questions/:id              # Get question details
+GET    /api/questions/user/:userId     # Get questions by user
+GET    /api/questions/parent/:id       # Get questions related to a parent content
+POST   /api/questions/ask              # Create question (with optional parentContentId)
 PUT    /api/questions/:id/edit         # Update question
 DELETE /api/questions/:id/delete       # Delete question
 GET    /api/questions/:id/like         # Like question
 GET    /api/questions/:id/undo_like    # Unlike question
+GET    /api/questions/:id/dislike      # Dislike question
+GET    /api/questions/:id/undo_dislike # Undo dislike question
 ```
 
 ### Answers
 
 ```
-POST   /api/answers/:questionId/answer # Add answer to question
-GET    /api/answers/:id                # Get answer details
-PUT    /api/answers/:id/edit           # Update answer
-DELETE /api/answers/:id/delete         # Delete answer
-GET    /api/answers/:id/like           # Like answer
-GET    /api/answers/:id/undo_like      # Unlike answer
+GET    /api/questions/:question_id/answers              # Get all answers for a question
+GET    /api/questions/:question_id/answers/:answer_id   # Get specific answer
+POST   /api/questions/:question_id/answers              # Add answer to question
+PUT    /api/questions/:question_id/answers/:answer_id/edit    # Update answer
+DELETE /api/questions/:question_id/answers/:answer_id/delete  # Delete answer
+GET    /api/questions/:question_id/answers/:answer_id/like    # Like answer
+GET    /api/questions/:question_id/answers/:answer_id/undo_like # Unlike answer
+GET    /api/questions/:question_id/answers/:answer_id/dislike  # Dislike answer
+GET    /api/questions/:question_id/answers/:answer_id/undo_dislike # Undo dislike answer
+GET    /api/answers/:id                      # Get answer by ID (standalone)
+GET    /api/answers/user/:userId             # Get answers by user
 ```
 
-### Notifications
+### Notifications (Admin Only)
 
 ```
-POST   /api/notifications/send         # Send notification
-POST   /api/notifications/template     # Send template notification
-GET    /api/notifications/history      # Get notification history
-GET    /api/notifications/templates    # List available templates
-GET    /api/notifications/queue-status # Get queue status
+POST   /api/notifications/user/:userId              # Send notification to user
+POST   /api/notifications/channels                  # Send notification to specific channels
+GET    /api/notifications/user/:userId              # Get user notifications
+GET    /api/notifications/preferences/:userId       # Get user notification preferences
+PUT    /api/notifications/preferences/:userId       # Update user notification preferences
+POST   /api/notifications/test/:userId              # Send test notification (all channels)
+GET    /api/notifications/debug/:userId             # Debug notifications
+GET    /api/notifications/queue/status              # Get queue status
+GET    /api/notifications/stats                     # Get notification statistics
 ```
 
-### User Management
+### Bookmarks
 
 ```
-GET    /api/users                      # List users (Admin)
-GET    /api/users/:id                  # Get user details
-PUT    /api/users/:id                  # Update user (Admin)
-DELETE /api/users/:id                  # Delete user (Admin)
+POST   /api/bookmarks/add                                    # Add bookmark
+DELETE /api/bookmarks/remove/:id                             # Remove bookmark
+PUT    /api/bookmarks/:id                                    # Update bookmark
+GET    /api/bookmarks/user                                   # Get user bookmarks
+GET    /api/bookmarks/check/:targetType/:targetId            # Check if bookmark exists
+GET    /api/bookmarks/search                                 # Search bookmarks
+GET    /api/bookmarks/paginated                              # Get paginated bookmarks
+POST   /api/bookmarks/collections                            # Create collection
+GET    /api/bookmarks/collections                            # Get user collections
+PUT    /api/bookmarks/collections/:id                        # Update collection
+DELETE /api/bookmarks/collections/:id                        # Delete collection
+POST   /api/bookmarks/collections/:collectionId/items/:bookmarkId   # Add to collection
+DELETE /api/bookmarks/collections/:collectionId/items/:bookmarkId  # Remove from collection
+GET    /api/bookmarks/collections/:id/items                  # Get collection items
+GET    /api/bookmarks/stats                                  # Get bookmark statistics
 ```
 
-### Permission Management
+### Users
 
 ```
-GET    /api/permissions/roles          # List all roles
-GET    /api/permissions/users/:userId/roles    # Get user roles
-POST   /api/permissions/users/:userId/roles    # Assign role to user
-DELETE /api/permissions/users/:userId/roles/:roleId  # Remove role from user
-POST   /api/permissions/roles/:roleId/permissions    # Add permissions to role
-DELETE /api/permissions/roles/:roleId/permissions    # Remove permissions from role
+GET    /api/public/users/:id           # Get public user profile (no auth required)
+GET    /api/users                      # List all users (Admin only)
+GET    /api/users/:id                  # Get user details (Admin only)
+```
+
+### Admin Operations
+
+```
+GET    /api/admin/users                           # List all users (Admin only)
+PUT    /api/admin/users/:userId                   # Update user (Admin only)
+DELETE /api/admin/users/:userId                   # Delete user (Admin only)
+PATCH  /api/admin/users/:userId/block             # Toggle user block status (Admin only)
+PATCH  /api/admin/users/:userId/roles             # Update user roles (Admin only)
+GET    /api/admin/users/stats                     # Get user statistics (Admin only)
+```
+
+### Permission Management (Admin Only)
+
+```
+GET    /api/permissions/roles                     # List all roles
+POST   /api/permissions/assign-role               # Assign role to user
+DELETE /api/permissions/remove-role               # Remove role from user
+GET    /api/permissions/user-roles/:userId        # Get user roles
+GET    /api/permissions/permissions               # List all permissions
+POST   /api/permissions/role-permissions          # Add permissions to role
+DELETE /api/permissions/role-permissions          # Remove permissions from role
+GET    /api/permissions/user-permissions/:userId  # Get user permissions
 ```
 
 ### Health & Monitoring
 
 ```
-GET    /health                         # Full health check
-GET    /health/quick                   # Quick health check
-GET    /api/monitoring/connections     # Connection status
-GET    /api/monitoring/alerts          # Alert history
-GET    /api/monitoring/stats           # Monitoring statistics
-POST   /api/monitoring/start           # Start monitoring
-POST   /api/monitoring/stop            # Stop monitoring
+GET    /health                         # Full health check (no auth)
+GET    /health/quick                   # Quick health check (no auth)
+GET    /api/monitoring/connections     # Connection status (Admin only)
+GET    /api/monitoring/alerts          # Alert history (Admin only)
+GET    /api/monitoring/stats           # Monitoring statistics (Admin only)
+POST   /api/monitoring/start           # Start monitoring (Admin only)
+POST   /api/monitoring/stop            # Stop monitoring (Admin only)
 ```
 
 ### WebSocket Endpoints

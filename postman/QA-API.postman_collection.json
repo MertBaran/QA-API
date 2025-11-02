@@ -1,0 +1,2290 @@
+{
+  "info": {
+    "name": "QA Platform API",
+    "description": "Complete API collection for Question & Answers Platform",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "Quick Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health/quick",
+              "host": ["{{baseUrl}}"],
+              "path": ["health", "quick"]
+            }
+          }
+        },
+        {
+          "name": "Full Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"test@example.com\",\n  \"password\": \"Test123456!\",\n  \"language\": \"tr\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const responseJson = pm.response.json();",
+                  "  if (responseJson.data && responseJson.data.token) {",
+                  "    pm.collectionVariables.set('authToken', responseJson.data.token);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"Test123456!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Google Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idToken\": \"GOOGLE_ID_TOKEN_HERE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/loginGoogle",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "loginGoogle"]
+            }
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "logout"]
+            }
+          }
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Edit Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Name\",\n  \"title\": \"Software Developer\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/edit",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "edit"]
+            }
+          }
+        },
+        {
+          "name": "Upload Profile Image",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "profile_image",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/upload",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "upload"]
+            }
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/forgotpassword",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "forgotpassword"]
+            }
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resetToken\": \"RESET_TOKEN_HERE\",\n  \"newPassword\": \"NewPassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/resetpassword",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "resetpassword"]
+            }
+          }
+        },
+        {
+          "name": "Check Admin Permissions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/check-admin-permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "check-admin-permissions"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Questions",
+      "item": [
+        {
+          "name": "Get All Questions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/questions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions"]
+            }
+          }
+        },
+        {
+          "name": "Get Paginated Questions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/paginated?page=1&limit=10&sortBy=createdAt&sortOrder=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", "paginated"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Question by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "QUESTION_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Questions by User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/user/:userId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", "user", ":userId"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "USER_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Questions by Parent",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/parent/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", "parent", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "PARENT_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Ask New Question",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"How to implement authentication?\",\n  \"content\": \"I need help with implementing JWT authentication in my application. What are the best practices?\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/ask",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", "ask"]
+            }
+          }
+        },
+        {
+          "name": "Ask Question About Another Question",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Follow-up question\",\n  \"content\": \"Could you elaborate on this point?\",\n  \"parentContentId\": \"QUESTION_ID_HERE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/ask",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", "ask"]
+            }
+          }
+        },
+        {
+          "name": "Edit Question",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated question title\",\n  \"content\": \"Updated question content\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/:id/edit",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", ":id", "edit"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "QUESTION_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Question",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/:id/delete",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", ":id", "delete"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "QUESTION_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Like Question",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/:id/like",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", ":id", "like"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "QUESTION_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Unlike Question",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/:id/undo_like",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", ":id", "undo_like"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "QUESTION_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Dislike Question",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/:id/dislike",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", ":id", "dislike"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "QUESTION_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Undo Dislike Question",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/:id/undo_dislike",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", ":id", "undo_dislike"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "QUESTION_ID_HERE"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Answers",
+      "item": [
+        {
+          "name": "Get All Answers by Question",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/:question_id/answers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", ":question_id", "answers"],
+              "variable": [
+                {
+                  "key": "question_id",
+                  "value": "QUESTION_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Single Answer",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/:question_id/answers/:answer_id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", ":question_id", "answers", ":answer_id"],
+              "variable": [
+                {
+                  "key": "question_id",
+                  "value": "QUESTION_ID_HERE"
+                },
+                {
+                  "key": "answer_id",
+                  "value": "ANSWER_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Answers by User",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/answers/user/:userId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "answers", "user", ":userId"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "USER_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Answer by ID (Standalone)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/answers/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "answers", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "ANSWER_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add Answer to Question",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"This is a helpful answer to your question.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/:question_id/answers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", ":question_id", "answers"],
+              "variable": [
+                {
+                  "key": "question_id",
+                  "value": "QUESTION_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Edit Answer",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Updated answer content\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/:question_id/answers/:answer_id/edit",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", ":question_id", "answers", ":answer_id", "edit"],
+              "variable": [
+                {
+                  "key": "question_id",
+                  "value": "QUESTION_ID_HERE"
+                },
+                {
+                  "key": "answer_id",
+                  "value": "ANSWER_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Answer",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/:question_id/answers/:answer_id/delete",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", ":question_id", "answers", ":answer_id", "delete"],
+              "variable": [
+                {
+                  "key": "question_id",
+                  "value": "QUESTION_ID_HERE"
+                },
+                {
+                  "key": "answer_id",
+                  "value": "ANSWER_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Like Answer",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/:question_id/answers/:answer_id/like",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", ":question_id", "answers", ":answer_id", "like"],
+              "variable": [
+                {
+                  "key": "question_id",
+                  "value": "QUESTION_ID_HERE"
+                },
+                {
+                  "key": "answer_id",
+                  "value": "ANSWER_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Unlike Answer",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/:question_id/answers/:answer_id/undo_like",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", ":question_id", "answers", ":answer_id", "undo_like"],
+              "variable": [
+                {
+                  "key": "question_id",
+                  "value": "QUESTION_ID_HERE"
+                },
+                {
+                  "key": "answer_id",
+                  "value": "ANSWER_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Dislike Answer",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/:question_id/answers/:answer_id/dislike",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", ":question_id", "answers", ":answer_id", "dislike"],
+              "variable": [
+                {
+                  "key": "question_id",
+                  "value": "QUESTION_ID_HERE"
+                },
+                {
+                  "key": "answer_id",
+                  "value": "ANSWER_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Undo Dislike Answer",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/questions/:question_id/answers/:answer_id/undo_dislike",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "questions", ":question_id", "answers", ":answer_id", "undo_dislike"],
+              "variable": [
+                {
+                  "key": "question_id",
+                  "value": "QUESTION_ID_HERE"
+                },
+                {
+                  "key": "answer_id",
+                  "value": "ANSWER_ID_HERE"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Get Public User Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/public/users/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "public", "users", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "USER_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get All Users (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          }
+        },
+        {
+          "name": "Get User by ID (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/users/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "USER_ID_HERE"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Get Users (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "users"]
+            }
+          }
+        },
+        {
+          "name": "Update User (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Name\",\n  \"email\": \"updated@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/:userId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "users", ":userId"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "USER_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete User (Admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/:userId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "users", ":userId"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "USER_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Toggle User Block (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/:userId/block",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "users", ":userId", "block"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "USER_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update User Roles (Admin)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roles\": [\"role_id_1\", \"role_id_2\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/:userId/roles",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "users", ":userId", "roles"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "USER_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get User Stats (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "users", "stats"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bookmarks",
+      "item": [
+        {
+          "name": "Add Bookmark",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"targetType\": \"question\",\n  \"targetId\": \"QUESTION_ID_HERE\",\n  \"note\": \"Important question\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bookmarks/add",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookmarks", "add"]
+            }
+          }
+        },
+        {
+          "name": "Remove Bookmark",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bookmarks/remove/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookmarks", "remove", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "BOOKMARK_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Bookmark",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Updated note\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bookmarks/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookmarks", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "BOOKMARK_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get User Bookmarks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bookmarks/user",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookmarks", "user"]
+            }
+          }
+        },
+        {
+          "name": "Check Bookmark Exists",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bookmarks/check/:targetType/:targetId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookmarks", "check", ":targetType", ":targetId"],
+              "variable": [
+                {
+                  "key": "targetType",
+                  "value": "question"
+                },
+                {
+                  "key": "targetId",
+                  "value": "TARGET_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search Bookmarks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bookmarks/search?query=keyword",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookmarks", "search"],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "keyword"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Paginated Bookmarks",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bookmarks/paginated?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookmarks", "paginated"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Collection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"My Collection\",\n  \"description\": \"Collection description\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bookmarks/collections",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookmarks", "collections"]
+            }
+          }
+        },
+        {
+          "name": "Get User Collections",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bookmarks/collections",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookmarks", "collections"]
+            }
+          }
+        },
+        {
+          "name": "Update Collection",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Collection\",\n  \"description\": \"Updated description\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bookmarks/collections/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookmarks", "collections", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "COLLECTION_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Delete Collection",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bookmarks/collections/:id",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookmarks", "collections", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "COLLECTION_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Add to Collection",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bookmarks/collections/:collectionId/items/:bookmarkId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookmarks", "collections", ":collectionId", "items", ":bookmarkId"],
+              "variable": [
+                {
+                  "key": "collectionId",
+                  "value": "COLLECTION_ID_HERE"
+                },
+                {
+                  "key": "bookmarkId",
+                  "value": "BOOKMARK_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remove from Collection",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bookmarks/collections/:collectionId/items/:bookmarkId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookmarks", "collections", ":collectionId", "items", ":bookmarkId"],
+              "variable": [
+                {
+                  "key": "collectionId",
+                  "value": "COLLECTION_ID_HERE"
+                },
+                {
+                  "key": "bookmarkId",
+                  "value": "BOOKMARK_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Collection Items",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bookmarks/collections/:id/items",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookmarks", "collections", ":id", "items"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "COLLECTION_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Bookmark Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/bookmarks/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "bookmarks", "stats"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Permissions",
+      "item": [
+        {
+          "name": "Assign Role to User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"USER_ID_HERE\",\n  \"roleId\": \"ROLE_ID_HERE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/permissions/assign-role",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "permissions", "assign-role"]
+            }
+          }
+        },
+        {
+          "name": "Remove Role from User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"USER_ID_HERE\",\n  \"roleId\": \"ROLE_ID_HERE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/permissions/remove-role",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "permissions", "remove-role"]
+            }
+          }
+        },
+        {
+          "name": "Get User Roles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/permissions/user-roles/:userId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "permissions", "user-roles", ":userId"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "USER_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get All Roles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/permissions/roles",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "permissions", "roles"]
+            }
+          }
+        },
+        {
+          "name": "Get All Permissions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/permissions/permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "permissions", "permissions"]
+            }
+          }
+        },
+        {
+          "name": "Add Permissions to Role",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roleId\": \"ROLE_ID_HERE\",\n  \"permissionIds\": [\"PERMISSION_ID_1\", \"PERMISSION_ID_2\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/permissions/role-permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "permissions", "role-permissions"]
+            }
+          }
+        },
+        {
+          "name": "Remove Permissions from Role",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"roleId\": \"ROLE_ID_HERE\",\n  \"permissionIds\": [\"PERMISSION_ID_1\", \"PERMISSION_ID_2\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/permissions/role-permissions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "permissions", "role-permissions"]
+            }
+          }
+        },
+        {
+          "name": "Get User Permissions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/permissions/user-permissions/:userId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "permissions", "user-permissions", ":userId"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "USER_ID_HERE"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notifications (Admin)",
+      "item": [
+        {
+          "name": "Send Notification to User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Notification Title\",\n  \"message\": \"Notification message\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/user/:userId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications", "user", ":userId"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "USER_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Send Notification to Channels",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Notification Title\",\n  \"message\": \"Notification message\",\n  \"channels\": [\"email\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/channels",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications", "channels"]
+            }
+          }
+        },
+        {
+          "name": "Get User Notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/user/:userId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications", "user", ":userId"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "USER_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get User Notification Preferences",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/preferences/:userId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications", "preferences", ":userId"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "USER_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update User Notification Preferences",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"channels\": [\"email\"],\n  \"preferences\": {}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/preferences/:userId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications", "preferences", ":userId"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "USER_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Send Test Notification",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/test/:userId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications", "test", ":userId"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "USER_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Debug Notifications",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/debug/:userId",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications", "debug", ":userId"],
+              "variable": [
+                {
+                  "key": "userId",
+                  "value": "USER_ID_HERE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Queue Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/queue/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications", "queue", "status"]
+            }
+          }
+        },
+        {
+          "name": "Get Notification Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications", "stats"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Monitoring (Admin)",
+      "item": [
+        {
+          "name": "Get Connection Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/monitoring/connections",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "monitoring", "connections"]
+            }
+          }
+        },
+        {
+          "name": "Get Alert History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/monitoring/alerts?limit=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "monitoring", "alerts"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Monitoring Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/monitoring/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "monitoring", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Start Monitoring",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/monitoring/start",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "monitoring", "start"]
+            }
+          }
+        },
+        {
+          "name": "Stop Monitoring",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{authToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/monitoring/stop",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "monitoring", "stop"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+
