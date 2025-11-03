@@ -4,7 +4,7 @@ import { ContentType } from '../../types/content/RelationType';
 
 export interface IQuestionModel extends IContent {
   // IContent'den gelenler:
-  // _id, contentType, content, user, createdAt, updatedAt, userInfo, likes, dislikes, parentContentId, relatedContents
+  // _id, contentType, content, user, createdAt, updatedAt, userInfo, likes, dislikes, parent, ancestors, relatedContents
 
   // Question'a özel alanlar
   title: string;

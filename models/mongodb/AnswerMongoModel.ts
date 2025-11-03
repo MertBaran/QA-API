@@ -10,7 +10,15 @@ export interface IAnswerMongo extends Document {
   likes: mongoose.Types.ObjectId[];
   dislikes: mongoose.Types.ObjectId[];
   isAccepted?: boolean;
-  parentContentId?: mongoose.Types.ObjectId;
+  parent?: {
+    id: mongoose.Types.ObjectId;
+    type: string;
+  };
+  ancestors?: Array<{
+    id: mongoose.Types.ObjectId;
+    type: string;
+    depth: number;
+  }>;
   relatedContents?: mongoose.Types.ObjectId[];
 }
 
@@ -53,9 +61,31 @@ const AnswerSchema = new Schema<IAnswerMongo>({
     type: Boolean,
     default: false,
   },
-  parentContentId: {
-    type: mongoose.Schema.Types.ObjectId,
+  parent: {
+    id: {
+      type: mongoose.Schema.Types.ObjectId,
+      refPath: 'parent.type',
+    },
+    type: {
+      type: String,
+      enum: ['question', 'answer'],
+    },
   },
+  ancestors: [
+    {
+      id: {
+        type: mongoose.Schema.Types.ObjectId,
+      },
+      type: {
+        type: String,
+        enum: ['question', 'answer'],
+      },
+      depth: {
+        type: Number,
+        min: 0,
+      },
+    },
+  ],
   relatedContents: [
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -104,6 +134,11 @@ AnswerSchema.pre(
     }
   }
 );
+
+// Indexes for performance
+AnswerSchema.index({ 'parent.id': 1 });
+AnswerSchema.index({ 'ancestors.id': 1 });
+AnswerSchema.index({ 'ancestors.depth': 1 });
 
 const AnswerMongo = mongoose.model<IAnswerMongo>('Answer', AnswerSchema);
 export default AnswerMongo;
