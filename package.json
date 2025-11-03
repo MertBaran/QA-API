@@ -59,6 +59,7 @@
     "reindex:all": "ts-node scripts/reindex-elasticsearch.ts all",
     "reindex": "ts-node scripts/reindex-elasticsearch.ts all",
     "migrate:field-names": "ts-node scripts/migrate-field-names.ts",
+    "backfill:ancestors": "ts-node scripts/backfill-ancestors.ts",
     "seed:test-questions": "ts-node scripts/seed-test-questions.ts"
   },
   "keywords": [
