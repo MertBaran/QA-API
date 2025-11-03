@@ -65,6 +65,18 @@ export class QuestionController {
     }
   );
 
+  getQuestionsWithParents = asyncErrorWrapper(
+    async (
+      req: Request<{}, {}, {}, PaginationQueryDTO>,
+      res: Response<SuccessResponseDTO<PaginatedResponse<IQuestionModel>>>,
+      _next: NextFunction
+    ): Promise<void> => {
+      const filters = req.query;
+      const result = await this.questionService.getQuestionsWithParents(filters);
+      res.status(200).json({ success: true, data: result });
+    }
+  );
+
   getSingleQuestion = asyncErrorWrapper(
     async (
       req: Request<IdParamDTO>,
