@@ -4,6 +4,7 @@ import { ApplicationError } from '../../infrastructure/error/ApplicationError';
 import { IAnswerRepository } from '../../repositories/interfaces/IAnswerRepository';
 import { EntityId } from '../../types/database';
 import { ContentType } from '../../types/content/RelationType';
+import { ParentReference, AncestorReference } from '../../types/content/IContent';
 import { IQuestionRepository } from '../../repositories/interfaces/IQuestionRepository';
 import { IAnswerService } from '../contracts/IAnswerService';
 import {

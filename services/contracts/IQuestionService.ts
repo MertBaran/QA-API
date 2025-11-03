@@ -11,6 +11,9 @@ export interface IQuestionService {
   getQuestionsPaginated(
     filters: PaginationQueryDTO
   ): Promise<PaginatedResponse<IQuestionModel>>;
+  getQuestionsWithParents(
+    filters: PaginationQueryDTO
+  ): Promise<PaginatedResponse<IQuestionModel>>;
   getQuestionById(questionId: EntityId): Promise<IQuestionModel>;
   updateQuestion(
     questionId: EntityId,
