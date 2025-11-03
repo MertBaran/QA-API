@@ -162,8 +162,12 @@ export class ElasticsearchIndexService
       'isAccepted',
       'dislikes',
       'answers',
-      'parentContentId',
       'relatedContents',
+      'ancestorsIds',
+      'ancestorsTypes',
+      'rootId',
+      'depth',
+      'parent',
     ];
     genericFields.forEach(field => {
       if (!properties[field]) {
@@ -183,10 +187,24 @@ export class ElasticsearchIndexService
           properties[field] = { type: 'boolean' };
         } else if (field === 'answers') {
           properties[field] = { type: 'keyword' };
-        } else if (field === 'parentContentId') {
-          properties[field] = { type: 'keyword' };
         } else if (field === 'relatedContents') {
           properties[field] = { type: 'keyword' };
+        } else if (field === 'parent') {
+          properties[field] = {
+            type: 'object',
+            properties: {
+              id: { type: 'keyword' },
+              type: { type: 'keyword' },
+            },
+          };
+        } else if (field === 'ancestorsIds') {
+          properties[field] = { type: 'keyword' };
+        } else if (field === 'ancestorsTypes') {
+          properties[field] = { type: 'keyword' };
+        } else if (field === 'rootId') {
+          properties[field] = { type: 'keyword' };
+        } else if (field === 'depth') {
+          properties[field] = { type: 'integer' };
         } else {
           properties[field] = { type: 'keyword' };
         }
