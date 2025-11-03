@@ -2,6 +2,10 @@ import { injectable } from 'tsyringe';
 import { IEntityModel } from '../interfaces/IEntityModel';
 import { IAnswerModel } from '../../models/interfaces/IAnswerModel';
 import { ContentType } from '../../types/content/RelationType';
+import {
+  ParentReference,
+  AncestorReference,
+} from '../../types/content/IContent';
 import { IDataSource } from '../interfaces/IDataSource';
 import { IAnswerMongo } from '../../models/mongodb/AnswerMongoModel';
 import { ApplicationError } from '../../infrastructure/error/ApplicationError';
@@ -72,7 +76,20 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
       isAccepted: mongoDoc.isAccepted ?? false,
       createdAt: mongoDoc.createdAt,
       updatedAt: mongoDoc.updatedAt,
-      parentContentId: mongoDoc.parentContentId?.toString(),
+      parent:
+        mongoDoc.parent && mongoDoc.parent.id && mongoDoc.parent.type
+          ? ({
+              id: String(mongoDoc.parent.id),
+              type: mongoDoc.parent.type as ContentType,
+            } as ParentReference)
+          : undefined,
+      ancestors: mongoDoc.ancestors
+        ? (mongoDoc.ancestors.map((ancestor: any) => ({
+            id: String(ancestor.id),
+            type: ancestor.type as ContentType,
+            depth: ancestor.depth,
+          })) as AncestorReference[])
+        : undefined,
       relatedContents: Array.isArray(mongoDoc.relatedContents)
         ? mongoDoc.relatedContents.map((content: any) =>
             content && content._id ? content._id.toString() : content.toString()
@@ -164,7 +181,10 @@ export class AnswerMongooseDataSource implements IDataSource<IAnswerModel> {
   }
 
   async findByFields(fields: Partial<IAnswerModel>): Promise<IAnswerModel[]> {
-    const results = await this.model.find(fields);
+    const results = await this.model
+      .find(fields)
+      .populate('user', 'name email profile_image')
+      .populate('question', 'title slug');
     return results.map((doc: any) => this.toEntity(doc));
   }
 

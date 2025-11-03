@@ -2,6 +2,10 @@ import { injectable } from 'tsyringe';
 import { IEntityModel } from '../interfaces/IEntityModel';
 import { IQuestionModel } from '../../models/interfaces/IQuestionModel';
 import { ContentType } from '../../types/content/RelationType';
+import {
+  ParentReference,
+  AncestorReference,
+} from '../../types/content/IContent';
 import { IDataSource } from '../interfaces/IDataSource';
 import { IQuestionMongo } from '../../models/mongodb/QuestionMongoModel';
 import { ApplicationError } from '../../infrastructure/error/ApplicationError';
@@ -67,7 +71,20 @@ export class QuestionMongooseDataSource implements IDataSource<IQuestionModel> {
         dislike.toString()
       ),
       answers: (mongoDoc.answers || []).map((answer: any) => answer.toString()),
-      parentContentId: mongoDoc.parentContentId?.toString(),
+      parent:
+        mongoDoc.parent && mongoDoc.parent.id && mongoDoc.parent.type
+          ? ({
+              id: String(mongoDoc.parent.id),
+              type: mongoDoc.parent.type as ContentType,
+            } as ParentReference)
+          : undefined,
+      ancestors: mongoDoc.ancestors
+        ? (mongoDoc.ancestors.map((ancestor: any) => ({
+            id: String(ancestor.id),
+            type: ancestor.type as ContentType,
+            depth: ancestor.depth,
+          })) as AncestorReference[])
+        : undefined,
       relatedContents: (mongoDoc.relatedContents || []).map((content: any) =>
         content.toString()
       ),
@@ -84,7 +101,8 @@ export class QuestionMongooseDataSource implements IDataSource<IQuestionModel> {
       likes: rest.likes || [],
       answers: rest.answers || [],
       dislikes: rest.dislikes || [],
-      parentContentId: rest.parentContentId,
+      parent: rest.parent,
+      ancestors: rest.ancestors,
       relatedContents: rest.relatedContents || [],
     };
 
