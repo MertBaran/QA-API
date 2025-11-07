@@ -4,7 +4,10 @@ import { ApplicationError } from '../../infrastructure/error/ApplicationError';
 import { IAnswerRepository } from '../../repositories/interfaces/IAnswerRepository';
 import { EntityId } from '../../types/database';
 import { ContentType } from '../../types/content/RelationType';
-import { ParentReference, AncestorReference } from '../../types/content/IContent';
+import {
+  ParentReference,
+  AncestorReference,
+} from '../../types/content/IContent';
 import { IQuestionRepository } from '../../repositories/interfaces/IQuestionRepository';
 import { IAnswerService } from '../contracts/IAnswerService';
 import {
@@ -82,49 +85,47 @@ export class AnswerManager implements IAnswerService {
   }
 
   async getAnswersByQuestion(questionId: EntityId): Promise<IAnswerModel[]> {
-    try {
-      const result = await this.searchClient.search<AnswerSearchDoc>(
-        this.answerProjector.indexName,
-        this.answerProjector.searchFields,
-        '',
-        {
-          page: 1,
-          limit: 100,
-          filters: {
-            questionId: String(questionId),
-          },
-          sortBy: 'date',
-          sortOrder: 'desc',
-        }
-      );
-      // Elasticsearch'ten gelen SearchDocument'ları direkt Entity'lere dönüştür
-      const answers = result.hits.map(
-        (doc): IAnswerModel => ({
-          _id: doc._id as EntityId,
-          contentType: ContentType.ANSWER,
-          content: doc.content,
-          user: doc.userId as EntityId,
-          userInfo: doc.userInfo,
-          question: doc.questionId as EntityId,
-          likes: (doc.likes || []).map(id => id as EntityId),
-          dislikes: (doc.dislikes || []).map(id => id as EntityId),
-          isAccepted: doc.isAccepted,
-          createdAt: doc.createdAt || new Date(),
-        })
-      );
-      return this.enrichWithQuestionInfo(answers);
-    } catch (error: any) {
-      this.logger.warn(
-        'Search failed for answers by question, falling back to MongoDB',
-        {
-          error: error.message,
-        }
-      );
-    }
-
-    // Fallback to MongoDB
     const answers = await this.answerRepository.findByQuestion(questionId);
     return this.enrichWithQuestionInfo(answers);
+    // try {
+    //   const result = await this.searchClient.search<AnswerSearchDoc>(
+    //     this.answerProjector.indexName,
+    //     this.answerProjector.searchFields,
+    //     '',
+    //     {
+    //       page: 1,
+    //       limit: 100,
+    //       filters: {
+    //         questionId: String(questionId),
+    //       },
+    //       sortBy: 'date',
+    //       sortOrder: 'desc',
+    //     }
+    //   );
+    //   // Elasticsearch'ten gelen SearchDocument'ları direkt Entity'lere dönüştür
+    //   const answers = result.hits.map(
+    //     (doc): IAnswerModel => ({
+    //       _id: doc._id as EntityId,
+    //       contentType: ContentType.ANSWER,
+    //       content: doc.content,
+    //       user: doc.userId as EntityId,
+    //       userInfo: doc.userInfo,
+    //       question: doc.questionId as EntityId,
+    //       likes: (doc.likes || []).map(id => id as EntityId),
+    //       dislikes: (doc.dislikes || []).map(id => id as EntityId),
+    //       isAccepted: doc.isAccepted,
+    //       createdAt: doc.createdAt || new Date(),
+    //     })
+    //   );
+    //   return this.enrichWithQuestionInfo(answers);
+    // } catch (error: any) {
+    //   this.logger.warn(
+    //     'Search failed for answers by question, falling back to MongoDB',
+    //     {
+    //       error: error.message,
+    //     }
+    //   );
+    // }
   }
 
   async getAnswerById(answerId: string): Promise<IAnswerModel> {
