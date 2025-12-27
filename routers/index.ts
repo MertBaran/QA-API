@@ -13,6 +13,7 @@ import notificationRouter from './notificationRouter';
 import monitoringRouter from './monitoringRouter';
 import permissionRouter from './permissionRouter';
 import bookmarkRouter from './bookmarkRouter';
+import contentAssetRouter from './contentAssetRouter';
 router.get('/', (req: Request, res: Response) => {
   res.send('Home Page');
 });
@@ -28,5 +29,6 @@ router.use('/notifications', notificationRouter);
 router.use('/monitoring', monitoringRouter);
 router.use('/permissions', permissionRouter);
 router.use('/bookmarks', bookmarkRouter);
+router.use('/content-assets', contentAssetRouter);
 
 export default router;
