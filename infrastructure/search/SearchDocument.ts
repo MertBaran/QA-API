@@ -24,6 +24,7 @@ export interface QuestionSearchDoc {
   dislikes: string[];
   answers: string[];
   relatedContents?: string[];
+  thumbnailUrl?: string;
   // Hierarchical fields
   parent?: {
     id: string;

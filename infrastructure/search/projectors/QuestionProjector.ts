@@ -57,6 +57,7 @@ export class QuestionProjector
       dislikes: entity.dislikes.map(id => String(id)),
       answers: entity.answers.map(id => String(id)),
       relatedContents: (entity.relatedContents || []).map(id => String(id)),
+      thumbnailUrl: entity.thumbnail?.url,
       parent: entity.parent
         ? {
             id: String(entity.parent.id),
