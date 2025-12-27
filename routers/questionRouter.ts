@@ -36,6 +36,11 @@ router.get(
   questionController.getQuestionsPaginated
 );
 router.get(
+  '/paginated/with-parents',
+  validator.validateQuery(PaginationQuerySchema) as any,
+  questionController.getQuestionsWithParents
+);
+router.get(
   '/user/:userId',
   validator.validateParams!(UserIdParamSchema),
   questionController.getQuestionsByUser

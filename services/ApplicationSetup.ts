@@ -103,16 +103,17 @@ export class ApplicationSetup {
         `📡 Database URI: ${config.MONGO_URI.replace(/\/\/.*@/, '//***:***@')}`
       ); // Hide credentials
 
+      let databaseAdapter: any = null;
       try {
-        const databaseAdapter = container.resolve<any>('IDatabaseAdapter');
+        databaseAdapter = container.resolve<any>('IDatabaseAdapter');
 
-        // Add timeout for database connection
+        // Add timeout for database connection (15 seconds)
         const connectionPromise = databaseAdapter.connect();
         const timeoutPromise = new Promise((_, reject) => {
           setTimeout(
             () =>
-              reject(new Error('Database connection timeout after 30 seconds')),
-            30000
+              reject(new Error('Database connection timeout after 15 seconds')),
+            15000
           );
         });
 
@@ -156,28 +157,50 @@ export class ApplicationSetup {
         console.log('✅ Database connection established successfully');
         console.log('🔗 Database is ready for operations');
       } catch (dbError) {
-        console.error('❌ CRITICAL: Database connection failed!');
-        console.error('📊 Error details:', {
+        console.error(
+          '\x1b[31m❌ CRITICAL: Database connection failed!\x1b[0m'
+        );
+        console.error('\x1b[31m📊 Error details:\x1b[0m', {
           message: dbError instanceof Error ? dbError.message : String(dbError),
           name: dbError instanceof Error ? dbError.name : 'Unknown',
           code: (dbError as any)?.code || 'UNKNOWN',
         });
         console.error(
-          '🔍 Connection string:',
+          '\x1b[31m🔍 Connection string:\x1b[0m',
           config.MONGO_URI.replace(/\/\/.*@/, '//***:***@')
         );
         console.error('');
         console.error(
-          '🛑 Application cannot start without database connection.'
+          '\x1b[31m🛑 Application cannot start without database connection.\x1b[0m'
         );
-        console.error('💡 Please check:');
-        console.error('   - MongoDB server is running');
-        console.error('   - Connection string is correct');
-        console.error('   - Network connectivity');
-        console.error('   - Database credentials');
+        console.error('\x1b[31m💡 Please check:\x1b[0m');
+        console.error('\x1b[31m   - MongoDB server is running\x1b[0m');
+        console.error('\x1b[31m   - Connection string is correct\x1b[0m');
+        console.error('\x1b[31m   - Network connectivity\x1b[0m');
+        console.error('\x1b[31m   - Database credentials\x1b[0m');
         console.error('');
-        console.error('🔄 Shutting down application...');
-        process.exit(1);
+        console.log('🔄 Shutting down application gracefully...');
+
+        // Graceful shutdown: disconnect database if connected
+        if (databaseAdapter) {
+          try {
+            await databaseAdapter.disconnect();
+            console.log('✅ Database disconnected successfully');
+          } catch (disconnectError) {
+            const disconnectMsg =
+              disconnectError instanceof Error
+                ? disconnectError.message
+                : String(disconnectError);
+            console.error(
+              '\x1b[31m⚠️ Error during database disconnection:\x1b[0m',
+              `\x1b[31m${disconnectMsg}\x1b[0m`
+            );
+          }
+        }
+
+        console.log('👋 Application shutdown complete');
+        // Exit with code 0 to indicate graceful shutdown (not a crash)
+        process.exit(0);
       }
 
       // Initialize cache provider
@@ -186,11 +209,47 @@ export class ApplicationSetup {
         const cacheProvider = container.resolve<any>('ICacheProvider');
         console.log('✅ Cache provider initialized successfully');
       } catch (cacheError) {
-        console.warn(
-          '⚠️ Cache connection failed, but continuing without cache:',
-          cacheError instanceof Error ? cacheError.message : String(cacheError)
+        const cacheMsg =
+          cacheError instanceof Error ? cacheError.message : String(cacheError);
+        console.error(
+          '\x1b[31m⚠️ Cache connection failed, but continuing without cache:\x1b[0m',
+          `\x1b[31m${cacheMsg}\x1b[0m`
         );
         console.warn('💡 Application will use memory cache as fallback');
+      }
+
+      // Check Cloudflare R2 connection
+      console.log('☁️  Checking Cloudflare R2 connection...');
+      try {
+        const configService = container.resolve<any>('IConfigurationService');
+        const storageConfig = configService.getObjectStorageConfig();
+
+        if (storageConfig.provider === 'cloudflare-r2') {
+          const storageProvider = container.resolve<any>(
+            'IObjectStorageProvider'
+          );
+
+          // Test connection with a simple list operation (max 1 key, timeout 15 seconds)
+          const listPromise = storageProvider.listObjects({ maxKeys: 1 });
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(
+              () => reject(new Error('R2 connection timeout after 15 seconds')),
+              15000
+            );
+          });
+
+          await Promise.race([listPromise, timeoutPromise]);
+          console.log('✅ Cloudflare R2 connection verified successfully');
+        } else {
+          console.log('Cloudflare R2 is not configured, skipping check');
+        }
+      } catch (r2Error) {
+        const errorMessage =
+          r2Error instanceof Error ? r2Error.message : String(r2Error);
+        console.error(
+          '\x1b[31m⚠️ Cloudflare R2 connection check failed, but continuing:\x1b[0m',
+          `\x1b[31m${errorMessage}\x1b[0m`
+        );
       }
 
       // EntityType'lar model dosyalarında export edildiğinde otomatik register edilir
@@ -235,17 +294,19 @@ export class ApplicationSetup {
             await searchClient.initializeRegisteredIndexes();
             console.log('✅ Elasticsearch indexes initialized');
           } else {
-            console.warn(
-              '⚠️ Elasticsearch is enabled but connection failed, continuing without Elasticsearch'
+            console.error(
+              '\x1b[31m⚠️ Elasticsearch is enabled but connection failed, continuing without Elasticsearch\x1b[0m'
             );
           }
         } else {
           console.log('ℹ️  Elasticsearch is disabled');
         }
       } catch (esError) {
-        console.warn(
-          '⚠️ Elasticsearch initialization failed, continuing without Elasticsearch:',
-          esError instanceof Error ? esError.message : String(esError)
+        const esMsg =
+          esError instanceof Error ? esError.message : String(esError);
+        console.error(
+          '\x1b[31m⚠️ Elasticsearch initialization failed, continuing without Elasticsearch:\x1b[0m',
+          `\x1b[31m${esMsg}\x1b[0m`
         );
       }
 
@@ -253,9 +314,28 @@ export class ApplicationSetup {
 
       console.log(`✅ Bootstrap completed successfully`);
     } catch (error) {
-      console.error('❌ Failed to initialize application:', error);
-      console.error('🛑 Application initialization failed. Shutting down...');
-      process.exit(1);
+      const initErrorMsg =
+        error instanceof Error ? error.message : String(error);
+      console.error(
+        '\x1b[31m❌ Failed to initialize application:\x1b[0m',
+        `\x1b[31m${initErrorMsg}\x1b[0m`
+      );
+      console.log('🔄 Shutting down application gracefully...');
+
+      // Try to disconnect database if it was connected
+      try {
+        const databaseAdapter = container.resolve<any>('IDatabaseAdapter');
+        if (databaseAdapter && databaseAdapter.isConnected()) {
+          await databaseAdapter.disconnect();
+          console.log('✅ Database disconnected successfully');
+        }
+      } catch (disconnectError) {
+        // Database might not be initialized, ignore error
+      }
+
+      console.log('👋 Application shutdown complete');
+      // Exit with code 0 to indicate graceful shutdown (not a crash)
+      process.exit(0);
     }
   }
 
@@ -295,8 +375,27 @@ export class ApplicationSetup {
       webSocketMonitor.startMonitoring(30000);
       console.log('🔌 WebSocket monitoring initialized successfully');
     } catch (error) {
-      console.error('❌ Failed to initialize WebSocket monitoring:', error);
+      const wsErrorMsg = error instanceof Error ? error.message : String(error);
+      console.error(
+        '\x1b[31m❌ Failed to initialize WebSocket monitoring:\x1b[0m',
+        `\x1b[31m${wsErrorMsg}\x1b[0m`
+      );
     }
+  }
+
+  async shutdown(): Promise<void> {
+    console.log('🔄 Shutting down server...');
+
+    return new Promise<void>(resolve => {
+      if (this.server) {
+        this.server.close(() => {
+          console.log('✅ Server closed');
+          resolve();
+        });
+      } else {
+        resolve();
+      }
+    });
   }
 
   getApp(): Application {

@@ -21,6 +21,16 @@ export class AnswerRepository
     return this.dataSource.findById(id);
   }
 
+  async findByIds(ids: EntityId[]): Promise<IAnswerModel[]> {
+    if (!ids.length) {
+      return [];
+    }
+    const uniqueIds = Array.from(new Set(ids.map(id => id.toString())));
+    return this.dataSource.findByFields({
+      _id: { $in: uniqueIds },
+    } as unknown as Partial<IAnswerModel>);
+  }
+
   async findByQuestion(questionId: EntityId): Promise<IAnswerModel[]> {
     const all = await this.dataSource.findAll();
     return all.filter(a => a.question === questionId);

@@ -37,6 +37,14 @@ export class BookmarkController {
     @inject('IExceptionTracker') private exceptionTracker: IExceptionTracker
   ) {}
 
+  // Helper method to safely convert Date to ISO string
+  private toISOString(date: Date | string): string {
+    if (date instanceof Date) {
+      return date.toISOString();
+    }
+    return date;
+  }
+
   // Add bookmark
   addBookmark = asyncErrorWrapper(
     async (
@@ -69,8 +77,8 @@ export class BookmarkController {
         tags: bookmark.tags,
         notes: bookmark.notes,
         is_public: bookmark.is_public,
-        createdAt: bookmark.createdAt.toISOString(),
-        updatedAt: bookmark.updatedAt.toISOString(),
+        createdAt: this.toISOString(bookmark.createdAt),
+        updatedAt: this.toISOString(bookmark.updatedAt),
       });
     }
   );
@@ -136,8 +144,8 @@ export class BookmarkController {
         tags: bookmark.tags,
         notes: bookmark.notes,
         is_public: bookmark.is_public,
-        createdAt: bookmark.createdAt.toISOString(),
-        updatedAt: bookmark.updatedAt.toISOString(),
+        createdAt: this.toISOString(bookmark.createdAt),
+        updatedAt: this.toISOString(bookmark.updatedAt),
       });
     }
   );
@@ -165,8 +173,8 @@ export class BookmarkController {
         tags: bookmark.tags,
         notes: bookmark.notes,
         is_public: bookmark.is_public,
-        createdAt: bookmark.createdAt.toISOString(),
-        updatedAt: bookmark.updatedAt.toISOString(),
+        createdAt: this.toISOString(bookmark.createdAt),
+        updatedAt: this.toISOString(bookmark.updatedAt),
       }));
 
       res.status(200).json(response);
@@ -232,8 +240,8 @@ export class BookmarkController {
         tags: bookmark.tags,
         notes: bookmark.notes,
         is_public: bookmark.is_public,
-        createdAt: bookmark.createdAt.toISOString(),
-        updatedAt: bookmark.updatedAt.toISOString(),
+        createdAt: this.toISOString(bookmark.createdAt),
+        updatedAt: this.toISOString(bookmark.updatedAt),
       }));
 
       res.status(200).json(response);
@@ -277,8 +285,8 @@ export class BookmarkController {
           tags: bookmark.tags,
           notes: bookmark.notes,
           is_public: bookmark.is_public,
-          createdAt: bookmark.createdAt.toISOString(),
-          updatedAt: bookmark.updatedAt.toISOString(),
+          createdAt: this.toISOString(bookmark.createdAt),
+          updatedAt: this.toISOString(bookmark.updatedAt),
         })),
         pagination: result.pagination,
       };
@@ -312,8 +320,8 @@ export class BookmarkController {
         description: collection.description,
         color: collection.color,
         is_public: collection.is_public,
-        createdAt: collection.createdAt.toISOString(),
-        updatedAt: collection.updatedAt.toISOString(),
+        createdAt: this.toISOString(collection.createdAt),
+        updatedAt: this.toISOString(collection.updatedAt),
       });
     }
   );
@@ -341,8 +349,8 @@ export class BookmarkController {
         description: collection.description,
         color: collection.color,
         is_public: collection.is_public,
-        createdAt: collection.createdAt.toISOString(),
-        updatedAt: collection.updatedAt.toISOString(),
+        createdAt: this.toISOString(collection.createdAt),
+        updatedAt: this.toISOString(collection.updatedAt),
       }));
 
       res.status(200).json(response);
@@ -380,8 +388,8 @@ export class BookmarkController {
         description: collection.description,
         color: collection.color,
         is_public: collection.is_public,
-        createdAt: collection.createdAt.toISOString(),
-        updatedAt: collection.updatedAt.toISOString(),
+        createdAt: this.toISOString(collection.createdAt),
+        updatedAt: this.toISOString(collection.updatedAt),
       });
     }
   );
@@ -517,8 +525,8 @@ export class BookmarkController {
         tags: bookmark.tags,
         notes: bookmark.notes,
         is_public: bookmark.is_public,
-        createdAt: bookmark.createdAt.toISOString(),
-        updatedAt: bookmark.updatedAt.toISOString(),
+        createdAt: this.toISOString(bookmark.createdAt),
+        updatedAt: this.toISOString(bookmark.updatedAt),
       }));
 
       res.status(200).json(response);
@@ -551,8 +559,8 @@ export class BookmarkController {
           tags: bookmark.tags,
           notes: bookmark.notes,
           is_public: bookmark.is_public,
-          createdAt: bookmark.createdAt.toISOString(),
-          updatedAt: bookmark.updatedAt.toISOString(),
+          createdAt: this.toISOString(bookmark.createdAt),
+          updatedAt: this.toISOString(bookmark.updatedAt),
         })),
       };
 

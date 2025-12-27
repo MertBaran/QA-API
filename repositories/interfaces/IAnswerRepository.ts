@@ -4,6 +4,7 @@ import { EntityId } from '../../types/database';
 export interface IAnswerRepository {
   findById(id: EntityId): Promise<IAnswerModel | null>;
   findByIdWithPopulate(id: EntityId): Promise<IAnswerModel | null>;
+  findByIds(ids: EntityId[]): Promise<IAnswerModel[]>;
   findByQuestion(questionId: EntityId): Promise<IAnswerModel[]>;
   findByUser(userId: EntityId): Promise<IAnswerModel[]>;
   create(data: Partial<IAnswerModel>): Promise<IAnswerModel>;

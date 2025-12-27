@@ -7,6 +7,7 @@
 - Redis 7+
 - Elasticsearch 8+
 - RabbitMQ 3.9+
+- Cloudflare R2 account or S3-compatible object storage (Optional)
 
 ### Installation
 
@@ -73,14 +74,24 @@ GET    /api/questions/paginated        # Get paginated questions (with filters, 
 GET    /api/questions/:id              # Get question details
 GET    /api/questions/user/:userId     # Get questions by user
 GET    /api/questions/parent/:id       # Get questions related to a parent content
-POST   /api/questions/ask              # Create question (with optional parentContentId)
-PUT    /api/questions/:id/edit         # Update question
+POST   /api/questions/ask              # Create question (supports optional parent & thumbnailKey)
+PUT    /api/questions/:id/edit         # Update question (title/content/thumbnailKey/removeThumbnail)
 DELETE /api/questions/:id/delete       # Delete question
 GET    /api/questions/:id/like         # Like question
 GET    /api/questions/:id/undo_like    # Unlike question
 GET    /api/questions/:id/dislike      # Dislike question
 GET    /api/questions/:id/undo_dislike # Undo dislike question
 ```
+
+### Content Assets
+
+```
+POST   /api/content-assets/presigned-upload   # Generate presigned upload URL (auth required)
+POST   /api/content-assets/resolve-url        # Resolve asset URL (auth required)
+DELETE /api/content-assets                    # Delete asset (auth required)
+```
+
+Payloads accept `type`, `filename`, optional `ownerId`, `entityId`, and visibility flags. By default the authenticated user becomes the asset owner.
 
 ### Answers
 
@@ -213,6 +224,16 @@ npm run test:clean                    # Clean test data
 # Server
 PORT=3000
 NODE_ENV=development
+
+# Object Storage
+OBJECT_STORAGE_PROVIDER=cloudflare-r2
+R2_ACCOUNT_ID=your-r2-account-id
+R2_ACCESS_KEY_ID=your-r2-access-key-id
+R2_SECRET_ACCESS_KEY=your-r2-secret-access-key
+R2_BUCKET=your-r2-bucket-name
+R2_ENDPOINT=https://r2.cloudflarestorage.com
+# Optional public CDN/base URL for direct access
+R2_PUBLIC_BASE_URL=https://<your-public-domain>
 
 # Database
 MONGO_URI=mongodb://localhost:27017/qa-platform
@@ -404,7 +425,6 @@ QA-API/
 ![Jest](https://img.shields.io/badge/-jest-%23C21325?style=for-the-badge&logo=jest&logoColor=white)
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 ![WebSocket](https://img.shields.io/badge/WebSocket-000000?style=for-the-badge&logo=websocket&logoColor=white)
-
-</div>
+![Cloudflare](https://img.shields.io/badge/Cloudflare%20R2-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)
 
 </div>

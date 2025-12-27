@@ -33,31 +33,71 @@ export class MongoDBAdapter implements IDatabaseAdapter {
   }
 
   async connect(): Promise<void> {
-    try {
-      // Get MongoDB URI from injected connection config
-      const mongoUri = this.connectionConfig.connectionString;
+    const mongoUri = this.connectionConfig.connectionString;
+    const maxRetries = 3;
+    const retryDelay = 1000; // 1 second between retries
+    const connectionTimeout = 15000; // 15 seconds timeout
 
-      await mongoose.connect(mongoUri);
-      this.isConnectedFlag = true;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        // Get MongoDB URI from injected connection config
+        const connectionPromise = mongoose.connect(mongoUri, {
+          serverSelectionTimeoutMS: connectionTimeout,
+          socketTimeoutMS: connectionTimeout,
+          connectTimeoutMS: connectionTimeout,
+          maxPoolSize: 10,
+          retryWrites: true,
+          retryReads: true,
+        });
 
-      // MongoDB adapter handles its own logging with its own business logic
-      const dbName = this.extractDatabaseName(mongoUri);
-      console.log(
-        RepositoryConstants.DATABASE_ADAPTER.MONGODB.CONNECT_SUCCESS.en.replace(
-          '{dbName}',
-          dbName
-        )
-      );
-    } catch (error) {
-      console.error('❌ MongoDB connection failed:', error);
-      console.log(
-        RepositoryConstants.DATABASE_ADAPTER.MONGODB.CONNECT_FAILED.en
-      );
-      // Throw error to trigger application shutdown
-      throw new ApplicationError(
-        `Database connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        500
-      );
+        // Add timeout wrapper
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(
+            () =>
+              reject(
+                new Error(`Connection timeout after ${connectionTimeout}ms`)
+              ),
+            connectionTimeout
+          );
+        });
+
+        await Promise.race([connectionPromise, timeoutPromise]);
+        this.isConnectedFlag = true;
+
+        // MongoDB adapter handles its own logging with its own business logic
+        const dbName = this.extractDatabaseName(mongoUri);
+        console.log(
+          RepositoryConstants.DATABASE_ADAPTER.MONGODB.CONNECT_SUCCESS.en.replace(
+            '{dbName}',
+            dbName
+          )
+        );
+        return; // Success, exit retry loop
+      } catch (error) {
+        const isLastAttempt = attempt === maxRetries;
+
+        if (isLastAttempt) {
+          const errorMsg =
+            error instanceof Error ? error.message : String(error);
+          console.error(
+            '\x1b[31m❌ MongoDB connection failed after all retries:\x1b[0m',
+            `\x1b[31m${errorMsg}\x1b[0m`
+          );
+          console.log(
+            RepositoryConstants.DATABASE_ADAPTER.MONGODB.CONNECT_FAILED.en
+          );
+          // Throw error to trigger application shutdown
+          throw new ApplicationError(
+            `Database connection failed after ${maxRetries} attempts: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            500
+          );
+        } else {
+          console.warn(
+            `⚠️ MongoDB connection attempt ${attempt}/${maxRetries} failed, retrying in ${retryDelay}ms...`
+          );
+          await new Promise(resolve => setTimeout(resolve, retryDelay));
+        }
+      }
     }
   }
 
@@ -69,7 +109,12 @@ export class MongoDBAdapter implements IDatabaseAdapter {
         RepositoryConstants.DATABASE_ADAPTER.MONGODB.DISCONNECT_SUCCESS.en
       );
     } catch (_error) {
-      console.error('MongoDB disconnection error:', _error);
+      const disconnectErrorMsg =
+        _error instanceof Error ? _error.message : String(_error);
+      console.error(
+        '\x1b[31mMongoDB disconnection error:\x1b[0m',
+        `\x1b[31m${disconnectErrorMsg}\x1b[0m`
+      );
       throw new ApplicationError(
         RepositoryConstants.DATABASE_ADAPTER.MONGODB.DISCONNECT_ERROR.en,
         500

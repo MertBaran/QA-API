@@ -23,8 +23,17 @@ export interface QuestionSearchDoc {
   likes: string[];
   dislikes: string[];
   answers: string[];
-  parentContentId?: string;
   relatedContents?: string[];
+  thumbnailUrl?: string;
+  // Hierarchical fields
+  parent?: {
+    id: string;
+    type: string;
+  };
+  ancestorsIds?: string[];
+  ancestorsTypes?: string[];
+  rootId?: string;
+  depth?: number;
 }
 
 // Answer Search Document
@@ -43,4 +52,13 @@ export interface AnswerSearchDoc {
   dislikes: string[];
   isAccepted: boolean;
   createdAt: Date;
+  // Hierarchical fields
+  parent?: {
+    id: string;
+    type: string;
+  };
+  ancestorsIds?: string[];
+  ancestorsTypes?: string[];
+  rootId?: string;
+  depth?: number;
 }

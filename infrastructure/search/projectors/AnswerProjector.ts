@@ -33,6 +33,15 @@ export class AnswerProjector
   }
 
   project(entity: IAnswerModel): AnswerSearchDoc {
+    // Extract ancestor IDs and types from ancestors array
+    const ancestorsIds = entity.ancestors?.map(a => String(a.id)) || [];
+    const ancestorsTypes = entity.ancestors?.map(a => a.type) || [];
+    const rootId =
+      entity.ancestors && entity.ancestors.length > 0
+        ? String(entity.ancestors[entity.ancestors.length - 1]?.id || '')
+        : undefined;
+    const depth = entity.ancestors?.length || 0;
+
     return {
       _id: String(entity._id),
       content: entity.content,
@@ -43,6 +52,16 @@ export class AnswerProjector
       dislikes: entity.dislikes.map(id => String(id)),
       isAccepted: entity.isAccepted,
       createdAt: entity.createdAt || new Date(),
+      parent: entity.parent
+        ? {
+            id: String(entity.parent.id),
+            type: entity.parent.type,
+          }
+        : undefined,
+      ancestorsIds,
+      ancestorsTypes,
+      rootId,
+      depth,
     };
   }
 }
