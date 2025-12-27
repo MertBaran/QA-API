@@ -76,6 +76,9 @@ import { EntityTypeResolver } from '../infrastructure/search/EntityTypeResolver'
 import { EntityTypeRegistry } from '../infrastructure/search/EntityType';
 import { QuestionProjector } from '../infrastructure/search/projectors/QuestionProjector';
 import { AnswerProjector } from '../infrastructure/search/projectors/AnswerProjector';
+import { CloudflareR2StorageProvider } from '../infrastructure/storage/providers/CloudflareR2StorageProvider';
+import { ContentAssetService } from '../infrastructure/storage/content/ContentAssetService';
+import { ContentAssetController } from '../controllers/contentAssetController';
 import { IQuestionModel } from '../models/interfaces/IQuestionModel';
 import { IAnswerModel } from '../models/interfaces/IAnswerModel';
 import { QuestionSearchDoc } from '../infrastructure/search/SearchDocument';
@@ -102,6 +105,11 @@ container.registerSingleton(TOKENS.IDatabaseAdapter, MongoDBAdapter);
 container.registerSingleton(TOKENS.IAuditProvider, MongoAuditProvider);
 container.registerSingleton(TOKENS.AuditProvider, MongoAuditProvider);
 container.registerSingleton(TOKENS.IEnvironmentProvider, EnvironmentProvider);
+container.registerSingleton(
+  TOKENS.IObjectStorageProvider,
+  CloudflareR2StorageProvider
+);
+container.registerSingleton(TOKENS.IContentAssetService, ContentAssetService);
 
 // Register Elasticsearch services
 container.registerSingleton(TOKENS.IElasticsearchClient, ElasticsearchClient);
@@ -168,7 +176,10 @@ container.registerSingleton(TOKENS.IPermissionRepository, PermissionRepository);
 container.registerSingleton(TOKENS.IRoleRepository, RoleRepository);
 container.registerSingleton(TOKENS.IUserRoleRepository, UserRoleRepository);
 container.registerSingleton(TOKENS.IBookmarkRepository, BookmarkRepository);
-container.registerSingleton(TOKENS.IContentRelationRepository, ContentRelationRepository);
+container.registerSingleton(
+  TOKENS.IContentRelationRepository,
+  ContentRelationRepository
+);
 
 // Register managers as services
 container.registerSingleton(TOKENS.IAuthService, AuthManager);
@@ -275,6 +286,10 @@ container.registerSingleton(TOKENS.BookmarkController, BookmarkController);
 container.registerSingleton(
   TOKENS.NotificationController,
   NotificationController
+);
+container.registerSingleton(
+  TOKENS.ContentAssetController,
+  ContentAssetController
 );
 
 export { container };
