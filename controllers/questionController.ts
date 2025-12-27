@@ -72,7 +72,8 @@ export class QuestionController {
       _next: NextFunction
     ): Promise<void> => {
       const filters = req.query;
-      const result = await this.questionService.getQuestionsWithParents(filters);
+      const result =
+        await this.questionService.getQuestionsWithParents(filters);
       res.status(200).json({ success: true, data: result });
     }
   );
@@ -96,11 +97,7 @@ export class QuestionController {
       _next: NextFunction
     ): Promise<void> => {
       const { id } = req.params;
-      const { title, content } = req.body;
-      const question = await this.questionService.updateQuestion(id, {
-        title,
-        content,
-      });
+      const question = await this.questionService.updateQuestion(id, req.body);
       res.status(200).json({ success: true, data: question });
     }
   );
