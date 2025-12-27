@@ -4,9 +4,14 @@ import {
   PaginationQueryDTO,
   PaginatedResponse,
 } from '../../types/dto/question/pagination.dto';
+import type { CreateQuestionDTO } from '../../types/dto/question/create-question.dto';
+import type { UpdateQuestionDTO } from '../../types/dto/question/update-question.dto';
 
 export interface IQuestionService {
-  createQuestion(questionData: any, userId: EntityId): Promise<IQuestionModel>;
+  createQuestion(
+    questionData: CreateQuestionDTO,
+    userId: EntityId
+  ): Promise<IQuestionModel>;
   getAllQuestions(): Promise<IQuestionModel[]>;
   getQuestionsPaginated(
     filters: PaginationQueryDTO
@@ -17,7 +22,7 @@ export interface IQuestionService {
   getQuestionById(questionId: EntityId): Promise<IQuestionModel>;
   updateQuestion(
     questionId: EntityId,
-    updateData: { title?: string; content?: string }
+    updateData: UpdateQuestionDTO
   ): Promise<IQuestionModel>;
   deleteQuestion(questionId: EntityId): Promise<IQuestionModel>;
   likeQuestion(questionId: EntityId, userId: EntityId): Promise<IQuestionModel>;
