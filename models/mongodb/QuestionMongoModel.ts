@@ -25,6 +25,10 @@ export interface IQuestionMongo extends Document {
     depth: number;
   }>;
   relatedContents?: mongoose.Types.ObjectId[];
+  thumbnail?: {
+    key: string;
+    url?: string;
+  } | null;
   makeSlug(): string;
 }
 
@@ -119,6 +123,17 @@ const QuestionSchema = new Schema<IQuestionMongo>({
       type: mongoose.Schema.Types.ObjectId,
     },
   ],
+  thumbnail: {
+    type: {
+      key: {
+        type: String,
+      },
+      url: {
+        type: String,
+      },
+    },
+    default: null,
+  },
 });
 
 QuestionSchema.pre('save', function (next) {
