@@ -88,6 +88,12 @@ export class QuestionMongooseDataSource implements IDataSource<IQuestionModel> {
       relatedContents: (mongoDoc.relatedContents || []).map((content: any) =>
         content.toString()
       ),
+      thumbnail: mongoDoc.thumbnail
+        ? {
+            key: mongoDoc.thumbnail.key,
+            url: mongoDoc.thumbnail.url,
+          }
+        : null,
     };
   }
 
