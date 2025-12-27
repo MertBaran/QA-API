@@ -24,6 +24,15 @@ import { ISearchClient } from '../../infrastructure/search/ISearchClient';
 import { ILoggerProvider } from '../../infrastructure/logging/ILoggerProvider';
 import { IProjector } from '../../infrastructure/search/IProjector';
 import { QuestionSearchDoc } from '../../infrastructure/search/SearchDocument';
+import { TOKENS } from '../TOKENS';
+import { IContentAssetService } from '../../infrastructure/storage/content/IContentAssetService';
+import {
+  ContentAssetDescriptor,
+  ContentAssetType,
+  ContentAssetVisibility,
+} from '../../infrastructure/storage/content/ContentAssetType';
+import type { CreateQuestionDTO } from '../../types/dto/question/create-question.dto';
+import type { UpdateQuestionDTO } from '../../types/dto/question/update-question.dto';
 
 @injectable()
 export class QuestionManager implements IQuestionService {
@@ -41,21 +50,29 @@ export class QuestionManager implements IQuestionService {
     private searchClient: ISearchClient,
     @inject('IProjector<IQuestionModel, QuestionSearchDoc>')
     private questionProjector: IProjector<IQuestionModel, QuestionSearchDoc>,
+    @inject(TOKENS.IContentAssetService)
+    private contentAssetService: IContentAssetService,
     @inject('ILoggerProvider')
     private logger: ILoggerProvider
   ) {}
 
   async createQuestion(
-    questionData: any,
+    questionData: CreateQuestionDTO,
     userId: EntityId
   ): Promise<IQuestionModel> {
+    const {
+      thumbnailKey,
+      parent: parentInput,
+      ...restQuestionData
+    } = questionData;
+
     // Compute parent and ancestors if parent is provided
     let parent: ParentReference | undefined = undefined;
     let ancestors: AncestorReference[] = [];
 
-    if (questionData.parent) {
-      const parentId = questionData.parent.id;
-      const parentType = questionData.parent.type;
+    if (parentInput) {
+      const parentId = parentInput.id;
+      const parentType = parentInput.type;
 
       if (parentType === ContentType.QUESTION) {
         // Check if parent is a question
@@ -81,23 +98,40 @@ export class QuestionManager implements IQuestionService {
     }
 
     const question = await this.questionRepository.create({
-      ...questionData,
+      ...restQuestionData,
       contentType: ContentType.QUESTION,
       user: userId,
       parent,
       ancestors,
     });
+
+    let questionWithAssets = question;
+
+    if (thumbnailKey) {
+      const descriptor = this.buildQuestionThumbnailDescriptor(
+        userId,
+        question._id
+      );
+      const thumbnail = await this.buildThumbnail(thumbnailKey, descriptor);
+      questionWithAssets = await this.questionRepository.updateById(
+        question._id,
+        {
+          thumbnail,
+        }
+      );
+    }
+
     await this.cacheProvider.del('questions:all');
 
     // Project entity to SearchDocument and index
-    const searchDoc = this.questionProjector.project(question);
+    const searchDoc = this.questionProjector.project(questionWithAssets);
     await this.indexClient.sync(
       this.questionProjector.indexName,
       'index',
       searchDoc
     );
 
-    return question;
+    return questionWithAssets;
   }
 
   private computeAncestors(
@@ -183,6 +217,9 @@ export class QuestionManager implements IQuestionService {
   async getQuestionsPaginated(
     filters: PaginationQueryDTO
   ): Promise<PaginatedResponse<IQuestionModel>> {
+    // TODO: Consider using Elasticsearch when category/tags filters are present (even without search)
+    // Currently only uses Elasticsearch when search term is provided
+    // Potential improvement: if (filters.search || filters.category || filters.tags) { ... }
     // Search client kullan - SearchDocument bazlı
     if (filters.search && filters.search.trim().length > 0) {
       try {
@@ -431,22 +468,54 @@ export class QuestionManager implements IQuestionService {
         QuestionServiceMessages.QuestionNotFound.en
       );
     }
+
     return question;
   }
 
   async updateQuestion(
     questionId: EntityId,
-    updateData: { title?: string; content?: string }
+    updateData: UpdateQuestionDTO
   ): Promise<IQuestionModel> {
-    const question = await this.questionRepository.updateById(
-      questionId,
-      updateData
-    );
-    if (!question) {
-      throw ApplicationError.notFoundError(
-        QuestionServiceMessages.QuestionNotFound.en
-      );
+    const existingQuestion = await this.questionRepository.findById(questionId);
+
+    const { thumbnailKey, removeThumbnail, ...restUpdateData } = updateData;
+
+    const updates: Partial<IQuestionModel> = {};
+
+    if (restUpdateData.title !== undefined) {
+      updates.title = restUpdateData.title;
     }
+    if (restUpdateData.content !== undefined) {
+      updates.content = restUpdateData.content;
+    }
+
+    const descriptor = this.buildQuestionThumbnailDescriptor(
+      existingQuestion.user,
+      existingQuestion._id
+    );
+
+    if (thumbnailKey) {
+      if (
+        existingQuestion.thumbnail?.key &&
+        existingQuestion.thumbnail.key !== thumbnailKey
+      ) {
+        await this.safeDeleteAsset(existingQuestion.thumbnail.key, descriptor);
+      }
+      const thumbnail = await this.buildThumbnail(thumbnailKey, descriptor);
+      updates.thumbnail = thumbnail;
+    } else if (removeThumbnail) {
+      if (existingQuestion.thumbnail?.key) {
+        await this.safeDeleteAsset(existingQuestion.thumbnail.key, descriptor);
+      }
+      updates.thumbnail = null;
+    }
+
+    let question = existingQuestion;
+
+    if (Object.keys(updates).length > 0) {
+      question = await this.questionRepository.updateById(questionId, updates);
+    }
+
     await this.cacheProvider.del('questions:all');
 
     // Project entity to SearchDocument and update index
@@ -467,6 +536,8 @@ export class QuestionManager implements IQuestionService {
         QuestionServiceMessages.QuestionNotFound.en
       );
     }
+
+    await this.deleteThumbnailIfExists(question);
     await this.cacheProvider.del('questions:all');
 
     // Delete from index
@@ -663,5 +734,82 @@ export class QuestionManager implements IQuestionService {
 
     // Fallback to MongoDB
     return await this.questionRepository.searchByTitle(searchTerm);
+  }
+
+  private buildQuestionThumbnailDescriptor(
+    ownerId: EntityId,
+    questionId?: EntityId
+  ): ContentAssetDescriptor {
+    const resolvedOwnerId = this.resolveEntityId(ownerId);
+    const resolvedQuestionId = questionId
+      ? this.resolveEntityId(questionId)
+      : undefined;
+
+    return {
+      type: ContentAssetType.QuestionThumbnail,
+      ownerId: resolvedOwnerId,
+      entityId: resolvedQuestionId,
+      visibility: ContentAssetVisibility.Public,
+    };
+  }
+
+  private async buildThumbnail(
+    key: string,
+    descriptor: ContentAssetDescriptor
+  ): Promise<IQuestionModel['thumbnail']> {
+    const url = await this.contentAssetService.getAssetUrl(descriptor, key);
+    return {
+      key,
+      url,
+    };
+  }
+
+  private async deleteThumbnailIfExists(
+    question: IQuestionModel
+  ): Promise<void> {
+    if (!question.thumbnail?.key) {
+      return;
+    }
+
+    const descriptor = this.buildQuestionThumbnailDescriptor(
+      question.user,
+      question._id
+    );
+    await this.safeDeleteAsset(question.thumbnail.key, descriptor);
+  }
+
+  private async safeDeleteAsset(
+    key: string,
+    descriptor: ContentAssetDescriptor
+  ): Promise<void> {
+    try {
+      await this.contentAssetService.deleteAsset({ descriptor, key });
+    } catch (error) {
+      this.logger.warn('Content asset delete failed', {
+        key,
+        error,
+      });
+    }
+  }
+
+  private resolveEntityId(value: EntityId | any): string | undefined {
+    if (!value) {
+      return undefined;
+    }
+    if (typeof value === 'string') {
+      return value;
+    }
+    if (typeof value === 'object') {
+      if ('toString' in value && typeof value.toString === 'function') {
+        const str = value.toString();
+        if (str !== '[object Object]') {
+          return str;
+        }
+      }
+      if ('_id' in value) {
+        return String((value as { _id: any })._id);
+      }
+    }
+    return String(value);
   }
 }
