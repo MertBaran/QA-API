@@ -3,7 +3,13 @@ import { z } from 'zod';
 export const CreateQuestionSchema = z.object({
   title: z.string().min(10),
   content: z.string().min(20),
-  parentContentId: z.string().optional(),
+  parent: z
+    .object({
+      id: z.string(),
+      type: z.enum(['question', 'answer']),
+    })
+    .optional(),
+  thumbnailKey: z.string().trim().min(1).optional(),
 });
 
 export type CreateQuestionDTO = z.infer<typeof CreateQuestionSchema>;

@@ -4,7 +4,7 @@ import { ContentType } from '../../types/content/RelationType';
 
 export interface IAnswerModel extends IContent {
   // IContent'den gelenler:
-  // _id, contentType, content, user, createdAt, updatedAt, userInfo, likes, dislikes, parentContentId, relatedContents
+  // _id, contentType, content, user, createdAt, updatedAt, userInfo, likes, dislikes, parent, ancestors, relatedContents
 
   // Answer'a özel alanlar
   question: EntityId;

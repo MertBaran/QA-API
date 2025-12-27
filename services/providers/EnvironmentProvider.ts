@@ -1,5 +1,9 @@
 import { injectable } from 'tsyringe';
 import { IEnvironmentProvider } from '../contracts/IEnvironmentProvider';
+import {
+  ObjectStorageConfig,
+  ObjectStorageProvider,
+} from '../contracts/object-storage/ObjectStorageConfig';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
@@ -124,5 +128,58 @@ export class EnvironmentProvider implements IEnvironmentProvider {
 
   public isDevelopment(): boolean {
     return this.environment === 'development';
+  }
+
+  public getObjectStorageConfig(): ObjectStorageConfig {
+    const provider = this.getObjectStorageProvider();
+
+    switch (provider) {
+      case 'cloudflare-r2':
+        return this.buildR2Config();
+      default:
+        throw new Error(`Desteklenmeyen object storage provider: ${provider}`);
+    }
+  }
+
+  private getObjectStorageProvider(): ObjectStorageProvider {
+    const provider = this.getEnvironmentVariable(
+      'OBJECT_STORAGE_PROVIDER',
+      'cloudflare-r2'
+    ).toLowerCase() as ObjectStorageProvider;
+    return provider;
+  }
+
+  private buildR2Config(): ObjectStorageConfig {
+    const accountId = this.getEnvironmentVariable('R2_ACCOUNT_ID');
+    const accessKeyId = this.getEnvironmentVariable('R2_ACCESS_KEY_ID');
+    const secretAccessKey = this.getEnvironmentVariable('R2_SECRET_ACCESS_KEY');
+    const bucket = this.getEnvironmentVariable('R2_BUCKET');
+    const endpoint = this.getEnvironmentVariable('R2_ENDPOINT');
+    const publicBaseUrl = this.getEnvironmentVariable('R2_PUBLIC_BASE_URL', '');
+
+    const missing: string[] = [];
+    if (!accountId) missing.push('R2_ACCOUNT_ID');
+    if (!accessKeyId) missing.push('R2_ACCESS_KEY_ID');
+    if (!secretAccessKey) missing.push('R2_SECRET_ACCESS_KEY');
+    if (!bucket) missing.push('R2_BUCKET');
+    if (!endpoint) missing.push('R2_ENDPOINT');
+
+    if (missing.length > 0) {
+      throw new Error(
+        `Eksik Cloudflare R2 ortam değişkenleri: ${missing.join(', ')}`
+      );
+    }
+
+    return {
+      provider: 'cloudflare-r2',
+      bucket,
+      endpoint,
+      credentials: {
+        accountId,
+        accessKeyId,
+        secretAccessKey,
+      },
+      publicBaseUrl: publicBaseUrl || undefined,
+    };
   }
 }

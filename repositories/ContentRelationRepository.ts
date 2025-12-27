@@ -26,7 +26,9 @@ export class ContentRelationRepository implements IContentRelationRepository {
     return this.dataSource.findAll();
   }
 
-  async create(data: Partial<IContentRelationModel>): Promise<IContentRelationModel> {
+  async create(
+    data: Partial<IContentRelationModel>
+  ): Promise<IContentRelationModel> {
     return this.dataSource.create(data);
   }
 
@@ -47,6 +49,39 @@ export class ContentRelationRepository implements IContentRelationRepository {
       r =>
         r.sourceContentType === contentType && r.sourceContentId === contentId
     );
+  }
+
+  async findBySources(
+    contentType: ContentType,
+    contentIds: EntityId[]
+  ): Promise<IContentRelationModel[]> {
+    if (!contentIds.length) {
+      return [];
+    }
+    // Access model directly for $in query
+    const ContentRelationMongo =
+      require('../models/mongodb/ContentRelationMongoModel').default;
+    const mongoose = require('mongoose');
+
+    const uniqueIds = contentIds.map(
+      id => new mongoose.Types.ObjectId(id.toString())
+    );
+    const results = await ContentRelationMongo.find({
+      sourceContentType: contentType,
+      sourceContentId: { $in: uniqueIds },
+    });
+
+    return results.map((doc: any) => ({
+      _id: doc._id.toString(),
+      sourceContentType: doc.sourceContentType,
+      sourceContentId: doc.sourceContentId.toString(),
+      targetContentType: doc.targetContentType,
+      targetContentId: doc.targetContentId.toString(),
+      relationType: doc.relationType,
+      metadata: doc.metadata,
+      createdAt: doc.createdAt,
+      createdBy: doc.createdBy?.toString(),
+    }));
   }
 
   async findByTarget(
@@ -111,4 +146,3 @@ export class ContentRelationRepository implements IContentRelationRepository {
     return toDelete.length;
   }
 }
-

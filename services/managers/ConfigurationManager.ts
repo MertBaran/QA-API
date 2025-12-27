@@ -9,6 +9,7 @@ import {
 import { container } from 'tsyringe';
 import { ICacheProvider } from '../../infrastructure/cache/ICacheProvider';
 import { IEnvironmentProvider } from '../contracts/IEnvironmentProvider';
+import { ObjectStorageConfig } from '../contracts/object-storage/ObjectStorageConfig';
 
 @injectable()
 export class ConfigurationManager implements IConfigurationService {
@@ -97,6 +98,7 @@ export class ConfigurationManager implements IConfigurationService {
         ),
         environment: this.environmentProvider.getEnvironment(),
       },
+      objectStorage: this.buildObjectStorageEnvironmentConfig(),
     };
   }
 
@@ -170,6 +172,10 @@ export class ConfigurationManager implements IConfigurationService {
     };
   }
 
+  public getObjectStorageConfig(): ObjectStorageConfig {
+    return this.environmentProvider.getObjectStorageConfig();
+  }
+
   public logEnvironmentInfo(): void {
     const env = this.getEnvironment();
     console.log(`🔧 Environment: ${env}`);
@@ -209,5 +215,14 @@ export class ConfigurationManager implements IConfigurationService {
 
   public isDevelopment(): boolean {
     return this.environmentProvider.isDevelopment();
+  }
+
+  private buildObjectStorageEnvironmentConfig(): EnvironmentConfig['objectStorage'] {
+    const storageConfig = this.environmentProvider.getObjectStorageConfig();
+    return {
+      provider: storageConfig.provider,
+      bucket: storageConfig.bucket,
+      publicBaseUrl: storageConfig.publicBaseUrl,
+    };
   }
 }

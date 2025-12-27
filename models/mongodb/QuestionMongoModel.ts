@@ -15,8 +15,20 @@ export interface IQuestionMongo extends Document {
   likes: mongoose.Types.ObjectId[];
   dislikes: mongoose.Types.ObjectId[];
   answers: mongoose.Types.ObjectId[];
-  parentContentId?: mongoose.Types.ObjectId;
+  parent?: {
+    id: mongoose.Types.ObjectId;
+    type: string;
+  };
+  ancestors?: Array<{
+    id: mongoose.Types.ObjectId;
+    type: string;
+    depth: number;
+  }>;
   relatedContents?: mongoose.Types.ObjectId[];
+  thumbnail?: {
+    key: string;
+    url?: string;
+  } | null;
   makeSlug(): string;
 }
 
@@ -81,14 +93,47 @@ const QuestionSchema = new Schema<IQuestionMongo>({
       ref: 'Answer',
     },
   ],
-  parentContentId: {
-    type: mongoose.Schema.Types.ObjectId,
+  parent: {
+    id: {
+      type: mongoose.Schema.Types.ObjectId,
+      refPath: 'parent.type',
+    },
+    type: {
+      type: String,
+      enum: ['question', 'answer'],
+    },
   },
+  ancestors: [
+    {
+      id: {
+        type: mongoose.Schema.Types.ObjectId,
+      },
+      type: {
+        type: String,
+        enum: ['question', 'answer'],
+      },
+      depth: {
+        type: Number,
+        min: 0,
+      },
+    },
+  ],
   relatedContents: [
     {
       type: mongoose.Schema.Types.ObjectId,
     },
   ],
+  thumbnail: {
+    type: {
+      key: {
+        type: String,
+      },
+      url: {
+        type: String,
+      },
+    },
+    default: null,
+  },
 });
 
 QuestionSchema.pre('save', function (next) {
@@ -147,6 +192,11 @@ QuestionSchema.methods['makeSlug'] = function (): string {
     lower: true,
   });
 };
+
+// Indexes for performance
+QuestionSchema.index({ 'parent.id': 1 });
+QuestionSchema.index({ 'ancestors.id': 1 });
+QuestionSchema.index({ 'ancestors.depth': 1 });
 
 const QuestionMongo = mongoose.model<IQuestionMongo>(
   'Question',

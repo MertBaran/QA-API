@@ -1,3 +1,5 @@
+import { ObjectStorageConfig } from './object-storage/ObjectStorageConfig';
+
 export interface EnvironmentConfig {
   nodeEnv: string;
   port: number;
@@ -29,6 +31,11 @@ export interface EnvironmentConfig {
     version: string;
     environment: string;
   };
+  objectStorage: {
+    provider: ObjectStorageConfig['provider'];
+    bucket: string;
+    publicBaseUrl?: string;
+  };
 }
 
 export interface DatabaseConnectionConfig {
@@ -59,6 +66,7 @@ export interface IConfigurationService {
   getExceptionTrackingConfig(): EnvironmentConfig['exceptionTracking'];
   getFileLoggingConfig(): EnvironmentConfig['fileLogging'];
   getElasticsearchConfig(): ElasticsearchConnectionConfig;
+  getObjectStorageConfig(): ObjectStorageConfig;
   isProduction(): boolean;
   isTest(): boolean;
   isDevelopment(): boolean;

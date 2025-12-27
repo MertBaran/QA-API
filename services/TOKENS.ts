@@ -42,6 +42,7 @@ export const TOKENS = {
   AnswerController: 'AnswerController',
   BookmarkController: 'BookmarkController',
   NotificationController: 'NotificationController',
+  ContentAssetController: 'ContentAssetController',
   INotificationChannelRegistry: 'INotificationChannelRegistry',
   INotificationStrategy: 'INotificationStrategy',
   SystemMetricsCollector: 'SystemMetricsCollector',
@@ -81,6 +82,8 @@ export const TOKENS = {
   IContentRelationDataSource: 'IContentRelationDataSource',
   IContentRelationRepository: 'IContentRelationRepository',
   IContentRelationService: 'IContentRelationService',
+  IObjectStorageProvider: 'IObjectStorageProvider',
+  IContentAssetService: 'IContentAssetService',
 } as const;
 
 export type Token = (typeof TOKENS)[keyof typeof TOKENS];

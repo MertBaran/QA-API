@@ -5,6 +5,64 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2025-12-27
+
+### Added
+
+- **Question Thumbnail Support**: Complete thumbnail management system for questions
+  - Thumbnail upload via presigned URLs (Cloudflare R2 compatible)
+  - Thumbnail display on question cards and detail pages
+  - Thumbnail update and removal functionality
+  - Automatic thumbnail URL generation from storage keys
+- **Object Storage Infrastructure**: Cloudflare R2 integration
+  - `IObjectStorageProvider` interface for storage abstraction
+  - `CloudflareR2StorageProvider` implementation with presigned URL support
+  - Support for both global and account-specific R2 endpoints
+  - Public URL generation for public assets
+- **Content Asset Service**: Centralized asset management
+  - `ContentAssetService` for managing content assets
+  - Support for multiple asset types (question-thumbnail, attachments, user avatars, etc.)
+  - Public/private asset visibility control
+  - Asset path building with proper organization
+- **Content Asset API Endpoints**: RESTful API for asset operations
+  - `POST /api/content-assets/presigned-upload` - Generate presigned upload URLs
+  - `POST /api/content-assets/resolve-url` - Resolve asset URLs from keys
+  - `DELETE /api/content-assets` - Delete assets
+- **Elasticsearch Thumbnail Indexing**: Thumbnail URLs indexed for search
+  - `thumbnailUrl` field added to `QuestionSearchDoc`
+  - Thumbnail URLs included in search results
+
+### Changed
+
+- **Question Model**: Enhanced with thumbnail support
+  - Added `thumbnail` field with `key` and optional `url` properties
+  - Thumbnail data properly mapped in MongoDB data source
+- **Question DTOs**: Updated to support thumbnail operations
+  - `CreateQuestionDTO` now accepts `thumbnailKey`
+  - `UpdateQuestionDTO` supports `thumbnailKey` and `removeThumbnail`
+- **Question Manager**: Enhanced with thumbnail management
+  - Automatic thumbnail URL generation during create/update
+  - Safe asset deletion with error handling
+  - Thumbnail cleanup on question deletion
+- **Application Configuration**: Added object storage configuration
+  - Environment variables for R2 configuration
+  - Object storage config in application setup
+  - Monitoring integration for storage health
+
+### Fixed
+
+- Thumbnail field mapping in `QuestionMongooseDataSource.toEntity()` method
+- Thumbnail URL generation when key exists but URL is missing
+- Frontend thumbnail loading with automatic retry on failure
+
+### Technical Improvements
+
+- Improved application shutdown with graceful database disconnection
+- Enhanced database connection handling with retry logic
+- Better TypeScript type safety in Elasticsearch service
+- Improved error handling in storage operations
+- Updated dependencies for AWS SDK v3 support
+
 ## [1.4.0] - 2025-11-02
 
 ### Added
