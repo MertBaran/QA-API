@@ -4,12 +4,12 @@ import { Server } from 'http';
 import { ILoggerProvider } from '../infrastructure/logging/ILoggerProvider';
 import { INotificationService } from './contracts/INotificationService';
 import { ApplicationState } from './ApplicationState';
-import { ICacheProvider } from '../infrastructure/cache/ICacheProvider';
-import { container } from './container';
 import { InternalWebSocketClient } from './InternalWebSocketClient';
+import { TOKENS } from './TOKENS';
+import { IObjectStorageProvider } from '../infrastructure/storage/IObjectStorageProvider';
 
 export interface ConnectionStatus {
-  service: 'database' | 'cache' | 'queue' | 'email';
+  service: 'database' | 'cache' | 'queue' | 'email' | 'object-storage';
   status: 'connected' | 'disconnected' | 'reconnecting';
   lastCheck: Date;
   error?: string;
@@ -61,7 +61,9 @@ export class WebSocketMonitorService {
     @inject('INotificationService')
     private notificationService: INotificationService,
     @inject('InternalWebSocketClient')
-    private internalClient: InternalWebSocketClient
+    private internalClient: InternalWebSocketClient,
+    @inject(TOKENS.IObjectStorageProvider)
+    private objectStorageProvider: IObjectStorageProvider
   ) {
     this.initializeStatus();
     // Don't start internal client immediately - wait for app to be ready
@@ -88,6 +90,12 @@ export class WebSocketMonitorService {
 
     this.connectionStatus.set('email', {
       service: 'email',
+      status: 'connected',
+      lastCheck: new Date(),
+    });
+
+    this.connectionStatus.set('object-storage', {
+      service: 'object-storage',
       status: 'connected',
       lastCheck: new Date(),
     });
@@ -246,7 +254,7 @@ export class WebSocketMonitorService {
       interval: `${intervalMs}ms`,
       internalClient: this.internalClient.isClientConnected(),
       externalClients: this.clients.size,
-      services: ['database', 'cache', 'queue', 'email'],
+      services: ['database', 'cache', 'queue', 'email', 'object-storage'],
     });
   }
 
@@ -281,6 +289,7 @@ export class WebSocketMonitorService {
       // this.checkCacheConnection(config),
       this.checkQueueConnection(),
       this.checkEmailConnection(config),
+      // this.checkObjectStorageConnection(config.objectStorage),
     ];
 
     await Promise.allSettled(checks);
@@ -447,6 +456,74 @@ export class WebSocketMonitorService {
       this.updateConnectionStatus('email', newStatus, previousStatus);
     } catch (error) {
       this.handleConnectionError('email', error as Error);
+    }
+  }
+
+  private async checkObjectStorageConnection(
+    objectStorageConfig: any
+  ): Promise<void> {
+    if (this.shouldSkipCheck('object-storage')) {
+      return;
+    }
+
+    if (!objectStorageConfig) {
+      const previousStatus = this.connectionStatus.get('object-storage');
+      const newStatus: ConnectionStatus = {
+        service: 'object-storage',
+        status: 'disconnected',
+        lastCheck: new Date(),
+        error: 'Object storage configuration not found',
+      };
+      this.updateConnectionStatus('object-storage', newStatus, previousStatus);
+      return;
+    }
+
+    try {
+      await this.objectStorageProvider.listObjects({ maxKeys: 1 });
+
+      const previousStatus = this.connectionStatus.get('object-storage');
+      const newStatus: ConnectionStatus = {
+        service: 'object-storage',
+        status: 'connected',
+        lastCheck: new Date(),
+        details: {
+          provider: objectStorageConfig?.provider,
+          bucket: objectStorageConfig?.bucket,
+          publicBaseUrl: objectStorageConfig?.publicBaseUrl,
+        },
+      };
+
+      this.updateConnectionStatus('object-storage', newStatus, previousStatus);
+      this.recordSuccess('object-storage');
+    } catch (error) {
+      this.recordFailure('object-storage');
+
+      const previousStatus = this.connectionStatus.get('object-storage');
+      const newStatus: ConnectionStatus = {
+        service: 'object-storage',
+        status: 'disconnected',
+        lastCheck: new Date(),
+        error: error instanceof Error ? error.message : String(error),
+        details: {
+          provider: objectStorageConfig?.provider,
+          bucket: objectStorageConfig?.bucket,
+          publicBaseUrl: objectStorageConfig?.publicBaseUrl,
+        },
+      };
+
+      this.updateConnectionStatus('object-storage', newStatus, previousStatus);
+
+      this.broadcast({
+        type: 'alert',
+        data: {
+          type: 'connection_lost',
+          service: 'object-storage',
+          message: 'Object storage connection lost',
+          timestamp: new Date(),
+          details: newStatus.details,
+        },
+        timestamp: new Date(),
+      });
     }
   }
 
