@@ -1,5 +1,5 @@
 import { injectable, inject } from 'tsyringe';
-import { Client } from '@elastic/elasticsearch';
+import { Client, estypes } from '@elastic/elasticsearch';
 import { IElasticsearchClient } from './IElasticsearchClient';
 import { ILoggerProvider } from '../logging/ILoggerProvider';
 import { IConfigurationService } from '../../services/contracts/IConfigurationService';
@@ -12,51 +12,48 @@ import { IDocumentService } from './IDocumentService';
 import { IProjector } from '../search/IProjector';
 
 // Turkish analyzer for better search experience
-const TURKISH_ANALYZER = {
-  settings: {
-    // Ngram fark limitini artır
-    index: {
-      max_ngram_diff: 10,
-    },
-    analysis: {
-      analyzer: {
-        turkish_analyzer: {
-          type: 'custom',
-          tokenizer: 'standard',
-          filter: [
-            'lowercase',
-            'turkish_lowercase',
-            'turkish_stop',
-            'turkish_stemmer',
-            'asciifolding',
-          ],
-        },
-        // Partial match için ngram analyzer
-        turkish_ngram_analyzer: {
-          type: 'custom',
-          tokenizer: 'standard',
-          filter: ['lowercase', 'turkish_lowercase', 'ngram_filter'],
-        },
+const TURKISH_ANALYZER_SETTINGS: estypes.IndicesCreateRequest['settings'] = {
+  index: {
+    max_ngram_diff: 10,
+  },
+  analysis: {
+    analyzer: {
+      turkish_analyzer: {
+        type: 'custom' as const,
+        tokenizer: 'standard',
+        filter: [
+          'lowercase',
+          'turkish_lowercase',
+          'turkish_stop',
+          'turkish_stemmer',
+          'asciifolding',
+        ],
       },
-      filter: {
-        turkish_lowercase: {
-          type: 'lowercase',
-          language: 'turkish',
-        },
-        turkish_stop: {
-          type: 'stop',
-          stopwords: '_turkish_',
-        },
-        turkish_stemmer: {
-          type: 'stemmer',
-          language: 'turkish',
-        },
-        // Ngram filter - kelime içinde arama için (2-10 aralığı)
-        ngram_filter: {
-          type: 'ngram',
-          min_gram: 2,
-          max_gram: 10,
-        },
+      // Partial match için ngram analyzer
+      turkish_ngram_analyzer: {
+        type: 'custom' as const,
+        tokenizer: 'standard',
+        filter: ['lowercase', 'turkish_lowercase', 'ngram_filter'],
+      },
+    },
+    filter: {
+      turkish_lowercase: {
+        type: 'lowercase' as const,
+        language: 'turkish',
+      },
+      turkish_stop: {
+        type: 'stop' as const,
+        stopwords: '_turkish_',
+      },
+      turkish_stemmer: {
+        type: 'stemmer' as const,
+        language: 'turkish',
+      },
+      // Ngram filter - kelime içinde arama için (2-10 aralığı)
+      ngram_filter: {
+        type: 'ngram' as const,
+        min_gram: 2,
+        max_gram: 10,
       },
     },
   },
@@ -121,7 +118,7 @@ export class ElasticsearchIndexService
       const mapping = this.createIndexMapping(searchFields);
       await this.client.indices.create({
         index: indexName,
-        ...TURKISH_ANALYZER,
+        settings: TURKISH_ANALYZER_SETTINGS,
         mappings: mapping,
       });
       //this.logger.info(`Created Elasticsearch index: ${indexName}`);
@@ -310,10 +307,12 @@ export class ElasticsearchIndexService
       });
 
       // Elasticsearch'ten dönen _id'yi _source'a ekle
-      const hits = searchResponse.hits.hits.map(hit => ({
-        ...hit._source!,
-        _id: hit._id, // Elasticsearch'ten gelen _id'yi ekle
-      }));
+      const hits = searchResponse.hits.hits.map(
+        (hit: estypes.SearchHit<TDoc>) => ({
+          ...hit._source!,
+          _id: hit._id, // Elasticsearch'ten gelen _id'yi ekle
+        })
+      );
 
       const total = searchResponse.hits.total
         ? typeof searchResponse.hits.total === 'number'
@@ -386,7 +385,7 @@ export class ElasticsearchIndexService
     if (!exists) {
       await this.client.indices.create({
         index: indexName,
-        ...TURKISH_ANALYZER,
+        settings: TURKISH_ANALYZER_SETTINGS,
         mappings: mapping.properties || {},
       });
     }
