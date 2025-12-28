@@ -2,12 +2,24 @@ export interface SearchFilters {
   [key: string]: string | string[] | number | boolean | undefined;
 }
 
+export interface SmartSearchOptions {
+  linguistic?: boolean; // Synonym ve dilsel özellikler
+  semantic?: boolean; // ELSER veya diğer semantic search
+}
+
 export interface SearchOptions {
   page?: number;
   limit?: number;
   filters?: SearchFilters;
   sortBy?: 'relevance' | 'date' | 'popularity';
   sortOrder?: 'asc' | 'desc';
+  searchMode?: 'phrase' | 'all_words' | 'any_word'; // 'auto' kaldırıldı, varsayılan 'any_word'
+  matchType?: 'fuzzy' | 'exact'; // Eşleşme tipi (smart kaldırıldı, ayrı checkbox olacak)
+  typoTolerance?: 'low' | 'medium' | 'high'; // Typo hatası tolerans seviyesi (sadece fuzzy modunda aktif)
+  smartSearch?: boolean; // Akıllı arama açık/kapalı (checkbox)
+  smartOptions?: SmartSearchOptions; // Smart search açıksa linguistic/semantic seçenekleri
+  excludeIds?: string[]; // Exclude these IDs from search results
+  language?: string; // Dil kodu (tr, en, de, vb.) - synonym ve semantic search için
 }
 
 export interface SearchResult<TDoc = unknown> {
@@ -16,6 +28,9 @@ export interface SearchResult<TDoc = unknown> {
   page: number;
   limit: number;
   totalPages: number;
+  warnings?: {
+    semanticSearchUnavailable?: boolean; // ELSER model deploy edilmemişse true
+  };
 }
 
 /**
