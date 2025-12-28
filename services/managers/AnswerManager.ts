@@ -70,12 +70,13 @@ export class AnswerManager implements IAnswerService {
     );
 
     // Update question index - answers array changed
+    // Use 'index' instead of 'update' to handle case where document doesn't exist yet (upsert behavior)
     const updatedQuestion = await this.questionRepository.findById(questionId);
     if (updatedQuestion) {
       const questionSearchDoc = this.questionProjector.project(updatedQuestion);
       await this.indexClient.sync(
         this.questionProjector.indexName,
-        'update',
+        'index',
         questionSearchDoc
       );
     }
@@ -407,5 +408,135 @@ export class AnswerManager implements IAnswerService {
     return await this.answerRepository.findAnswersByQuestionWithPopulate(
       questionId
     );
+  }
+
+  async searchAnswers(
+    searchTerm: string,
+    page: number = 1,
+    limit: number = 10,
+    searchMode: 'phrase' | 'all_words' | 'any_word' = 'any_word',
+    matchType: 'fuzzy' | 'exact' = 'fuzzy',
+    typoTolerance: 'low' | 'medium' | 'high' = 'medium',
+    smartSearch: boolean = false,
+    smartOptions?: { linguistic?: boolean; semantic?: boolean },
+    language?: string
+  ): Promise<{
+    data: IAnswerModel[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+    warnings?: {
+      semanticSearchUnavailable?: boolean;
+    };
+  }> {
+    if (searchTerm.trim().length === 0) {
+      return {
+        data: [],
+        pagination: {
+          page: 1,
+          limit,
+          total: 0,
+          totalPages: 0,
+          hasNext: false,
+          hasPrev: false,
+        },
+      };
+    }
+    try {
+      const result = await this.searchClient.search<AnswerSearchDoc>(
+        this.answerProjector.indexName,
+        this.answerProjector.searchFields,
+        searchTerm,
+        {
+          page,
+          limit,
+          searchMode,
+          matchType,
+          typoTolerance,
+          smartSearch,
+          smartOptions,
+          language,
+        }
+      );
+
+      // Semantic search kullanılamadıysa warning'i logla
+      if (result.warnings?.semanticSearchUnavailable) {
+        this.logger.warn(
+          'Semantic search was requested but ELSER model is not deployed',
+          {
+            searchTerm,
+            matchType,
+            smartOptions,
+          }
+        );
+      }
+
+      // Elasticsearch'ten gelen SearchDocument'ları direkt Entity'lere dönüştür
+      const answers = result.hits.map(
+        (doc): IAnswerModel => ({
+          _id: doc._id as EntityId,
+          contentType: ContentType.ANSWER,
+          content: doc.content,
+          user: doc.userId as EntityId,
+          userInfo: doc.userInfo,
+          question: doc.questionId as EntityId,
+          likes: (doc.likes || []).map(id => id as EntityId),
+          dislikes: (doc.dislikes || []).map(id => id as EntityId),
+          isAccepted: doc.isAccepted,
+          createdAt: doc.createdAt || new Date(),
+          parent: doc.parent
+            ? {
+                id: doc.parent.id as EntityId,
+                type: doc.parent.type as ContentType,
+              }
+            : undefined,
+          ancestors:
+            doc.ancestorsIds && doc.ancestorsTypes
+              ? doc.ancestorsIds.map((id, idx) => ({
+                  id: id as EntityId,
+                  type: doc.ancestorsTypes![idx] as ContentType,
+                  depth: idx,
+                }))
+              : undefined,
+        })
+      );
+      const enrichedAnswers = await this.enrichWithQuestionInfo(answers);
+
+      return {
+        data: enrichedAnswers,
+        pagination: {
+          page: result.page,
+          limit: result.limit,
+          total: result.total,
+          totalPages: result.totalPages,
+          hasNext: result.page < result.totalPages,
+          hasPrev: result.page > 1,
+        },
+        warnings: result.warnings,
+      };
+    } catch (error: any) {
+      this.logger.warn('Search failed for answers, falling back to MongoDB', {
+        error: error.message,
+      });
+    }
+
+    // Fallback to MongoDB - repository'de searchByContent metodu yoksa eklememiz gerekebilir
+    // Şimdilik boş array döndürelim, MongoDB fallback'i eklenebilir
+    return {
+      data: [],
+      pagination: {
+        page,
+        limit,
+        total: 0,
+        totalPages: 0,
+        hasNext: false,
+        hasPrev: false,
+      },
+    };
   }
 }

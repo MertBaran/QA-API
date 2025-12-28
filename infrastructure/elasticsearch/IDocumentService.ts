@@ -6,7 +6,8 @@ export interface IDocumentService {
   indexDocument(
     indexName: string,
     id: string,
-    document: Record<string, any>
+    document: Record<string, any>,
+    pipeline?: string
   ): Promise<void>;
 
   updateDocument(
