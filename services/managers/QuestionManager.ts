@@ -682,16 +682,76 @@ export class QuestionManager implements IQuestionService {
     return await this.questionRepository.findByParent(parentId);
   }
 
-  async searchQuestions(searchTerm: string): Promise<IQuestionModel[]> {
-    if (searchTerm.trim().length === 0) return [];
+  async searchQuestions(
+    searchTerm: string,
+    page: number = 1,
+    limit: number = 10,
+    searchMode: 'phrase' | 'all_words' | 'any_word' = 'any_word',
+    matchType: 'fuzzy' | 'exact' = 'fuzzy',
+    typoTolerance: 'low' | 'medium' | 'high' = 'medium',
+    smartSearch: boolean = false,
+    smartOptions?: { linguistic?: boolean; semantic?: boolean },
+    excludeQuestionIds?: string[],
+    language?: string
+  ): Promise<{
+    data: IQuestionModel[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+    warnings?: {
+      semanticSearchUnavailable?: boolean;
+    };
+  }> {
+    if (searchTerm.trim().length === 0) {
+      return {
+        data: [],
+        pagination: {
+          page: 1,
+          limit,
+          total: 0,
+          totalPages: 0,
+          hasNext: false,
+          hasPrev: false,
+        },
+      };
+    }
     try {
       const result = await this.searchClient.search<QuestionSearchDoc>(
         this.questionProjector.indexName,
         this.questionProjector.searchFields,
-        searchTerm
+        searchTerm,
+        {
+          page,
+          limit,
+          searchMode,
+          matchType,
+          typoTolerance,
+          smartSearch,
+          smartOptions,
+          excludeIds: excludeQuestionIds,
+          language,
+        }
       );
+
+      // Semantic search kullanılamadıysa warning'i logla
+      if (result.warnings?.semanticSearchUnavailable) {
+        this.logger.warn(
+          'Semantic search was requested but ELSER model is not deployed',
+          {
+            searchTerm,
+            matchType,
+            smartOptions,
+          }
+        );
+      }
+
       // Elasticsearch'ten gelen SearchDocument'ları direkt Entity'lere dönüştür
-      return result.hits.map(
+      const questions = result.hits.map(
         (doc): IQuestionModel => ({
           _id: doc._id as EntityId,
           contentType: ContentType.QUESTION,
@@ -726,6 +786,19 @@ export class QuestionManager implements IQuestionService {
           ),
         })
       );
+
+      return {
+        data: questions,
+        pagination: {
+          page: result.page,
+          limit: result.limit,
+          total: result.total,
+          totalPages: result.totalPages,
+          hasNext: result.page < result.totalPages,
+          hasPrev: result.page > 1,
+        },
+        warnings: result.warnings,
+      };
     } catch (error: any) {
       this.logger.warn('Search failed, falling back to MongoDB', {
         error: error.message,
@@ -733,7 +806,25 @@ export class QuestionManager implements IQuestionService {
     }
 
     // Fallback to MongoDB
-    return await this.questionRepository.searchByTitle(searchTerm);
+    const allQuestions =
+      await this.questionRepository.searchByTitle(searchTerm);
+    const total = allQuestions.length;
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedQuestions = allQuestions.slice(startIndex, endIndex);
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: paginatedQuestions,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+    };
   }
 
   private buildQuestionThumbnailDescriptor(
