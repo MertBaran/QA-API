@@ -7,6 +7,9 @@ import {
   IndexOperation,
 } from '../search/IIndexClient';
 import { IDocumentService } from './IDocumentService';
+import { ElasticsearchIngestPipeline } from './ElasticsearchIngestPipeline';
+import { ISemanticSearchService } from '../search/ISemanticSearchService';
+import { TOKENS } from '../../services/TOKENS';
 
 @injectable()
 export class ElasticsearchSyncService implements IIndexClient {
@@ -18,7 +21,11 @@ export class ElasticsearchSyncService implements IIndexClient {
     @inject('IConfigurationService')
     private configService: IConfigurationService,
     @inject('ILoggerProvider')
-    private logger: ILoggerProvider
+    private logger: ILoggerProvider,
+    @inject(TOKENS.ElasticsearchIngestPipeline)
+    private ingestPipeline?: ElasticsearchIngestPipeline,
+    @inject('ISemanticSearchService')
+    private semanticSearchService?: ISemanticSearchService
   ) {
     const esConfig = this.configService.getElasticsearchConfig();
     this.elasticsearchEnabled = esConfig.enabled;
@@ -29,8 +36,37 @@ export class ElasticsearchSyncService implements IIndexClient {
     id: string,
     content: Record<string, any>
   ): Promise<void> {
+    // ELSER pipeline'ını kullan (eğer varsa ve model deploy edilmişse)
+    let pipelineName: string | undefined;
+
+    if (this.ingestPipeline) {
+      // ELSER model'inin deploy edilip edilmediğini kontrol et
+      if (
+        this.semanticSearchService &&
+        'isModelDeployed' in this.semanticSearchService
+      ) {
+        const elserService = this.semanticSearchService as any;
+        try {
+          const isDeployed = await elserService.isModelDeployed();
+          if (isDeployed) {
+            pipelineName = this.ingestPipeline.getPipelineName();
+          }
+        } catch (error) {
+          this.logger.warn(
+            'Failed to check ELSER model deployment status, indexing without pipeline',
+            { error, indexName }
+          );
+        }
+      }
+    }
+
     await this.documentService.createIndexIfNotExists(indexName, {});
-    await this.documentService.indexDocument(indexName, id, content);
+    await this.documentService.indexDocument(
+      indexName,
+      id,
+      content,
+      pipelineName
+    );
   }
 
   private async updateDocument(
@@ -73,11 +109,7 @@ export class ElasticsearchSyncService implements IIndexClient {
         if (operation === 'index') {
           // _id'yi document'tan çıkar (Elasticsearch metadata field olarak kabul eder)
           const { _id, ...documentWithoutId } = doc as Record<string, any>;
-          await this.indexDocument(
-            indexName,
-            String(docId),
-            documentWithoutId
-          );
+          await this.indexDocument(indexName, String(docId), documentWithoutId);
         } else if (operation === 'update') {
           // _id'yi document'tan çıkar (Elasticsearch metadata field olarak kabul eder)
           const { _id, ...documentWithoutId } = doc as Record<string, any>;

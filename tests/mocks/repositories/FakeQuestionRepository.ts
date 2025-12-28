@@ -17,6 +17,10 @@ export class FakeQuestionRepository implements IQuestionRepository {
     return this.questions.find(q => q._id === id) || null;
   }
 
+  async findByIds(ids: EntityId[]): Promise<IQuestionModel[]> {
+    return this.questions.filter(q => ids.includes(q._id));
+  }
+
   async findAll(): Promise<IQuestionModel[]> {
     return [...this.questions];
   }

@@ -40,5 +40,29 @@ export interface IQuestionService {
   ): Promise<IQuestionModel>;
   getQuestionsByUser(userId: EntityId): Promise<IQuestionModel[]>;
   getQuestionsByParent(parentId: EntityId): Promise<IQuestionModel[]>;
-  searchQuestions(searchTerm: string): Promise<IQuestionModel[]>;
+  searchQuestions(
+    searchTerm: string,
+    page?: number,
+    limit?: number,
+    searchMode?: 'phrase' | 'all_words' | 'any_word',
+    matchType?: 'fuzzy' | 'exact',
+    typoTolerance?: 'low' | 'medium' | 'high',
+    smartSearch?: boolean,
+    smartOptions?: { linguistic?: boolean; semantic?: boolean },
+    excludeQuestionIds?: string[],
+    language?: string
+  ): Promise<{
+    data: IQuestionModel[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+    warnings?: {
+      semanticSearchUnavailable?: boolean;
+    };
+  }>;
 }
