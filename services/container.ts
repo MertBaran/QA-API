@@ -72,6 +72,9 @@ import { ElasticsearchClient } from '../infrastructure/elasticsearch/Elasticsear
 import { ElasticsearchIndexService } from '../infrastructure/elasticsearch/ElasticsearchIndexService';
 import { ElasticsearchLogShipper } from '../infrastructure/elasticsearch/ElasticsearchLogShipper';
 import { ElasticsearchSyncService } from '../infrastructure/elasticsearch/ElasticsearchSyncService';
+import { ElserSemanticSearchService } from '../infrastructure/search/ElserSemanticSearchService';
+import { ElasticsearchIngestPipeline } from '../infrastructure/elasticsearch/ElasticsearchIngestPipeline';
+import { SynonymService } from '../infrastructure/search/SynonymService';
 import { EntityTypeResolver } from '../infrastructure/search/EntityTypeResolver';
 import { EntityTypeRegistry } from '../infrastructure/search/EntityType';
 import { QuestionProjector } from '../infrastructure/search/projectors/QuestionProjector';
@@ -124,6 +127,21 @@ container.registerSingleton(TOKENS.IIndexClient, ElasticsearchSyncService);
 container.registerSingleton(TOKENS.IDocumentService, ElasticsearchIndexService);
 container.registerSingleton(TOKENS.IEntityTypeRegistry, EntityTypeRegistry);
 container.registerSingleton(TOKENS.IEntityTypeResolver, EntityTypeResolver);
+
+// Register semantic search service (ELSER) - optional, can be undefined if not configured
+container.registerSingleton(
+  TOKENS.ISemanticSearchService,
+  ElserSemanticSearchService
+);
+
+// Register synonym service (optional, can be undefined if not configured)
+container.registerSingleton(TOKENS.ISynonymService, SynonymService);
+
+// Register ingest pipeline service for ELSER semantic fields
+container.registerSingleton(
+  TOKENS.ElasticsearchIngestPipeline,
+  ElasticsearchIngestPipeline
+);
 
 // Register Projectors - Entity'den SearchDocument'a mapping
 // Manager'larda kullanılan token string'leri ile register ediyoruz

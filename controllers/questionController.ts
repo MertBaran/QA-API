@@ -16,6 +16,10 @@ import type {
   PaginatedResponse,
 } from '../types/dto/question/pagination.dto';
 import { i18n } from '../types/i18n';
+import {
+  SearchOptions,
+  SearchOptionsQueryParams,
+} from '../types/SearchOptions';
 
 type AuthenticatedRequest<P = any, B = any> = Request<P, any, B> & {
   user?: { id: string };
@@ -199,6 +203,74 @@ export class QuestionController {
       const { id } = req.params;
       const questions = await this.questionService.getQuestionsByParent(id);
       res.status(200).json({ success: true, data: questions });
+    }
+  );
+
+  searchQuestions = asyncErrorWrapper(
+    async (
+      req: Request<
+        {},
+        {},
+        {},
+        SearchOptionsQueryParams & {
+          q?: string;
+          page?: string;
+          limit?: string;
+          includeAnswers?: string;
+          excludeQuestionIds?: string;
+        }
+      >,
+      res: Response<
+        SuccessResponseDTO<{ data: IQuestionModel[]; pagination: any }>
+      >,
+      _next: NextFunction
+    ): Promise<void> => {
+      const searchTerm = req.query.q || '';
+      const page = parseInt(req.query.page || '1', 10);
+      const limit = parseInt(req.query.limit || '10', 10);
+
+      // searchOptions'ı query parametrelerinden oluştur
+      // Language önce query parametresinden, yoksa req.locale'den, yoksa 'tr' varsayılan
+      const languageParam = Array.isArray(req.query.language)
+        ? req.query.language[0]
+        : req.query.language;
+      const language = (languageParam as string) || req.locale || 'tr';
+      const searchOptions = SearchOptions.fromQuery({
+        searchMode: req.query.searchMode,
+        matchType: req.query.matchType,
+        typoTolerance: req.query.typoTolerance,
+        smartSearch: req.query.smartSearch,
+        smartLinguistic: req.query.smartLinguistic,
+        smartSemantic: req.query.smartSemantic,
+        language,
+      });
+
+      const smartOptions = searchOptions.toSmartOptions();
+
+      const includeAnswers = req.query.includeAnswers === 'true';
+
+      // Eğer cevapları dahil et seçeneği aktifse, cevaplarda geçen soru ID'lerini bul ve çıkar
+      let excludeQuestionIds: string[] | undefined = undefined;
+      if (includeAnswers && req.query.excludeQuestionIds) {
+        // Frontend'den gelen excludeQuestionIds'i kullan
+        excludeQuestionIds = Array.isArray(req.query.excludeQuestionIds)
+          ? req.query.excludeQuestionIds
+          : [req.query.excludeQuestionIds];
+      }
+
+      const result = await this.questionService.searchQuestions(
+        searchTerm,
+        page,
+        limit,
+        searchOptions.searchMode,
+        searchOptions.matchType,
+        searchOptions.typoTolerance || 'medium',
+        searchOptions.smartSearch || false,
+        smartOptions,
+        excludeQuestionIds,
+        searchOptions.language
+      );
+      res.status(200).json({ success: true, data: result });
     }
   );
 }

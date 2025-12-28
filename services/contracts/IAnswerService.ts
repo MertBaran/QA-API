@@ -17,4 +17,28 @@ export interface IAnswerService {
   undoDislikeAnswer(answerId: string, userId: EntityId): Promise<IAnswerModel>;
   getAnswersByUser(userId: EntityId): Promise<IAnswerModel[]>;
   getAnswersWithPopulatedData(questionId: EntityId): Promise<IAnswerModel[]>;
+  searchAnswers(
+    searchTerm: string,
+    page?: number,
+    limit?: number,
+    searchMode?: 'phrase' | 'all_words' | 'any_word',
+    matchType?: 'fuzzy' | 'exact',
+    typoTolerance?: 'low' | 'medium' | 'high',
+    smartSearch?: boolean,
+    smartOptions?: { linguistic?: boolean; semantic?: boolean },
+    language?: string
+  ): Promise<{
+    data: IAnswerModel[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+    warnings?: {
+      semanticSearchUnavailable?: boolean;
+    };
+  }>;
 }

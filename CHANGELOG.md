@@ -5,6 +5,98 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2025-01-XX
+
+### Extraordinary Searching Structure v1
+
+#### Added
+
+- **Advanced Elasticsearch Search Infrastructure**: Comprehensive search system with multiple search modes and intelligent query building
+  - `ElasticsearchIndexService` with advanced query construction supporting phrase, all_words, any_word search modes
+  - Dynamic typo tolerance system (low, medium, high) with automatic fuzziness calculation
+  - Smart search integration with linguistic (synonym) and semantic (ELSER) search capabilities
+  - Support for exact and fuzzy matching with configurable prefix_length and fuzziness
+  - Ngram-based partial matching for single-word queries
+  - Minimum score threshold calculation based on match type, typo tolerance, and word count
+  - Comprehensive filter support: category, user, date range, numeric range, exclude IDs
+  - Multiple sort options: relevance, date, popularity with ascending/descending order
+  - Pagination support with page, limit, and totalPages calculation
+- **Semantic Search Service**: ELSER model integration for semantic search
+  - `ISemanticSearchService` interface for semantic search abstraction
+  - `ElserSemanticSearchService` implementation with ELSER model deployment
+  - Model deployment status checking
+  - Query embedding generation for semantic search
+  - Semantic query construction with text expansion
+- **Synonym Service**: Linguistic search enhancement
+  - `ISynonymService` interface for synonym management
+  - `SynonymService` implementation with synonym expansion
+  - Support for language-specific synonyms
+  - Synonym-based query enhancement for better search results
+- **Elasticsearch Ingest Pipeline**: Automatic semantic field population
+  - `ElasticsearchIngestPipeline` for ELSER semantic field generation
+  - Automatic pipeline creation and management
+  - Support for multiple search fields with semantic indexing
+- **Search Options Type System**: Type-safe search configuration
+  - `SearchOptions` type with comprehensive search parameters
+  - Support for searchMode, matchType, typoTolerance, smartSearch, smartOptions
+  - Language detection and filtering support
+  - Exclude IDs functionality for search result filtering
+- **Comprehensive Unit Test Suite**: Full test coverage for search functionality
+  - `ElasticsearchIndexService.test.ts` with 100+ test cases covering all search scenarios
+  - `QuestionManager.search.test.ts` for question search integration tests
+  - `AnswerManager.search.test.ts` for answer search integration tests
+  - Mock implementations: `FakeElasticsearchClient`, `FakeSynonymService`, `FakeSemanticSearchService`
+  - Isolated Jest configurations for unit tests without MongoDB dependencies
+- **Enhanced Search Client Interface**: Extended search capabilities
+  - `ISearchClient` interface with advanced search options
+  - Support for semantic and linguistic search integration
+  - Language-specific search support
+  - Exclude IDs functionality in search queries
+
+#### Changed
+
+- **ElasticsearchIndexService**: Complete rewrite with advanced search capabilities
+  - Refactored query building logic with support for multiple search modes
+  - Enhanced filter system with date and numeric range support
+  - Improved synonym and semantic search integration
+  - Better error handling and logging
+  - Optimized query construction for performance
+- **QuestionManager**: Enhanced search functionality
+  - Integrated advanced Elasticsearch search with all search options
+  - Support for semantic and linguistic search
+  - Improved fallback to MongoDB when Elasticsearch fails
+  - Better result transformation and pagination
+- **AnswerManager**: Enhanced search functionality
+  - Integrated advanced Elasticsearch search with all search options
+  - Support for semantic and linguistic search
+  - Question information enrichment in search results
+  - Improved fallback to MongoDB when Elasticsearch fails
+- **ElasticsearchSyncService**: Improved document synchronization
+  - Better ELSER pipeline integration
+  - Enhanced error handling for document operations
+  - Improved model deployment status checking
+- **Reindex Script**: Enhanced reindexing capabilities
+  - Support for advanced search field configuration
+  - Better error handling and progress reporting
+  - Improved index management
+
+#### Fixed
+
+- Elasticsearch query construction for exclude IDs functionality
+- Document update operations in mock Elasticsearch client
+- Question repository `findByIds` method for answer enrichment
+- Test isolation issues with MongoDB connection attempts
+- Log file accessibility by moving logs to project directory
+
+#### Technical Improvements
+
+- Removed unnecessary debug and info logs from Elasticsearch services
+- Improved code organization with better separation of concerns
+- Enhanced type safety with comprehensive TypeScript interfaces
+- Better error handling and logging throughout search infrastructure
+- Optimized query performance with intelligent query building
+- Improved test coverage and test isolation
+
 ## [1.5.0] - 2025-12-27
 
 ### Added

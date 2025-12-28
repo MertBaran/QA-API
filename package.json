@@ -1,6 +1,6 @@
 {
   "name": "qa-api",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Questions and Answers Rest API",
   "main": "APP.js",
   "scripts": {
@@ -58,6 +58,7 @@
     "reindex:answers": "ts-node scripts/reindex-elasticsearch.ts answers",
     "reindex:all": "ts-node scripts/reindex-elasticsearch.ts all",
     "reindex": "ts-node scripts/reindex-elasticsearch.ts all",
+    "reindex:recreate": "ts-node scripts/reindex-elasticsearch.ts all --recreate",
     "migrate:field-names": "ts-node scripts/migrate-field-names.ts",
     "backfill:ancestors": "ts-node scripts/backfill-ancestors.ts",
     "r2:test": "ts-node scripts/storage/r2-smoke-test.ts",

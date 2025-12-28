@@ -30,6 +30,7 @@ const auditMiddleware = new AuditMiddleware(
 );
 
 router.get('/', questionController.getAllQuestions);
+router.get('/search', questionController.searchQuestions);
 router.get(
   '/paginated',
   validator.validateQuery(PaginationQuerySchema) as any,
