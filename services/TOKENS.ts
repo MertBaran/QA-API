@@ -84,6 +84,9 @@ export const TOKENS = {
   IContentRelationService: 'IContentRelationService',
   IObjectStorageProvider: 'IObjectStorageProvider',
   IContentAssetService: 'IContentAssetService',
+  ISynonymService: 'ISynonymService',
+  ISemanticSearchService: 'ISemanticSearchService',
+  ElasticsearchIngestPipeline: 'ElasticsearchIngestPipeline',
 } as const;
 
 export type Token = (typeof TOKENS)[keyof typeof TOKENS];
