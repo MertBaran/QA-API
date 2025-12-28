@@ -2,6 +2,10 @@ import { Request, Response, NextFunction } from 'express';
 import asyncErrorWrapper from 'express-async-handler';
 import { injectable, inject } from 'tsyringe';
 import { IAnswerService } from '../services/contracts/IAnswerService';
+import {
+  SearchOptions,
+  SearchOptionsQueryParams,
+} from '../types/SearchOptions';
 import { AnswerConstants } from './constants/ControllerMessages';
 
 import type { QuestionIdParamDTO } from '../types/dto/common/question-id-param.dto';
@@ -175,6 +179,60 @@ export class AnswerController {
       const { userId } = req.params;
       const answers = await this.answerService.getAnswersByUser(userId);
       res.status(200).json({ success: true, data: answers });
+    }
+  );
+
+  searchAnswers = asyncErrorWrapper(
+    async (
+      req: Request<
+        {},
+        {},
+        {},
+        SearchOptionsQueryParams & {
+          q?: string;
+          page?: string;
+          limit?: string;
+        }
+      >,
+      res: Response<
+        SuccessResponseDTO<{ data: IAnswerModel[]; pagination: any }>
+      >,
+      _next: NextFunction
+    ): Promise<void> => {
+      const searchTerm = req.query.q || '';
+      const page = parseInt(req.query.page || '1', 10);
+      const limit = parseInt(req.query.limit || '10', 10);
+
+      // searchOptions'ı query parametrelerinden oluştur
+      // Language önce query parametresinden, yoksa req.locale'den, yoksa 'tr' varsayılan
+      const languageParam = Array.isArray(req.query.language)
+        ? req.query.language[0]
+        : req.query.language;
+      const language = (languageParam as string) || req.locale || 'tr';
+      const searchOptions = SearchOptions.fromQuery({
+        searchMode: req.query.searchMode,
+        matchType: req.query.matchType,
+        typoTolerance: req.query.typoTolerance,
+        smartSearch: req.query.smartSearch,
+        smartLinguistic: req.query.smartLinguistic,
+        smartSemantic: req.query.smartSemantic,
+        language,
+      });
+
+      const smartOptions = searchOptions.toSmartOptions();
+
+      const result = await this.answerService.searchAnswers(
+        searchTerm,
+        page,
+        limit,
+        searchOptions.searchMode,
+        searchOptions.matchType,
+        searchOptions.typoTolerance || 'medium',
+        searchOptions.smartSearch || false,
+        smartOptions,
+        searchOptions.language
+      );
+      res.status(200).json({ success: true, data: result });
     }
   );
 }
