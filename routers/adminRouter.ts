@@ -21,4 +21,21 @@ router.patch(
 );
 router.get('/users/stats', getAccessToRoute, adminController.getUserStats);
 
+// ELSER model yönetimi
+router.get(
+  '/elser/status',
+  getAccessToRoute,
+  adminController.checkElserModelStatus
+);
+router.post(
+  '/elser/download',
+  getAccessToRoute,
+  adminController.downloadElserModel
+);
+router.post(
+  '/elser/deploy',
+  getAccessToRoute,
+  adminController.deployElserModel
+);
+
 export default router;
