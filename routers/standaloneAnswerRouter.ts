@@ -14,7 +14,17 @@ const answerController = new AnswerController(
 );
 const validator = container.resolve<IValidationProvider>('IValidationProvider');
 
-// Get single answer by ID
+// Search answers - MUST be before /:id route to avoid conflict
+router.get('/search', answerController.searchAnswers);
+
+// Get answers by user ID
+router.get(
+  '/user/:userId',
+  validator.validateParams!(UserIdParamSchema),
+  answerController.getAnswersByUser
+);
+
+// Get single answer by ID - MUST be last to avoid conflict with /search
 router.get(
   '/:id',
   validator.validateParams!(IdParamSchema),
@@ -23,13 +33,6 @@ router.get(
     (req.params as any).answer_id = req.params.id;
     await answerController.getSingleAnswer(req as any, res, next);
   }
-);
-
-// Get answers by user ID
-router.get(
-  '/user/:userId',
-  validator.validateParams!(UserIdParamSchema),
-  answerController.getAnswersByUser
 );
 
 export default router;
