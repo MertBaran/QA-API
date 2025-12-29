@@ -15,7 +15,21 @@ export interface IAnswerService {
   undoLikeAnswer(answerId: string, userId: EntityId): Promise<IAnswerModel>;
   dislikeAnswer(answerId: string, userId: EntityId): Promise<IAnswerModel>;
   undoDislikeAnswer(answerId: string, userId: EntityId): Promise<IAnswerModel>;
-  getAnswersByUser(userId: EntityId): Promise<IAnswerModel[]>;
+  getAnswersByUser(
+    userId: EntityId,
+    page?: number,
+    limit?: number
+  ): Promise<{
+    data: IAnswerModel[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  }>;
   getAnswersWithPopulatedData(questionId: EntityId): Promise<IAnswerModel[]>;
   searchAnswers(
     searchTerm: string,
