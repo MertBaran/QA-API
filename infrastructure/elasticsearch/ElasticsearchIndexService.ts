@@ -241,7 +241,6 @@ export class ElasticsearchIndexService
       'question',
       'category',
       'tags',
-      'views',
       'likes',
       'createdAt',
       'questionId',
@@ -262,8 +261,6 @@ export class ElasticsearchIndexService
           properties[field] = { type: 'keyword' };
         } else if (field === 'createdAt') {
           properties[field] = { type: 'date' };
-        } else if (field === 'views') {
-          properties[field] = { type: 'integer' };
         } else if (field === 'likes') {
           // likes is string[] (user IDs), not integer
           properties[field] = { type: 'keyword' };
@@ -882,7 +879,6 @@ export class ElasticsearchIndexService
         sort.push({ createdAt: { order: options.sortOrder || 'desc' } });
       } else if (options?.sortBy === 'popularity') {
         sort.push({ likes: { order: options.sortOrder || 'desc' } });
-        sort.push({ views: { order: options.sortOrder || 'desc' } });
       } else {
         sort.push('_score');
         sort.push({ createdAt: { order: 'desc' } });

@@ -16,7 +16,6 @@ export interface IQuestionModel extends IContent {
   slug: string;
   category?: string;
   tags?: string[];
-  views?: number;
   answers: EntityId[];
   thumbnail?: QuestionThumbnail | null;
 

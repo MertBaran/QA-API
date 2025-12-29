@@ -136,8 +136,11 @@ AnswerSchema.pre(
 );
 
 // Indexes for performance
+AnswerSchema.index({ user: 1 }); // User'a göre arama için kritik
+AnswerSchema.index({ question: 1 }); // Question'a göre arama için
 AnswerSchema.index({ 'parent.id': 1 });
 AnswerSchema.index({ 'ancestors.id': 1 });
+AnswerSchema.index({ createdAt: -1 }); // Sıralama için
 AnswerSchema.index({ 'ancestors.depth': 1 });
 
 const AnswerMongo = mongoose.model<IAnswerMongo>('Answer', AnswerSchema);
