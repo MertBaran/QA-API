@@ -194,6 +194,8 @@ QuestionSchema.methods['makeSlug'] = function (): string {
 };
 
 // Indexes for performance
+QuestionSchema.index({ user: 1 }); // User'a göre arama için kritik
+QuestionSchema.index({ createdAt: -1 }); // Sıralama için
 QuestionSchema.index({ 'parent.id': 1 });
 QuestionSchema.index({ 'ancestors.id': 1 });
 QuestionSchema.index({ 'ancestors.depth': 1 });
