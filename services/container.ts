@@ -10,7 +10,7 @@ import { QuestionManager } from './managers/QuestionManager';
 import { AnswerManager } from './managers/AnswerManager';
 import { AdminManager } from './managers/AdminManager';
 
-// MultiChannelNotificationManager kullanılmıyor, kaldırıldı
+import { MultiChannelNotificationManager } from './managers/MultiChannelNotificationManager';
 import { NotificationChannelRegistry } from './managers/NotificationChannelRegistry';
 import { EmailNotificationHandler } from './managers/EmailNotificationHandler';
 import { EmailChannel } from './managers/EmailChannel';
@@ -240,9 +240,11 @@ container.registerSingleton(
 );
 
 // Register notification managers based on technology
+// Default to MultiChannelNotificationManager (direct mode)
+// BootstrapService will override this based on NOTIFICATION_TECHNOLOGY
 container.registerSingleton(
   TOKENS.INotificationService,
-  SmartNotificationManager
+  MultiChannelNotificationManager
 );
 
 // Register notification channels

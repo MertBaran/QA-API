@@ -73,6 +73,13 @@ router.get(
   answerController.getAllAnswersByQuestion
 );
 
+router.get(
+  '/:answer_id/page',
+  validator.validateParams(AnswerIdParamSchema),
+  checkQuestionAndAnswerExist,
+  answerController.getAnswerPageNumber
+);
+
 router.put(
   '/:answer_id/edit',
   [

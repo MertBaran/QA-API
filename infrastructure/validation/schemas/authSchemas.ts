@@ -28,8 +28,31 @@ export const editProfileSchema = z.object({
   firstName: z.string().min(2).max(50).optional(),
   lastName: z.string().min(2).max(50).optional(),
   email: z.string().email({ message: 'Invalid email address' }).optional(),
-  website: z.string().url().optional(),
-  place: z.string().min(1).max(100).optional(),
-  title: z.string().min(1).max(100).optional(),
-  about: z.string().min(1).max(500).optional(),
+  website: z.union([z.string().url(), z.literal('')]).optional(),
+  place: z.union([z.string().max(100), z.literal('')]).optional(),
+  title: z.union([z.string().max(100), z.literal('')]).optional(),
+  about: z.union([z.string().max(500), z.literal('')]).optional(),
+});
+
+// Password validation regex: min 8 chars, uppercase, lowercase, number, special char
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]).{8,}$/;
+
+export const requestPasswordChangeSchema = z.object({
+  oldPassword: z.string().optional(), // Optional for Google users
+  newPassword: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(passwordRegex, 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'),
+});
+
+export const verifyPasswordChangeCodeSchema = z.object({
+  code: z.string()
+    .length(6, 'Code must be 6 digits')
+    .regex(/^\d{6}$/, 'Code must contain only digits'),
+});
+
+export const confirmPasswordChangeSchema = z.object({
+  newPassword: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(passwordRegex, 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'),
+  verificationToken: z.string().min(1, 'Verification token is required'),
 });

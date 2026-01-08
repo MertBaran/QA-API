@@ -155,6 +155,13 @@ export class QueueBasedNotificationManager implements INotificationService {
       },
     };
 
+    this.logger.info('QueueBasedNotificationManager: notifyUser preparing message', {
+      userId,
+      activeChannels,
+      userEmail: user.email,
+      subject: payload.subject,
+    });
+
     const message: NotificationQueueMessage = {
       id: this.generateMessageId(),
       type: 'notification',
@@ -167,7 +174,19 @@ export class QueueBasedNotificationManager implements INotificationService {
       priority: this.getPriority(multiChannelPayload),
     };
 
+    this.logger.info('Publishing notification to queue', {
+      queue: this.NOTIFICATION_QUEUE,
+      messageId: message.id,
+      channels: multiChannelPayload.channels,
+      userId,
+    });
+
     await this.queueProvider.publishToQueue(this.NOTIFICATION_QUEUE, message);
+
+    this.logger.info('Notification published to queue successfully', {
+      queue: this.NOTIFICATION_QUEUE,
+      messageId: message.id,
+    });
   }
 
   async getUserNotificationPreferences(
@@ -208,39 +227,90 @@ export class QueueBasedNotificationManager implements INotificationService {
 
   // Queue consumer'ı başlat
   async startConsumer(): Promise<void> {
-    await this.queueProvider.consume(
-      this.NOTIFICATION_QUEUE,
-      async (message: QueueMessage) => {
-        await this.processNotificationMessage(
-          message as NotificationQueueMessage
-        );
-      },
-      { prefetch: 10 }
-    );
+    this.logger.info('Starting notification consumer', {
+      queue: this.NOTIFICATION_QUEUE,
+    });
 
-    // Consumer started silently
+    try {
+      await this.queueProvider.consume(
+        this.NOTIFICATION_QUEUE,
+        async (message: QueueMessage) => {
+          this.logger.info('Received notification message from queue', {
+            queue: this.NOTIFICATION_QUEUE,
+            messageId: message.id,
+            messageType: message.type,
+          });
+
+          try {
+            await this.processNotificationMessage(
+              message as NotificationQueueMessage
+            );
+            this.logger.info('Notification message processed successfully', {
+              messageId: message.id,
+            });
+          } catch (error) {
+            this.logger.error('Failed to process notification message', {
+              messageId: message.id,
+              error: error instanceof Error ? error.message : String(error),
+              stack: error instanceof Error ? error.stack : undefined,
+            });
+            throw error; // Requeue message
+          }
+        },
+        { prefetch: 10 }
+      );
+
+      this.logger.info('Notification consumer started successfully', {
+        queue: this.NOTIFICATION_QUEUE,
+      });
+    } catch (error) {
+      this.logger.error('Failed to start notification consumer', {
+        queue: this.NOTIFICATION_QUEUE,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      throw error;
+    }
   }
 
   // Queue'dan gelen mesajları işle
   private async processNotificationMessage(
     message: NotificationQueueMessage
   ): Promise<void> {
+    this.logger.info('Processing notification message', {
+      messageId: message.id,
+      hasChannels: 'channels' in message.data.payload,
+    });
+
     try {
       if ('channels' in message.data.payload) {
         // Multi-channel notification
+        this.logger.info('Processing as multi-channel notification', {
+          messageId: message.id,
+          channels: (message.data.payload as MultiChannelNotificationPayload).channels,
+        });
         await this.processMultiChannelNotification(
           message.data.payload as MultiChannelNotificationPayload
         );
       } else {
         // Single channel notification
+        this.logger.info('Processing as single channel notification', {
+          messageId: message.id,
+          channel: (message.data.payload as NotificationPayload).channel,
+        });
         await this.processSingleChannelNotification(
           message.data.payload as NotificationPayload
         );
       }
+
+      this.logger.info('Notification message processed successfully', {
+        messageId: message.id,
+      });
     } catch (error) {
       this.logger.error('Failed to process notification message', {
         messageId: message.id,
         error: (error as Error).message,
+        stack: error instanceof Error ? error.stack : undefined,
       });
       throw error; // Requeue message
     }
@@ -284,10 +354,21 @@ export class QueueBasedNotificationManager implements INotificationService {
   private async processMultiChannelNotification(
     payload: MultiChannelNotificationPayload
   ): Promise<void> {
+    this.logger.info('Processing multi-channel notification', {
+      channels: payload.channels,
+      to: payload.to,
+      subject: payload.subject,
+    });
+
     try {
       // Her channel için notification gönder
       for (const channel of payload.channels) {
         try {
+          this.logger.info(`Processing channel: ${channel}`, {
+            channel,
+            to: payload.to,
+          });
+
           const channelPayload: NotificationPayload = {
             channel,
             to: payload.to,
@@ -299,7 +380,9 @@ export class QueueBasedNotificationManager implements INotificationService {
 
           switch (channel) {
             case 'email':
+              this.logger.info('Calling sendEmailNotification for email channel');
               await this.sendEmailNotification(channelPayload);
+              this.logger.info('sendEmailNotification completed for email channel');
               break;
             case 'sms':
               await this.sendSMSNotification(channelPayload);
@@ -315,18 +398,26 @@ export class QueueBasedNotificationManager implements INotificationService {
                 channel,
               });
           }
+
+          this.logger.info(`Successfully processed channel: ${channel}`);
         } catch (error) {
           this.logger.error('Failed to send notification to channel', {
             channel,
             error: (error as Error).message,
+            stack: error instanceof Error ? error.stack : undefined,
           });
           // Bir channel başarısız olsa bile diğerlerini denemeye devam et
         }
       }
+
+      this.logger.info('Multi-channel notification processing completed', {
+        channels: payload.channels,
+      });
     } catch (error) {
       this.logger.error('Failed to send multi-channel notification', {
         channels: payload.channels,
         error: (error as Error).message,
+        stack: error instanceof Error ? error.stack : undefined,
       });
       throw error;
     }
@@ -335,9 +426,39 @@ export class QueueBasedNotificationManager implements INotificationService {
   private async sendEmailNotification(
     payload: NotificationPayload
   ): Promise<void> {
-    const { container } = await import('tsyringe');
-    const emailChannel = container.resolve('IEmailChannel') as any;
-    await emailChannel.send(payload);
+    this.logger.info('QueueBasedNotificationManager: sendEmailNotification called', {
+      to: payload.to,
+      subject: payload.subject,
+      hasHtml: !!payload.html,
+    });
+
+    try {
+      const { container } = await import('tsyringe');
+      const { TOKENS } = await import('../TOKENS');
+      
+      this.logger.info('Resolving EmailChannel from container');
+      const emailChannel = container.resolve(TOKENS.IEmailChannel) as any;
+      
+      if (!emailChannel) {
+        throw new Error('EmailChannel could not be resolved from container');
+      }
+
+      this.logger.info('Calling EmailChannel.send()', {
+        channelType: emailChannel.type,
+      });
+
+      await emailChannel.send(payload);
+
+      this.logger.info('EmailChannel.send() completed successfully');
+    } catch (error) {
+      this.logger.error('Failed to send email notification', {
+        to: payload.to,
+        subject: payload.subject,
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      throw error;
+    }
   }
 
   private async sendSMSNotification(

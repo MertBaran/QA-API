@@ -23,6 +23,11 @@ export interface IUserModel {
   resetPasswordToken?: string;
   resetPasswordExpire?: Date;
   lastPasswordChange?: Date;
+  passwordChangeCode?: string;
+  passwordChangeCodeExpire?: Date;
+  passwordChangeVerificationToken?: string;
+  passwordChangeVerificationTokenExpire?: Date;
+  isGoogleUser?: boolean;
   createdAt?: Date;
   // Notification için yeni alanlar
   phoneNumber?: string;

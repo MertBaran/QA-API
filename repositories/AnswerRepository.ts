@@ -36,6 +36,74 @@ export class AnswerRepository
     return all.filter(a => a.question === questionId);
   }
 
+  async findByQuestionPaginated(
+    questionId: EntityId,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<{
+    data: IAnswerModel[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  }> {
+    const all = await this.dataSource.findAll();
+    const filtered = all.filter(a => a.question === questionId);
+    
+    // Sort by createdAt descending (newest first)
+    filtered.sort((a, b) => {
+      const aTime = new Date(a.createdAt).getTime();
+      const bTime = new Date(b.createdAt).getTime();
+      return bTime - aTime;
+    });
+    
+    const total = filtered.length;
+    const totalPages = Math.ceil(total / limit);
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const data = filtered.slice(startIndex, endIndex);
+    
+    return {
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1,
+      },
+    };
+  }
+
+  async findAnswerPageNumber(
+    questionId: EntityId,
+    answerId: EntityId,
+    limit: number = 10
+  ): Promise<number | null> {
+    const all = await this.dataSource.findAll();
+    const filtered = all.filter(a => a.question === questionId);
+    
+    // Sort by createdAt descending (newest first)
+    filtered.sort((a, b) => {
+      const aTime = new Date(a.createdAt).getTime();
+      const bTime = new Date(b.createdAt).getTime();
+      return bTime - aTime;
+    });
+    
+    const answerIndex = filtered.findIndex(a => a._id === answerId);
+    if (answerIndex === -1) {
+      return null;
+    }
+    
+    // Calculate which page this answer is on (1-indexed)
+    return Math.floor(answerIndex / limit) + 1;
+  }
+
   async findByUser(userId: EntityId): Promise<IAnswerModel[]> {
     return await this.dataSource.findByField('user', userId);
   }

@@ -61,8 +61,27 @@ export class AuthController {
       _next: NextFunction
     ): Promise<void> => {
       const { token } = req.body;
-      console.log(token);
       const user = await this.authService.googleLogin(token);
+      const locale = normalizeLocale(
+        req.headers['accept-language'] as string | undefined
+      );
+      const jwt = this.authService.createJwtForUser({
+        id: user._id,
+        name: user.name,
+        lang: locale,
+      });
+      sendJwtToClient(jwt, user, res);
+    }
+  );
+
+  googleRegister = asyncErrorWrapper(
+    async (
+      req: Request,
+      res: Response<AuthTokenResponseDTO>,
+      _next: NextFunction
+    ): Promise<void> => {
+      const { token } = req.body;
+      const user = await this.authService.googleRegister(token);
       const locale = normalizeLocale(
         req.headers['accept-language'] as string | undefined
       );
@@ -314,6 +333,7 @@ export class AuthController {
         language: user.language,
         notificationPreferences: user.notificationPreferences,
         background_asset_key: user.background_asset_key,
+        isGoogleUser: user.isGoogleUser,
       };
 
       res.json({
@@ -513,6 +533,90 @@ export class AuthController {
         AuthConstants.PasswordResetSuccess,
         req.locale
       );
+      res.status(200).json({
+        success: true,
+        message,
+      });
+    }
+  );
+
+  requestPasswordChange = asyncErrorWrapper(
+    async (
+      req: AuthenticatedRequest<{ oldPassword?: string; newPassword: string }>,
+      res: Response<SuccessResponseDTO>,
+      _next: NextFunction
+    ): Promise<void> => {
+      if (!req.user) {
+        throw ApplicationError.authenticationError('User not authenticated');
+      }
+
+      const { oldPassword, newPassword } = req.body;
+      await this.authService.requestPasswordChange(
+        req.user.id,
+        oldPassword,
+        newPassword
+      );
+
+      const locale = normalizeLocale(
+        req.headers['accept-language'] as string | undefined
+      );
+      const message = await i18n(AuthConstants.PasswordChangeCodeSent, locale);
+
+      res.status(200).json({
+        success: true,
+        message,
+      });
+    }
+  );
+
+  verifyPasswordChangeCode = asyncErrorWrapper(
+    async (
+      req: AuthenticatedRequest<{ code: string }>,
+      res: Response<SuccessResponseDTO<{ verificationToken: string }>>,
+      _next: NextFunction
+    ): Promise<void> => {
+      if (!req.user) {
+        throw ApplicationError.authenticationError('User not authenticated');
+      }
+
+      const { code } = req.body;
+      const verificationToken = await this.authService.verifyPasswordChangeCode(
+        req.user.id,
+        code
+      );
+
+      res.status(200).json({
+        success: true,
+        data: { verificationToken },
+      });
+    }
+  );
+
+  confirmPasswordChange = asyncErrorWrapper(
+    async (
+      req: AuthenticatedRequest<{
+        newPassword: string;
+        verificationToken: string;
+      }>,
+      res: Response<SuccessResponseDTO>,
+      _next: NextFunction
+    ): Promise<void> => {
+      if (!req.user) {
+        throw ApplicationError.authenticationError('User not authenticated');
+      }
+
+      const { newPassword, verificationToken } = req.body;
+      await this.authService.confirmPasswordChange(
+        req.user.id,
+        verificationToken,
+        newPassword
+      );
+
+      const locale = normalizeLocale(
+        req.headers['accept-language'] as string | undefined
+      );
+      const message = await i18n(AuthConstants.PasswordChangeSuccess, locale);
+
       res.status(200).json({
         success: true,
         message,

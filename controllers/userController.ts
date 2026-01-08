@@ -70,6 +70,7 @@ export class UserController {
         followingCount,
         isFollowing,
         background_asset_key: user.background_asset_key,
+        isGoogleUser: user.isGoogleUser,
       };
 
       res.status(200).json({ success: true, data: safeUser });
@@ -152,6 +153,7 @@ export class UserController {
         followingCount,
         isFollowing,
         background_asset_key: user.background_asset_key,
+        isGoogleUser: user.isGoogleUser,
       };
 
       res.status(200).json({ success: true, data: publicProfile });

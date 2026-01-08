@@ -194,10 +194,45 @@ export class AnswerManager implements IAnswerService {
     return ancestors;
   }
 
-  async getAnswersByQuestion(questionId: EntityId): Promise<IAnswerModel[]> {
-    const answers = await this.answerRepository.findByQuestion(questionId);
-    const enrichedAnswers = await this.enrichWithQuestionInfo(answers);
-    return await this.enrichWithParentInfo(enrichedAnswers);
+  async getAnswersByQuestion(
+    questionId: EntityId,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<{
+    data: IAnswerModel[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  }> {
+    const result = await this.answerRepository.findByQuestionPaginated(
+      questionId,
+      page,
+      limit
+    );
+    const enrichedAnswers = await this.enrichWithQuestionInfo(result.data);
+    const answersWithParents = await this.enrichWithParentInfo(enrichedAnswers);
+    
+    return {
+      data: answersWithParents,
+      pagination: result.pagination,
+    };
+  }
+
+  async getAnswerPageNumber(
+    questionId: EntityId,
+    answerId: EntityId,
+    limit: number = 10
+  ): Promise<number | null> {
+    return await this.answerRepository.findAnswerPageNumber(
+      questionId,
+      answerId,
+      limit
+    );
     // try {
     //   const result = await this.searchClient.search<AnswerSearchDoc>(
     //     this.answerProjector.indexName,
