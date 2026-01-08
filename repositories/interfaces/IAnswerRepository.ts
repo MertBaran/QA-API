@@ -6,6 +6,26 @@ export interface IAnswerRepository {
   findByIdWithPopulate(id: EntityId): Promise<IAnswerModel | null>;
   findByIds(ids: EntityId[]): Promise<IAnswerModel[]>;
   findByQuestion(questionId: EntityId): Promise<IAnswerModel[]>;
+  findByQuestionPaginated(
+    questionId: EntityId,
+    page?: number,
+    limit?: number
+  ): Promise<{
+    data: IAnswerModel[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  }>;
+  findAnswerPageNumber(
+    questionId: EntityId,
+    answerId: EntityId,
+    limit?: number
+  ): Promise<number | null>;
   findByUser(userId: EntityId): Promise<IAnswerModel[]>;
   create(data: Partial<IAnswerModel>): Promise<IAnswerModel>;
   updateById(
