@@ -107,23 +107,9 @@ export class ElasticsearchIndexService
       throw new Error('Elasticsearch is not enabled');
     }
 
-    // ELSER model'ini deploy et (eğer semantic search aktifse)
-    if (
-      this.semanticSearchService &&
-      'deployModel' in this.semanticSearchService
-    ) {
-      try {
-        const elserService = this.semanticSearchService as any;
-        await elserService.deployModel();
-      } catch (error) {
-        this.logger.warn(
-          'ELSER model deployment failed, continuing without semantic search',
-          {
-            error,
-          }
-        );
-      }
-    }
+    // ELSER model deployment is disabled - requires Elasticsearch ML license
+    // If semantic search is needed, deploy ELSER model manually via admin endpoints
+    // or ensure Elasticsearch has ML license enabled
 
     // Tüm register edilmiş index'leri oluştur
     for (const [indexName, searchFields] of this.registeredIndexes) {
