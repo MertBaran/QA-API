@@ -217,27 +217,61 @@ export class RabbitMQProvider implements IQueueProvider {
       await this.channel.prefetch(options.prefetch);
     }
 
+    this.logger.info('Setting up consumer for queue', {
+      queueName,
+      prefetch: options.prefetch,
+    });
+
     const result = await this.channel.consume(
       queueName,
       async (msg: any) => {
-        if (!msg) return;
+        if (!msg) {
+          this.logger.warn('Received null message from queue', { queueName });
+          return;
+        }
+
+        this.logger.info('Message received from queue', {
+          queueName,
+          messageId: msg.properties?.messageId,
+          deliveryTag: msg.fields?.deliveryTag,
+        });
 
         try {
           const message: QueueMessage = JSON.parse(msg.content.toString());
+          this.logger.info('Parsed message from queue', {
+            queueName,
+            messageId: message.id,
+            messageType: message.type,
+          });
+
           await handler(message);
+
+          this.logger.info('Message handler completed successfully', {
+            queueName,
+            messageId: message.id,
+          });
 
           if (!consumeOptions.noAck) {
             this.channel!.ack(msg);
+            this.logger.debug('Message acknowledged', {
+              queueName,
+              messageId: message.id,
+            });
           }
         } catch (error) {
           this.logger.error('Error processing message', {
             error: (error as Error).message,
             queueName,
-            messageId: msg.properties.messageId,
+            messageId: msg.properties?.messageId,
+            stack: error instanceof Error ? error.stack : undefined,
           });
 
           if (!consumeOptions.noAck) {
             this.channel!.nack(msg, false, true); // Requeue on error
+            this.logger.warn('Message nacked and requeued', {
+              queueName,
+              messageId: msg.properties?.messageId,
+            });
           }
         }
       },
@@ -245,7 +279,11 @@ export class RabbitMQProvider implements IQueueProvider {
     );
 
     this.consumers.set(result.consumerTag, result);
-    // Consumer started silently
+    
+    this.logger.info('Consumer registered successfully', {
+      queueName,
+      consumerTag: result.consumerTag,
+    });
 
     return result.consumerTag;
   }

@@ -30,7 +30,7 @@ export class ContentAssetService implements IContentAssetService {
     @inject(TOKENS.ILoggerProvider)
     private readonly logger: ILoggerProvider
   ) {
-    this.pathBuilder = new ContentAssetPathBuilder({ useDatePrefix: true });
+    this.pathBuilder = new ContentAssetPathBuilder();
   }
 
   public async uploadAsset(

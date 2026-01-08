@@ -105,25 +105,68 @@ export class AuthManager implements IAuthService {
         AuthServiceMessages.GooglePayloadMissing.en
       );
     }
-    const { email, name } = payload;
+    const { email } = payload;
     if (!email) {
       throw ApplicationError.notFoundError(
         AuthServiceMessages.GoogleEmailMissing.en
       );
     }
-    let user = await this.userRepository.findByEmail(email);
-    if (!user) {
-      user = await this.userRepository.create({
-        name,
-        email,
-        password: Math.random().toString(36),
-        language: 'en',
-      });
+    
+    // Kullanıcıyı bul - sadece mevcut kullanıcılar için
+    const user = await this.userRepository.findByEmail(email);
+    
+    // Kullanıcı bulundu, giriş yapabilir
+    return user;
+  }
 
-      // Varsayılan user role'ünü al ve ata
-      const defaultRole = await this.roleService.getDefaultRole();
-      await this.userRoleService.assignRoleToUser(user._id, defaultRole._id);
+  async googleRegister(token: string): Promise<IUserModel> {
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env['GOOGLE_CLIENT_ID'],
+    });
+    const payload = ticket.getPayload();
+    if (!payload) {
+      throw ApplicationError.notFoundError(
+        AuthServiceMessages.GooglePayloadMissing.en
+      );
     }
+    const { email, name, picture } = payload;
+    if (!email) {
+      throw ApplicationError.notFoundError(
+        AuthServiceMessages.GoogleEmailMissing.en
+      );
+    }
+    
+    // Kullanıcı zaten var mı kontrol et
+    try {
+      const existingUser = await this.userRepository.findByEmail(email);
+      if (existingUser) {
+        throw ApplicationError.businessError(
+          AuthServiceMessages.GoogleUserAlreadyExists.en,
+          400
+        );
+      }
+    } catch (error: any) {
+      // 404 hatası bekleniyor (kullanıcı yok), diğer hatalar fırlatılmalı
+      if (error.statusCode !== 404) {
+        throw error;
+      }
+    }
+    
+    // Yeni kullanıcı oluştur
+    const user = await this.userRepository.create({
+      name,
+      email,
+      password: Math.random().toString(36),
+      language: 'en',
+      profile_image: picture || undefined, // Google profil resmi varsa kaydet
+      isGoogleUser: true, // Google ile kayıt olan kullanıcıyı işaretle
+    });
+
+    // Varsayılan user role'ünü al ve ata
+    const defaultRole = await this.roleService.getDefaultRole();
+    await this.userRoleService.assignRoleToUser(user._id, defaultRole._id);
+    
     return user;
   }
 
@@ -316,5 +359,188 @@ export class AuthManager implements IAuthService {
       Date.now() + parseInt(RESET_PASSWORD_EXPIRE || '3600') * 1000
     );
     return { token: resetPasswordToken, expire: resetPasswordExpire };
+  }
+
+  // Generate 6-digit password change code
+  private static generatePasswordChangeCode(): string {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  }
+
+  // Generate verification token for password change
+  private static generateVerificationToken(): string {
+    return crypto.randomBytes(32).toString('hex');
+  }
+
+  async requestPasswordChange(
+    userId: EntityId,
+    oldPassword: string | undefined,
+    newPassword: string
+  ): Promise<void> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw ApplicationError.notFoundError(
+        AuthServiceMessages.UserNotFound.en
+      );
+    }
+
+    // Check if user is Google user
+    const isGoogleUser = user.isGoogleUser === true;
+
+    // If not Google user, validate old password
+    if (!isGoogleUser) {
+      if (!oldPassword) {
+        throw ApplicationError.validationError(
+          'Old password is required for non-Google users'
+        );
+      }
+
+      const userWithPassword = await this.userRepository.findByEmailWithPassword(
+        user.email
+      );
+      if (!userWithPassword) {
+        throw ApplicationError.notFoundError(
+          AuthServiceMessages.UserNotFound.en
+        );
+      }
+
+      const isPasswordCorrect = await comparePassword(
+        oldPassword,
+        userWithPassword.password
+      );
+      if (!isPasswordCorrect) {
+        throw ApplicationError.validationError(
+          'Current password is incorrect'
+        );
+      }
+    }
+
+    // Validate new password strength (min 8, uppercase, lowercase, number, special char)
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]).{8,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      throw ApplicationError.validationError(
+        'Password must be at least 8 characters and contain at least one uppercase letter, one lowercase letter, one number, and one special character'
+      );
+    }
+
+    // Generate 6-digit code
+    const code = AuthManager.generatePasswordChangeCode();
+    const codeExpire = new Date(Date.now() + 3 * 60 * 1000); // 3 minutes
+
+    // Store code in database
+    await this.userRepository.updateById(userId, {
+      passwordChangeCode: code,
+      passwordChangeCodeExpire: codeExpire,
+    });
+
+    // Get user's locale
+    const locale = getLanguageOrDefault(user.language || 'en');
+
+    // Send email with code
+    try {
+      await this.notificationService.notifyUserWithTemplate(
+        userId.toString(),
+        'password-change-code',
+        locale,
+        {
+          userName: user.name,
+          code: code,
+          expiryMinutes: '3',
+        }
+      );
+    } catch (error) {
+      // Clear code on email send failure
+      await this.userRepository.updateById(userId, {
+        passwordChangeCode: undefined,
+        passwordChangeCodeExpire: undefined,
+      });
+      throw ApplicationError.notFoundError(
+        AuthServiceMessages.EmailSendError.en
+      );
+    }
+  }
+
+  async verifyPasswordChangeCode(
+    userId: EntityId,
+    code: string
+  ): Promise<string> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw ApplicationError.notFoundError(
+        AuthServiceMessages.UserNotFound.en
+      );
+    }
+
+    // Verify code
+    if (
+      !user.passwordChangeCode ||
+      user.passwordChangeCode !== code ||
+      !user.passwordChangeCodeExpire ||
+      user.passwordChangeCodeExpire < new Date()
+    ) {
+      throw ApplicationError.validationError(
+        'Invalid or expired verification code'
+      );
+    }
+
+    // Generate verification token
+    const verificationToken = AuthManager.generateVerificationToken();
+    const tokenExpire = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+
+    // Store verification token
+    await this.userRepository.updateById(userId, {
+      passwordChangeVerificationToken: verificationToken,
+      passwordChangeVerificationTokenExpire: tokenExpire,
+    });
+
+    return verificationToken;
+  }
+
+  async confirmPasswordChange(
+    userId: EntityId,
+    verificationToken: string,
+    newPassword: string
+  ): Promise<void> {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      throw ApplicationError.notFoundError(
+        AuthServiceMessages.UserNotFound.en
+      );
+    }
+
+    // Verify token
+    if (
+      !user.passwordChangeVerificationToken ||
+      user.passwordChangeVerificationToken !== verificationToken ||
+      !user.passwordChangeVerificationTokenExpire ||
+      user.passwordChangeVerificationTokenExpire < new Date()
+    ) {
+      throw ApplicationError.validationError(
+        'Invalid or expired verification token'
+      );
+    }
+
+    // Validate new password strength
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]).{8,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      throw ApplicationError.validationError(
+        'Password must be at least 8 characters and contain at least one uppercase letter, one lowercase letter, one number, and one special character'
+      );
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update password and clear codes/tokens
+    await this.userRepository.updateById(userId, {
+      password: hashedPassword,
+      passwordChangeCode: undefined,
+      passwordChangeCodeExpire: undefined,
+      passwordChangeVerificationToken: undefined,
+      passwordChangeVerificationTokenExpire: undefined,
+      lastPasswordChange: new Date(),
+    });
   }
 }

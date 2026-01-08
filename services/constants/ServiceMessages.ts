@@ -49,6 +49,16 @@ export const AuthServiceMessages = {
     tr: 'Google ile giriş başarısız oldu',
     de: 'Google-Anmeldung fehlgeschlagen',
   },
+  GoogleUserNotFound: {
+    en: 'No account found with this Google email. Please register first.',
+    tr: 'Bu Google email ile kayıtlı hesap bulunamadı. Lütfen önce kayıt olun.',
+    de: 'Kein Konto mit dieser Google-E-Mail gefunden. Bitte registrieren Sie sich zuerst.',
+  },
+  GoogleUserAlreadyExists: {
+    en: 'An account with this Google email already exists. Please login instead.',
+    tr: 'Bu Google email ile zaten kayıtlı bir hesap var. Lütfen giriş yapın.',
+    de: 'Ein Konto mit dieser Google-E-Mail existiert bereits. Bitte melden Sie sich stattdessen an.',
+  },
   EmailNotFound: {
     en: 'There is no user with that email',
     tr: 'Bu e-posta ile kullanıcı bulunamadı',

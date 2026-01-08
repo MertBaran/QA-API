@@ -7,7 +7,26 @@ export interface IAnswerService {
     questionId: EntityId,
     userId: EntityId
   ): Promise<IAnswerModel>;
-  getAnswersByQuestion(questionId: EntityId): Promise<IAnswerModel[]>;
+  getAnswersByQuestion(
+    questionId: EntityId,
+    page?: number,
+    limit?: number
+  ): Promise<{
+    data: IAnswerModel[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
+    };
+  }>;
+  getAnswerPageNumber(
+    questionId: EntityId,
+    answerId: EntityId,
+    limit?: number
+  ): Promise<number | null>;
   getAnswerById(answerId: string): Promise<IAnswerModel>;
   updateAnswer(answerId: string, content: string): Promise<IAnswerModel>;
   deleteAnswer(answerId: string, questionId: string): Promise<void>;
