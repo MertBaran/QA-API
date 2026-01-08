@@ -78,19 +78,14 @@ export class ContentAssetService implements IContentAssetService {
     key: string,
     options?: AssetUrlOptions
   ): Promise<string> {
-    const shouldForcePresigned =
-      options?.forcePresignedUrl ||
+    // Determine if presigned URL is required
+    // Private assets always require presigned URLs for security
+    const usePresignedUrl =
+      options?.presignedUrl === true ||
       descriptor.visibility === ContentAssetVisibility.Private;
 
-    if (
-      !shouldForcePresigned &&
-      descriptor.visibility !== ContentAssetVisibility.Private
-    ) {
-      return this.storageProvider.getObjectUrl(key);
-    }
-
     return this.storageProvider.getObjectUrl(key, {
-      forcePresignedUrl: true,
+      presignedUrl: usePresignedUrl,
       expiresInSeconds: options?.expiresInSeconds,
       download: options?.download,
       responseContentType: options?.responseContentType,

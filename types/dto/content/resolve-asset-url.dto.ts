@@ -23,7 +23,7 @@ export const ResolveAssetUrlSchema = z.object({
   ownerId: z.string().optional(),
   entityId: z.string().optional(),
   visibility: z.enum(contentAssetVisibilityValues).optional(),
-  forcePresignedUrl: z.boolean().optional(),
+  presignedUrl: z.boolean().optional(),
   expiresInSeconds: z.number().int().positive().max(3600).optional(),
   download: z.boolean().optional(),
   responseContentType: z.string().optional(),

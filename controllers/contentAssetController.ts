@@ -59,7 +59,7 @@ export class ContentAssetController {
         descriptor,
         dto.key,
         {
-          forcePresignedUrl: dto.forcePresignedUrl,
+          presignedUrl: dto.presignedUrl,
           expiresInSeconds: dto.expiresInSeconds,
           download: dto.download,
           responseContentType: dto.responseContentType,

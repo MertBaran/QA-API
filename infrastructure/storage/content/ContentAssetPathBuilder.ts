@@ -29,6 +29,10 @@ export class ContentAssetPathBuilder {
   private buildPrefix(descriptor: ContentAssetDescriptor): string {
     const segments: string[] = [];
 
+    // Önce işlem biçimi (type folder)
+    segments.push(this.resolveBaseFolder(descriptor.type));
+
+    // Sonra tarih
     if (this.options.useDatePrefix) {
       const now = new Date();
       segments.push(
@@ -37,8 +41,6 @@ export class ContentAssetPathBuilder {
         String(now.getUTCDate()).padStart(2, '0')
       );
     }
-
-    segments.push(this.resolveBaseFolder(descriptor.type));
 
     if (descriptor.ownerId) {
       segments.push('owner', descriptor.ownerId);
