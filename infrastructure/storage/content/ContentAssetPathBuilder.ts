@@ -32,22 +32,16 @@ export class ContentAssetPathBuilder {
     // Önce işlem biçimi (type folder)
     segments.push(this.resolveBaseFolder(descriptor.type));
 
-    // Sonra tarih
-    if (this.options.useDatePrefix) {
-      const now = new Date();
-      segments.push(
-        now.getUTCFullYear().toString(),
-        String(now.getUTCMonth() + 1).padStart(2, '0'),
-        String(now.getUTCDate()).padStart(2, '0')
-      );
-    }
-
-    if (descriptor.ownerId) {
-      segments.push('owner', descriptor.ownerId);
-    }
-
-    if (descriptor.entityId) {
-      segments.push('entity', descriptor.entityId);
+    // Soru thumbnail'ları için: question-thumbnails/{questionId}
+    if (descriptor.type === ContentAssetType.QuestionThumbnail) {
+      if (descriptor.entityId) {
+        segments.push(descriptor.entityId);
+      }
+    } else {
+      // Diğer dosyalar için: {type}/{userId}
+      if (descriptor.ownerId) {
+        segments.push(descriptor.ownerId);
+      }
     }
 
     return segments.join('/');
