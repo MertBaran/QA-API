@@ -135,4 +135,43 @@ const getAnswerOwnerAccess = asyncErrorWrapper(
   }
 );
 
-export { getAccessToRoute, getQuestionOwnerAccess, getAnswerOwnerAccess };
+// Optional authentication - sets req.user if token is valid, but doesn't require it
+const getOptionalAccess = (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  if (!isTokenIncluded(req)) {
+    return next(); // No token, continue without user
+  }
+
+  const access_token = getAccessTokenFromHeader(req);
+  if (!access_token) {
+    return next(); // No token, continue without user
+  }
+  
+  if (!process.env['JWT_SECRET_KEY']) {
+    return next(); // Missing secret, continue without user
+  }
+  
+  jwt.verify(
+    access_token,
+    process.env['JWT_SECRET_KEY'],
+    async (err: jwt.VerifyErrors | null, decoded: any) => {
+      if (err) {
+        return next(); // Invalid token, continue without user
+      }
+      
+      if (decoded && decoded.id) {
+        req.user = {
+          id: decoded.id,
+          name: decoded.name || '',
+          role: decoded.role,
+        };
+      }
+      next();
+    }
+  );
+};
+
+export { getAccessToRoute, getQuestionOwnerAccess, getAnswerOwnerAccess, getOptionalAccess };

@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-01-08
+
+### Added
+
+- **Follow/Unfollow Users**: Users can now follow and unfollow other users
+  - Follow/unfollow endpoints to manage user relationships
+  - View followers and following lists for any user
+  - Followers and following counts displayed on user profiles
+- **Profile Image Upload**: Users can now upload and change their profile pictures
+  - Profile image stored on Cloudflare R2
+  - Automatic deletion of old profile images when new one is uploaded
+  - Support for image cropping and zooming
+- **Custom Profile Background**: Users can upload custom backgrounds for their profile pages (Magnefite theme)
+  - Support for images (GIF, JPEG, PNG, WebP) and videos (MP4, WebM, OGG)
+  - Maximum file size: 20MB
+  - Automatic deletion of old backgrounds when new one is uploaded
+  - Ping-pong video playback (forward and reverse loop)
+
+### Changed
+
+- **Asset Storage Improvements**: Better asset management and URL resolution
+  - Renamed `forcePresignedUrl` to `presignedUrl` for clearer semantics
+  - Public URLs are now prioritized when `publicBaseUrl` is configured
+  - Asset key structure changed from `date/type/owner` to `type/date/owner` for better organization
+  - Simplified asset URL resolution logic
+
+### Fixed
+
+- **Like/Dislike Behavior**: When a user likes content they previously disliked, the dislike is now automatically removed
+- **ELSER Model Deployment**: Removed automatic ELSER model deployment on startup to prevent license errors
+- Model can still be manually deployed via admin endpoints if needed
+  ....
+
+### Technical Improvements
+
+- Made `AuthenticatedRequest` generic to support typed params, body, and query
+- Added `optionalAuthMiddleware` for endpoints that optionally require authentication
+- Improved thumbnail URL generation to use permanent public URLs when available
+- Better error handling in profile image and background upload operations
+  ....
+
 ## [1.6.0] - 2025-01-XX
 
 ### Extraordinary Searching Structure v1

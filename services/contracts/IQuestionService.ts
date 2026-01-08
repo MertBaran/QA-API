@@ -38,7 +38,11 @@ export interface IQuestionService {
     questionId: EntityId,
     userId: EntityId
   ): Promise<IQuestionModel>;
-  getQuestionsByUser(userId: EntityId): Promise<IQuestionModel[]>;
+  getQuestionsByUser(
+    userId: EntityId,
+    page?: number,
+    limit?: number
+  ): Promise<PaginatedResponse<IQuestionModel>>;
   getQuestionsByParent(parentId: EntityId): Promise<IQuestionModel[]>;
   searchQuestions(
     searchTerm: string,

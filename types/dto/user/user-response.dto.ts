@@ -17,4 +17,8 @@ export interface UserResponseDTO {
     sms: boolean;
     webhook: boolean;
   };
+  followersCount?: number;
+  followingCount?: number;
+  isFollowing?: boolean; // Authenticated user için
+  background_asset_key?: string; // Profile background asset key (for Magnefite theme)
 }

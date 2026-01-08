@@ -23,7 +23,10 @@ import { IIndexClient } from '../../infrastructure/search/IIndexClient';
 import { ISearchClient } from '../../infrastructure/search/ISearchClient';
 import { ILoggerProvider } from '../../infrastructure/logging/ILoggerProvider';
 import { IProjector } from '../../infrastructure/search/IProjector';
-import { QuestionSearchDoc } from '../../infrastructure/search/SearchDocument';
+import {
+  QuestionSearchDoc,
+  AnswerSearchDoc,
+} from '../../infrastructure/search/SearchDocument';
 import { TOKENS } from '../TOKENS';
 import { IContentAssetService } from '../../infrastructure/storage/content/IContentAssetService';
 import {
@@ -50,6 +53,8 @@ export class QuestionManager implements IQuestionService {
     private searchClient: ISearchClient,
     @inject('IProjector<IQuestionModel, QuestionSearchDoc>')
     private questionProjector: IProjector<IQuestionModel, QuestionSearchDoc>,
+    @inject('IProjector<IAnswerModel, AnswerSearchDoc>')
+    private answerProjector: IProjector<IAnswerModel, AnswerSearchDoc>,
     @inject(TOKENS.IContentAssetService)
     private contentAssetService: IContentAssetService,
     @inject('ILoggerProvider')
@@ -256,7 +261,6 @@ export class QuestionManager implements IQuestionService {
             slug: doc.slug,
             category: doc.category,
             tags: doc.tags,
-            views: doc.views,
             createdAt: doc.createdAt,
             user: doc.user as EntityId,
             userInfo: doc.userInfo,
@@ -530,24 +534,161 @@ export class QuestionManager implements IQuestionService {
   }
 
   async deleteQuestion(questionId: EntityId): Promise<IQuestionModel> {
-    const question = await this.questionRepository.deleteById(questionId);
+    // Önce soruyu bul (silmeden önce)
+    const question = await this.questionRepository.findById(questionId);
     if (!question) {
       throw ApplicationError.notFoundError(
         QuestionServiceMessages.QuestionNotFound.en
       );
     }
 
-    await this.deleteThumbnailIfExists(question);
-    await this.cacheProvider.del('questions:all');
+    // 1. Cevapları bul ve Elasticsearch'ten sil
+    const answers = await this.answerRepository.findByQuestion(questionId);
+    for (const answer of answers) {
+      await this.indexClient.sync(
+        this.answerProjector.indexName,
+        'delete',
+        String(answer._id)
+      );
+    }
 
-    // Delete from index
+    // 2. Child soruları bul (bu soruyu parent olarak kullananlar)
+    const childQuestions =
+      await this.questionRepository.findByParent(questionId);
+    for (const childQuestion of childQuestions) {
+      // Parent'ı null yap ve ancestors'ları güncelle
+      const updatedAncestors =
+        childQuestion.ancestors?.filter(
+          ancestor => ancestor.id !== questionId
+        ) || [];
+
+      await this.questionRepository.updateById(childQuestion._id, {
+        parent: undefined,
+        ancestors: updatedAncestors,
+      });
+
+      // Elasticsearch'i güncelle
+      const updatedChild = await this.questionRepository.findById(
+        childQuestion._id
+      );
+      if (updatedChild) {
+        const searchDoc = this.questionProjector.project(updatedChild);
+        await this.indexClient.sync(
+          this.questionProjector.indexName,
+          'update',
+          searchDoc
+        );
+      }
+    }
+
+    // 3. Bu soruyu ancestor olarak içeren tüm soruları ve cevapları bul ve güncelle
+    const allQuestions = await this.questionRepository.findAll();
+    const allAnswers = (await (
+      this.answerRepository as any
+    ).findAll()) as IAnswerModel[];
+
+    // Bu soruyu ancestor olarak içeren sorular
+    const questionsWithThisAncestor = allQuestions.filter((q: IQuestionModel) =>
+      q.ancestors?.some(
+        (ancestor: AncestorReference) => ancestor.id === questionId
+      )
+    );
+
+    for (const q of questionsWithThisAncestor) {
+      const updatedAncestors =
+        q.ancestors?.filter(
+          (ancestor: AncestorReference) => ancestor.id !== questionId
+        ) || [];
+
+      // Depth'leri yeniden hesapla
+      const reindexedAncestors = updatedAncestors.map(
+        (ancestor: AncestorReference, index: number) => ({
+          ...ancestor,
+          depth: index,
+        })
+      );
+
+      await this.questionRepository.updateById(q._id, {
+        ancestors: reindexedAncestors,
+      });
+
+      // Elasticsearch'i güncelle
+      const updatedQ = await this.questionRepository.findById(q._id);
+      if (updatedQ) {
+        const searchDoc = this.questionProjector.project(updatedQ);
+        await this.indexClient.sync(
+          this.questionProjector.indexName,
+          'update',
+          searchDoc
+        );
+      }
+    }
+
+    // Bu soruyu ancestor olarak içeren cevaplar
+    const answersWithThisAncestor = allAnswers.filter((a: IAnswerModel) =>
+      a.ancestors?.some(
+        (ancestor: AncestorReference) => ancestor.id === questionId
+      )
+    );
+
+    for (const answer of answersWithThisAncestor) {
+      const updatedAncestors =
+        answer.ancestors?.filter(
+          (ancestor: AncestorReference) => ancestor.id !== questionId
+        ) || [];
+
+      // Depth'leri yeniden hesapla
+      const reindexedAncestors = updatedAncestors.map(
+        (ancestor: AncestorReference, index: number) => ({
+          ...ancestor,
+          depth: index,
+        })
+      );
+
+      await this.answerRepository.updateById(answer._id, {
+        ancestors: reindexedAncestors,
+      });
+
+      // Elasticsearch'i güncelle
+      const updatedAnswer = await this.answerRepository.findById(answer._id);
+      if (updatedAnswer) {
+        const answerSearchDoc = this.answerProjector.project(updatedAnswer);
+        await this.indexClient.sync(
+          this.answerProjector.indexName,
+          'update',
+          answerSearchDoc
+        );
+      }
+    }
+
+    // 4. Soruyu MongoDB'den sil (cevaplar pre-hook ile otomatik silinecek)
+    const deletedQuestion =
+      await this.questionRepository.deleteById(questionId);
+
+    // 5. Thumbnail'i sil
+    await this.deleteThumbnailIfExists(deletedQuestion);
+
+    // 6. Redis cache'lerini temizle
+    await this.cacheProvider.del('questions:all');
+    await this.cacheProvider.del(`question:${questionId}`);
+    await this.cacheProvider.del(`questions:user:${question.user}`);
+
+    // 7. Elasticsearch'ten soruyu sil
     await this.indexClient.sync(
       this.questionProjector.indexName,
       'delete',
       String(questionId)
     );
 
-    return question;
+    this.logger.info('Question deleted successfully', {
+      questionId: String(questionId),
+      deletedAnswersCount: answers.length,
+      updatedChildQuestionsCount: childQuestions.length,
+      updatedQuestionsWithAncestorCount: questionsWithThisAncestor.length,
+      updatedAnswersWithAncestorCount: answersWithThisAncestor.length,
+    });
+
+    return deletedQuestion;
   }
 
   async likeQuestion(
@@ -674,12 +815,266 @@ export class QuestionManager implements IQuestionService {
     return question;
   }
 
-  async getQuestionsByUser(userId: EntityId): Promise<IQuestionModel[]> {
-    return await this.questionRepository.findByUser(userId);
+  async getQuestionsByUser(
+    userId: EntityId,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<PaginatedResponse<IQuestionModel>> {
+    // Elasticsearch'i 2 saniye timeout ile dene, dönmezse MongoDB'ye geç
+    const ELASTICSEARCH_TIMEOUT = 2000; // 2 saniye
+
+    const elasticsearchPromise = (async () => {
+      try {
+        const result = await this.searchClient.search<QuestionSearchDoc>(
+          this.questionProjector.indexName,
+          this.questionProjector.searchFields,
+          '',
+          {
+            page,
+            limit,
+            filters: {
+              user: String(userId), // QuestionSearchDoc'da field adı 'user', 'userId' değil
+            },
+            sortBy: 'date',
+            sortOrder: 'desc',
+          }
+        );
+        // Elasticsearch'ten gelen SearchDocument'ları direkt Entity'lere dönüştür
+        const questions = result.hits.map(
+          (doc): IQuestionModel => ({
+            _id: doc._id as EntityId,
+            contentType: ContentType.QUESTION,
+            title: doc.title,
+            content: doc.content,
+            slug: doc.slug,
+            user: doc.user as EntityId,
+            userInfo: doc.userInfo,
+            likes: (doc.likes || []).map(id => id as EntityId),
+            dislikes: (doc.dislikes || []).map(id => id as EntityId),
+            createdAt: doc.createdAt || new Date(),
+            category: doc.category,
+            tags: doc.tags || [],
+            answers: (doc.answers || []).map(id => id as EntityId),
+            thumbnail: doc.thumbnailUrl
+              ? {
+                  key: doc.thumbnailUrl,
+                  url: doc.thumbnailUrl,
+                }
+              : null,
+            parent: doc.parent
+              ? {
+                  id: doc.parent.id as EntityId,
+                  type: doc.parent.type as ContentType,
+                }
+              : undefined,
+            ancestors:
+              doc.ancestorsIds && doc.ancestorsTypes
+                ? doc.ancestorsIds.map((id, idx) => ({
+                    id: id as EntityId,
+                    type: doc.ancestorsTypes![idx] as ContentType,
+                    depth: idx,
+                  }))
+                : undefined,
+            relatedContents: (doc.relatedContents || []).map(
+              id => id as EntityId
+            ),
+          })
+        );
+
+        return {
+          data: questions,
+          pagination: {
+            currentPage: result.page,
+            totalPages: result.totalPages,
+            totalItems: result.total,
+            itemsPerPage: result.limit,
+            hasNextPage: result.page < result.totalPages,
+            hasPreviousPage: result.page > 1,
+          },
+        };
+      } catch (error: any) {
+        throw error;
+      }
+    })();
+
+    const timeoutPromise = new Promise<PaginatedResponse<IQuestionModel>>(
+      (_, reject) => {
+        setTimeout(() => {
+          reject(new Error('Elasticsearch timeout after 2 seconds'));
+        }, ELASTICSEARCH_TIMEOUT);
+      }
+    );
+
+    try {
+      // 2 saniye içinde Elasticsearch'ten cevap gelirse onu kullan
+      return await Promise.race([elasticsearchPromise, timeoutPromise]);
+    } catch (error: any) {
+      // Timeout veya hata durumunda MongoDB'ye fallback
+      this.logger.warn(
+        'Elasticsearch timeout or error for questions by user, falling back to MongoDB',
+        {
+          error: error.message,
+          userId: String(userId),
+        }
+      );
+      // MongoDB'den pagination ile çek
+      const allQuestions = await this.questionRepository.findByUser(userId);
+      const skip = (page - 1) * limit;
+      const paginatedQuestions = allQuestions.slice(skip, skip + limit);
+      const totalPages = Math.ceil(allQuestions.length / limit);
+
+      return {
+        data: paginatedQuestions,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalItems: allQuestions.length,
+          itemsPerPage: limit,
+          hasNextPage: skip + limit < allQuestions.length,
+          hasPreviousPage: page > 1,
+        },
+      };
+    }
   }
 
   async getQuestionsByParent(parentId: EntityId): Promise<IQuestionModel[]> {
     return await this.questionRepository.findByParent(parentId);
+  }
+
+  private async enrichQuestionsWithParentInfo(
+    questions: IQuestionModel[]
+  ): Promise<IQuestionModel[]> {
+    if (!questions.length) {
+      return questions;
+    }
+
+    // Collect all parent IDs (questions and answers)
+    const parentQuestionIds: EntityId[] = [];
+    const parentAnswerIds: EntityId[] = [];
+
+    questions.forEach(question => {
+      if (question.parent) {
+        if (question.parent.type === ContentType.QUESTION) {
+          parentQuestionIds.push(question.parent.id);
+        } else if (question.parent.type === ContentType.ANSWER) {
+          parentAnswerIds.push(question.parent.id);
+        }
+      } else if (question.ancestors && question.ancestors.length > 0) {
+        // Try to get parent from ancestors (new structure)
+        const parent = question.ancestors.find(a => a.depth === 0);
+        if (parent) {
+          if (parent.type === ContentType.QUESTION) {
+            parentQuestionIds.push(parent.id);
+          } else if (parent.type === ContentType.ANSWER) {
+            parentAnswerIds.push(parent.id);
+          }
+        }
+      }
+    });
+
+    // Fetch parent questions and answers
+    const parentQuestions = parentQuestionIds.length
+      ? await this.questionRepository.findByIds(parentQuestionIds)
+      : [];
+    const parentAnswers = parentAnswerIds.length
+      ? await this.answerRepository.findByIds(parentAnswerIds)
+      : [];
+
+    // Create maps for quick lookup
+    const parentQuestionMap = new Map(
+      parentQuestions.map(q => [q._id.toString(), q])
+    );
+    const parentAnswerMap = new Map(
+      parentAnswers.map(a => [a._id.toString(), a])
+    );
+
+    // Get question IDs for parent answers
+    const parentAnswerQuestionIds = Array.from(
+      new Set(
+        parentAnswers
+          .map(a => {
+            const question: any = a.question;
+            if (!question) return null;
+            return typeof question === 'object'
+              ? question._id?.toString()
+              : question.toString();
+          })
+          .filter((id): id is string => Boolean(id))
+      )
+    );
+
+    const parentAnswerQuestions = parentAnswerQuestionIds.length
+      ? await this.questionRepository.findByIds(parentAnswerQuestionIds)
+      : [];
+
+    const parentAnswerQuestionMap = new Map(
+      parentAnswerQuestions.map(q => [q._id.toString(), q])
+    );
+
+    // Enrich questions with parent content info
+    return questions.map(question => {
+      let parentId: EntityId | undefined;
+      let parentType: ContentType | undefined;
+
+      // Try to get parent from ancestors (new structure)
+      if (question.ancestors && question.ancestors.length > 0) {
+        const parent = question.ancestors.find(a => a.depth === 0);
+        if (parent) {
+          parentId = parent.id;
+          parentType = parent.type;
+        }
+      } else if (question.parent) {
+        parentId = question.parent.id;
+        parentType = question.parent.type;
+      }
+
+      if (!parentId || !parentType) {
+        return question;
+      }
+
+      if (parentType === ContentType.QUESTION) {
+        const parentQuestion = parentQuestionMap.get(String(parentId));
+        if (parentQuestion) {
+          return {
+            ...question,
+            parentContentInfo: {
+              id: parentQuestion._id,
+              type: ContentType.QUESTION,
+              title: parentQuestion.title,
+              slug: parentQuestion.slug,
+              user: parentQuestion.user,
+              userInfo: parentQuestion.userInfo,
+            } as ParentContentInfo,
+          };
+        }
+      } else if (parentType === ContentType.ANSWER) {
+        const parentAnswer = parentAnswerMap.get(String(parentId));
+        if (parentAnswer) {
+          const questionId =
+            typeof parentAnswer.question === 'object'
+              ? (parentAnswer.question as any)._id?.toString()
+              : parentAnswer.question?.toString();
+          const answerQuestion = questionId
+            ? parentAnswerQuestionMap.get(questionId)
+            : null;
+
+          return {
+            ...question,
+            parentContentInfo: {
+              id: parentAnswer._id,
+              type: ContentType.ANSWER,
+              questionId: questionId as EntityId,
+              questionTitle: answerQuestion?.title,
+              questionSlug: answerQuestion?.slug,
+              user: parentAnswer.user,
+              userInfo: parentAnswer.userInfo,
+            } as ParentContentInfo,
+          };
+        }
+      }
+
+      return question;
+    });
   }
 
   async searchQuestions(
@@ -760,7 +1155,6 @@ export class QuestionManager implements IQuestionService {
           slug: doc.slug,
           category: doc.category,
           tags: doc.tags,
-          views: doc.views,
           createdAt: doc.createdAt,
           user: doc.user as EntityId,
           userInfo: doc.userInfo,
@@ -784,11 +1178,22 @@ export class QuestionManager implements IQuestionService {
           relatedContents: (doc.relatedContents || []).map(
             id => id as EntityId
           ),
+          thumbnail:
+            doc.thumbnailKey || doc.thumbnailUrl
+              ? {
+                  key: doc.thumbnailKey || doc.thumbnailUrl || '',
+                  url: doc.thumbnailUrl,
+                }
+              : null,
         })
       );
 
+      // Enrich questions with parent content info (same logic as getQuestionsWithParents)
+      const enrichedQuestions =
+        await this.enrichQuestionsWithParentInfo(questions);
+
       return {
-        data: questions,
+        data: enrichedQuestions,
         pagination: {
           page: result.page,
           limit: result.limit,
@@ -848,7 +1253,11 @@ export class QuestionManager implements IQuestionService {
     key: string,
     descriptor: ContentAssetDescriptor
   ): Promise<IQuestionModel['thumbnail']> {
-    const url = await this.contentAssetService.getAssetUrl(descriptor, key);
+    // Use public URL for public thumbnails (presignedUrl: false)
+    // This ensures permanent URLs that can be cached
+    const url = await this.contentAssetService.getAssetUrl(descriptor, key, {
+      presignedUrl: false,
+    });
     return {
       key,
       url,

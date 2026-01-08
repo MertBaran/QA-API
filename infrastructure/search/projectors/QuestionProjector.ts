@@ -49,7 +49,6 @@ export class QuestionProjector
       slug: entity.slug,
       category: entity.category,
       tags: entity.tags,
-      views: entity.views,
       createdAt: entity.createdAt,
       user: String(entity.user),
       userInfo: entity.userInfo,
@@ -58,6 +57,7 @@ export class QuestionProjector
       answers: entity.answers.map(id => String(id)),
       relatedContents: (entity.relatedContents || []).map(id => String(id)),
       thumbnailUrl: entity.thumbnail?.url,
+      thumbnailKey: entity.thumbnail?.key,
       parent: entity.parent
         ? {
             id: String(entity.parent.id),

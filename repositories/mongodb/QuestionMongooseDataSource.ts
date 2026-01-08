@@ -61,7 +61,6 @@ export class QuestionMongooseDataSource implements IDataSource<IQuestionModel> {
       slug: mongoDoc.slug,
       category: mongoDoc.category || 'General',
       tags: mongoDoc.tags || [],
-      views: mongoDoc.views,
       createdAt: mongoDoc.createdAt,
       updatedAt: mongoDoc.updatedAt,
       user: userInfo._id,

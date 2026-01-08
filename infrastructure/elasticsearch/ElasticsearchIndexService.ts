@@ -107,23 +107,9 @@ export class ElasticsearchIndexService
       throw new Error('Elasticsearch is not enabled');
     }
 
-    // ELSER model'ini deploy et (eğer semantic search aktifse)
-    if (
-      this.semanticSearchService &&
-      'deployModel' in this.semanticSearchService
-    ) {
-      try {
-        const elserService = this.semanticSearchService as any;
-        await elserService.deployModel();
-      } catch (error) {
-        this.logger.warn(
-          'ELSER model deployment failed, continuing without semantic search',
-          {
-            error,
-          }
-        );
-      }
-    }
+    // ELSER model deployment is disabled - requires Elasticsearch ML license
+    // If semantic search is needed, deploy ELSER model manually via admin endpoints
+    // or ensure Elasticsearch has ML license enabled
 
     // Tüm register edilmiş index'leri oluştur
     for (const [indexName, searchFields] of this.registeredIndexes) {
@@ -241,7 +227,6 @@ export class ElasticsearchIndexService
       'question',
       'category',
       'tags',
-      'views',
       'likes',
       'createdAt',
       'questionId',
@@ -262,8 +247,6 @@ export class ElasticsearchIndexService
           properties[field] = { type: 'keyword' };
         } else if (field === 'createdAt') {
           properties[field] = { type: 'date' };
-        } else if (field === 'views') {
-          properties[field] = { type: 'integer' };
         } else if (field === 'likes') {
           // likes is string[] (user IDs), not integer
           properties[field] = { type: 'keyword' };
@@ -882,7 +865,6 @@ export class ElasticsearchIndexService
         sort.push({ createdAt: { order: options.sortOrder || 'desc' } });
       } else if (options?.sortBy === 'popularity') {
         sort.push({ likes: { order: options.sortOrder || 'desc' } });
-        sort.push({ views: { order: options.sortOrder || 'desc' } });
       } else {
         sort.push('_score');
         sort.push({ createdAt: { order: 'desc' } });

@@ -24,7 +24,7 @@ export interface DeleteObjectInput {
 
 export interface GetObjectUrlOptions {
   expiresInSeconds?: number;
-  forcePresignedUrl?: boolean;
+  presignedUrl?: boolean;
   download?: boolean;
   responseContentType?: string;
   responseDispositionFilename?: string;
