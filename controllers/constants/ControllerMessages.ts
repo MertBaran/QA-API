@@ -88,6 +88,16 @@ export const AuthConstants = {
     tr: 'Şifre başarıyla sıfırlandı',
     de: 'Passwort erfolgreich zurückgesetzt',
   },
+  PasswordChangeCodeSent: {
+    en: 'Password change verification code sent to your email',
+    tr: 'Şifre değiştirme doğrulama kodu e-posta adresinize gönderildi',
+    de: 'Passwort-Änderungs-Bestätigungscode an Ihre E-Mail gesendet',
+  },
+  PasswordChangeSuccess: {
+    en: 'Password changed successfully',
+    tr: 'Şifre başarıyla değiştirildi',
+    de: 'Passwort erfolgreich geändert',
+  },
   CaptchaRequired: {
     en: 'reCAPTCHA verification required',
     tr: 'reCAPTCHA doğrulaması gerekli',
