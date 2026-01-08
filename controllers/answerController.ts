@@ -172,13 +172,36 @@ export class AnswerController {
 
   getAnswersByUser = asyncErrorWrapper(
     async (
-      req: Request<UserIdParamDTO>,
-      res: Response<SuccessResponseDTO<IAnswerModel[]>>,
+      req: Request<
+        UserIdParamDTO,
+        {},
+        {},
+        { page?: string; limit?: string }
+      >,
+      res: Response<
+        SuccessResponseDTO<{
+          data: IAnswerModel[];
+          pagination: {
+            page: number;
+            limit: number;
+            total: number;
+            totalPages: number;
+            hasNext: boolean;
+            hasPrev: boolean;
+          };
+        }>
+      >,
       _next: NextFunction
     ): Promise<void> => {
       const { userId } = req.params;
-      const answers = await this.answerService.getAnswersByUser(userId);
-      res.status(200).json({ success: true, data: answers });
+      const page = req.query.page ? parseInt(req.query.page, 10) : 1;
+      const limit = req.query.limit ? parseInt(req.query.limit, 10) : 10;
+      const result = await this.answerService.getAnswersByUser(
+        userId,
+        page,
+        limit
+      );
+      res.status(200).json({ success: true, data: result });
     }
   );
 

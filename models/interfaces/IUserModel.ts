@@ -30,4 +30,9 @@ export interface IUserModel {
   notificationPreferences?: NotificationPreferences;
   // Dil tercihi
   language?: SupportedLanguage;
+  // Follow relationships
+  following?: EntityId[];
+  followers?: EntityId[];
+  // Profile background asset (for Magnefite theme)
+  background_asset_key?: string;
 }

@@ -11,7 +11,6 @@ export interface QuestionSearchDoc {
   slug: string;
   category?: string;
   tags?: string[];
-  views?: number;
   createdAt: Date;
   user: string;
   userInfo?: {
@@ -25,6 +24,7 @@ export interface QuestionSearchDoc {
   answers: string[];
   relatedContents?: string[];
   thumbnailUrl?: string;
+  thumbnailKey?: string;
   // Hierarchical fields
   parent?: {
     id: string;

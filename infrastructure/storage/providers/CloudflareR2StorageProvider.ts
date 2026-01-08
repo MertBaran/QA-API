@@ -170,11 +170,14 @@ export class CloudflareR2StorageProvider implements IObjectStorageProvider {
     key: string,
     options?: GetObjectUrlOptions
   ): Promise<string> {
-    const forcePresigned = options?.forcePresignedUrl;
-    if (!forcePresigned && this.publicBaseUrl) {
+    // Use public URL if presignedUrl is explicitly false and publicBaseUrl is configured
+    const usePresignedUrl = options?.presignedUrl !== false;
+
+    if (!usePresignedUrl && this.publicBaseUrl) {
       return this.composePublicUrl(key);
     }
 
+    // Generate presigned URL
     const expiresIn =
       options?.expiresInSeconds ?? DEFAULT_PRESIGNED_EXPIRES_SECONDS;
     const command = new GetObjectCommand({

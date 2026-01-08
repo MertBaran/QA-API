@@ -8,6 +8,13 @@ import { IUserService } from '../services/contracts/IUserService';
 import { IUserRoleService } from '../services/contracts/IUserRoleService';
 import { IRoleService } from '../services/contracts/IRoleService';
 import { IPermissionService } from '../services/contracts/IPermissionService';
+import { TOKENS } from '../services/TOKENS';
+import { IContentAssetService } from '../infrastructure/storage/content/IContentAssetService';
+import {
+  ContentAssetDescriptor,
+  ContentAssetType,
+  ContentAssetVisibility,
+} from '../infrastructure/storage/content/ContentAssetType';
 import { AuthConstants } from './constants/ControllerMessages';
 import { ILoggerProvider } from '../infrastructure/logging/ILoggerProvider';
 import { IExceptionTracker } from '../infrastructure/error/IExceptionTracker';
@@ -41,6 +48,8 @@ export class AuthController {
     @inject('IUserRoleService') private userRoleService: IUserRoleService,
     @inject('IRoleService') private roleService: IRoleService,
     @inject('IPermissionService') private permissionService: IPermissionService,
+    @inject(TOKENS.IContentAssetService)
+    private contentAssetService: IContentAssetService,
     @inject('ILoggerProvider') private logger: ILoggerProvider,
     @inject('IExceptionTracker') private exceptionTracker: IExceptionTracker
   ) {}
@@ -285,6 +294,10 @@ export class AuthController {
       const userRoles = await this.userRoleService.getUserActiveRoles(user._id);
       const roleIds = userRoles.map(userRole => userRole.roleId);
 
+      // Return the key directly, frontend will resolve it to a fresh presigned URL when needed
+      // This avoids expire issues with presigned URLs
+      const profileImageUrl = user.profile_image;
+
       // Güvenli response - password ve diğer hassas bilgileri çıkar
       const safeUser: UserResponseDTO = {
         _id: user._id,
@@ -295,11 +308,12 @@ export class AuthController {
         about: user.about,
         place: user.place,
         website: user.website,
-        profile_image: user.profile_image,
+        profile_image: profileImageUrl,
         blocked: user.blocked,
         createdAt: user.createdAt,
         language: user.language,
         notificationPreferences: user.notificationPreferences,
+        background_asset_key: user.background_asset_key,
       };
 
       res.json({
@@ -324,6 +338,93 @@ export class AuthController {
         message: 'Image uploaded successfully',
         data: {
           profile_image: user.profile_image,
+        },
+      });
+    }
+  );
+
+  updateProfileBackground = asyncErrorWrapper(
+    async (
+      req: AuthenticatedRequest<{ backgroundAssetKey: string | null }>,
+      res: Response<
+        SuccessResponseDTO<{ background_asset_key: string | null }>
+      >,
+      _next: NextFunction
+    ): Promise<void> => {
+      const { backgroundAssetKey } = req.body;
+      const user = await this.authService.updateProfileBackground(
+        req.user!.id,
+        backgroundAssetKey
+      );
+      res.status(200).json({
+        success: true,
+        data: {
+          background_asset_key: user.background_asset_key || null,
+        },
+      });
+    }
+  );
+
+  updateProfileImage = asyncErrorWrapper(
+    async (
+      req: AuthenticatedRequest<{ profileImageKey: string | null }>,
+      res: Response<SuccessResponseDTO<{ profile_image: string }>>,
+      _next: NextFunction
+    ): Promise<void> => {
+      const { profileImageKey } = req.body;
+
+      // Eğer profileImageKey yoksa veya boş string ise, hata döndür
+      if (!profileImageKey || profileImageKey.trim() === '') {
+        throw ApplicationError.businessError(
+          'Profile image key is required',
+          400
+        );
+      }
+
+      // Önce mevcut kullanıcıyı al (eski fotoğrafı silmek için)
+      const currentUser = await this.userService.findById(req.user!.id);
+      const oldProfileImageKey = currentUser?.profile_image;
+
+      // Eski fotoğrafı sil (eğer Cloudflare key ise ve yeni key'den farklıysa)
+      if (
+        oldProfileImageKey &&
+        oldProfileImageKey !== profileImageKey &&
+        oldProfileImageKey !== 'default.jpg' &&
+        !oldProfileImageKey.startsWith('http') &&
+        (oldProfileImageKey.includes('user-profile-avatars') ||
+          oldProfileImageKey.match(/^\d{4}\/\d{2}\/\d{2}\//) ||
+          oldProfileImageKey.includes('/'))
+      ) {
+        try {
+          const descriptor: ContentAssetDescriptor = {
+            type: ContentAssetType.UserProfileAvatar,
+            ownerId: req.user!.id,
+            visibility: ContentAssetVisibility.Public,
+          };
+          await this.contentAssetService.deleteAsset({
+            descriptor,
+            key: oldProfileImageKey,
+          });
+          console.log('Old profile image deleted:', oldProfileImageKey);
+        } catch (error) {
+          console.error('Failed to delete old profile image:', error);
+          // Silme hatası kritik değil, devam et
+        }
+      }
+
+      // Store the key directly, not the URL
+      // Frontend will resolve the URL when needed
+      const user = await this.authService.updateProfileImage(
+        req.user!.id,
+        profileImageKey
+      );
+
+      // Return the key, not the URL
+      // Frontend will resolve it to a fresh presigned URL when needed
+      res.status(200).json({
+        success: true,
+        data: {
+          profile_image: user.profile_image, // This is the key
         },
       });
     }

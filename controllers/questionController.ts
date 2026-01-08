@@ -184,13 +184,26 @@ export class QuestionController {
 
   getQuestionsByUser = asyncErrorWrapper(
     async (
-      req: Request<UserIdParamDTO>,
-      res: Response<SuccessResponseDTO<IQuestionModel[]>>,
+      req: Request<
+        UserIdParamDTO,
+        {},
+        {},
+        { page?: string; limit?: string }
+      >,
+      res: Response<
+        SuccessResponseDTO<PaginatedResponse<IQuestionModel>>
+      >,
       _next: NextFunction
     ): Promise<void> => {
       const { userId } = req.params;
-      const questions = await this.questionService.getQuestionsByUser(userId);
-      res.status(200).json({ success: true, data: questions });
+      const page = req.query.page ? parseInt(req.query.page, 10) : 1;
+      const limit = req.query.limit ? parseInt(req.query.limit, 10) : 10;
+      const result = await this.questionService.getQuestionsByUser(
+        userId,
+        page,
+        limit
+      );
+      res.status(200).json({ success: true, data: result });
     }
   );
 
@@ -247,11 +260,9 @@ export class QuestionController {
 
       const smartOptions = searchOptions.toSmartOptions();
 
-      const includeAnswers = req.query.includeAnswers === 'true';
-
-      // Eğer cevapları dahil et seçeneği aktifse, cevaplarda geçen soru ID'lerini bul ve çıkar
+      // Her zaman cevapları dahil et, cevaplarda geçen soru ID'lerini bul ve çıkar
       let excludeQuestionIds: string[] | undefined = undefined;
-      if (includeAnswers && req.query.excludeQuestionIds) {
+      if (req.query.excludeQuestionIds) {
         // Frontend'den gelen excludeQuestionIds'i kullan
         excludeQuestionIds = Array.isArray(req.query.excludeQuestionIds)
           ? req.query.excludeQuestionIds

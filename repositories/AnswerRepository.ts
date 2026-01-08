@@ -53,8 +53,15 @@ export class AnswerRepository
         400
       );
     }
+    // Remove from dislikes if exists
+    if (answer.dislikes.includes(userId)) {
+      answer.dislikes = answer.dislikes.filter(dislike => dislike !== userId);
+    }
     answer.likes.push(userId);
-    return this.updateById(answerId, { likes: answer.likes });
+    return this.updateById(answerId, {
+      likes: answer.likes,
+      dislikes: answer.dislikes,
+    });
   }
 
   async unlikeAnswer(
@@ -77,7 +84,10 @@ export class AnswerRepository
     return this.updateById(answerId, { likes: answer.likes });
   }
 
-  async dislikeAnswer(answerId: string, userId: EntityId): Promise<IAnswerModel> {
+  async dislikeAnswer(
+    answerId: string,
+    userId: EntityId
+  ): Promise<IAnswerModel> {
     const answer = await this.findById(answerId);
     if (!answer) {
       throw ApplicationError.notFoundError(
@@ -95,9 +105,9 @@ export class AnswerRepository
       answer.likes = answer.likes.filter(like => like !== userId);
     }
     answer.dislikes.push(userId);
-    return this.updateById(answerId, { 
+    return this.updateById(answerId, {
       likes: answer.likes,
-      dislikes: answer.dislikes 
+      dislikes: answer.dislikes,
     });
   }
 

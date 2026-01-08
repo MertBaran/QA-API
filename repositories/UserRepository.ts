@@ -101,4 +101,112 @@ export class UserRepository
     const all = await this.dataSource.findAll();
     return all.length;
   }
+
+  async followUser(userId: EntityId, followerId: EntityId): Promise<IUserModel> {
+    // Kendi kendini follow etmeyi engelle
+    if (userId.toString() === followerId.toString()) {
+      throw ApplicationError.businessError(
+        'Cannot follow yourself',
+        400
+      );
+    }
+
+    const user = await this.dataSource.findById(userId.toString());
+    const follower = await this.dataSource.findById(followerId.toString());
+
+    if (!user || !follower) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.FIND_BY_ID_ERROR.en
+      );
+    }
+
+    // Zaten follow ediyorsa hata döndür
+    if (follower.following?.includes(userId.toString())) {
+      throw ApplicationError.businessError(
+        'Already following this user',
+        400
+      );
+    }
+
+    // Follower'ın following listesine ekle
+    const updatedFollower = await this.dataSource.updateById(followerId.toString(), {
+      following: [...(follower.following || []), userId.toString()],
+    });
+
+    // User'ın followers listesine ekle
+    const updatedUser = await this.dataSource.updateById(userId.toString(), {
+      followers: [...(user.followers || []), followerId.toString()],
+    });
+
+    return updatedUser;
+  }
+
+  async unfollowUser(userId: EntityId, followerId: EntityId): Promise<IUserModel> {
+    const user = await this.dataSource.findById(userId.toString());
+    const follower = await this.dataSource.findById(followerId.toString());
+
+    if (!user || !follower) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.FIND_BY_ID_ERROR.en
+      );
+    }
+
+    // Follow etmiyorsa hata döndür
+    if (!follower.following?.includes(userId.toString())) {
+      throw ApplicationError.businessError(
+        'Not following this user',
+        400
+      );
+    }
+
+    // Follower'ın following listesinden çıkar
+    await this.dataSource.updateById(followerId.toString(), {
+      following: follower.following.filter(id => id.toString() !== userId.toString()),
+    });
+
+    // User'ın followers listesinden çıkar
+    const updatedUser = await this.dataSource.updateById(userId.toString(), {
+      followers: (user.followers || []).filter(id => id.toString() !== followerId.toString()),
+    });
+
+    return updatedUser;
+  }
+
+  async getFollowers(userId: EntityId): Promise<IUserModel[]> {
+    const user = await this.dataSource.findById(userId.toString());
+    if (!user) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.FIND_BY_ID_ERROR.en
+      );
+    }
+
+    if (!user.followers || user.followers.length === 0) {
+      return [];
+    }
+
+    const followers = await Promise.all(
+      user.followers.map(id => this.dataSource.findById(id.toString()))
+    );
+
+    return followers.filter((u): u is IUserModel => u !== null);
+  }
+
+  async getFollowing(userId: EntityId): Promise<IUserModel[]> {
+    const user = await this.dataSource.findById(userId.toString());
+    if (!user) {
+      throw ApplicationError.notFoundError(
+        RepositoryConstants.BASE.FIND_BY_ID_ERROR.en
+      );
+    }
+
+    if (!user.following || user.following.length === 0) {
+      return [];
+    }
+
+    const following = await Promise.all(
+      user.following.map(id => this.dataSource.findById(id.toString()))
+    );
+
+    return following.filter((u): u is IUserModel => u !== null);
+  }
 }
