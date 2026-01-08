@@ -18,6 +18,10 @@ export interface IAuthService {
     userId: EntityId,
     profileImage: string
   ): Promise<IUserModel>;
+  updateProfileBackground(
+    userId: EntityId,
+    backgroundAssetKey: string | null
+  ): Promise<IUserModel>;
   updateProfile(
     userId: EntityId,
     profileData: {

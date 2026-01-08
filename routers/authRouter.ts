@@ -22,12 +22,15 @@ try {
   loggerProvider = console;
 }
 
+import { TOKENS } from '../services/TOKENS';
+
 const authController = new AuthController(
   container.resolve('IAuthService'),
   container.resolve('IUserService'),
   container.resolve('IUserRoleService'),
   container.resolve('IRoleService'),
   container.resolve('IPermissionService'),
+  container.resolve(TOKENS.IContentAssetService),
   loggerProvider,
   container.resolve('IExceptionTracker')
 );
@@ -72,6 +75,16 @@ router.post(
   '/upload',
   [getAccessToRoute, profileImageUpload.single('profile_image')],
   authController.imageUpload
+);
+router.put(
+  '/background',
+  getAccessToRoute,
+  authController.updateProfileBackground
+);
+router.put(
+  '/profile-image',
+  getAccessToRoute,
+  authController.updateProfileImage
 );
 router.post('/loginGoogle', authController.googleLogin);
 
