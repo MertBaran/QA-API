@@ -14,4 +14,9 @@ export interface IUserRepository extends IRepository<IUserModel> {
   clearResetToken(userId: EntityId): Promise<IUserModel>;
   findActive(): Promise<IUserModel[]>;
   countAll(): Promise<number>;
+  // Follow methods
+  followUser(userId: EntityId, followerId: EntityId): Promise<IUserModel>;
+  unfollowUser(userId: EntityId, followerId: EntityId): Promise<IUserModel>;
+  getFollowers(userId: EntityId): Promise<IUserModel[]>;
+  getFollowing(userId: EntityId): Promise<IUserModel[]>;
 }

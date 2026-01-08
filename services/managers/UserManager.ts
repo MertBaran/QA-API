@@ -89,4 +89,20 @@ export class UserManager implements IUserService {
     }
     return count;
   }
+
+  async followUser(userId: EntityId, followerId: EntityId): Promise<IUserModel> {
+    return await this.userRepository.followUser(userId, followerId);
+  }
+
+  async unfollowUser(userId: EntityId, followerId: EntityId): Promise<IUserModel> {
+    return await this.userRepository.unfollowUser(userId, followerId);
+  }
+
+  async getFollowers(userId: EntityId): Promise<IUserModel[]> {
+    return await this.userRepository.getFollowers(userId);
+  }
+
+  async getFollowing(userId: EntityId): Promise<IUserModel[]> {
+    return await this.userRepository.getFollowing(userId);
+  }
 }
