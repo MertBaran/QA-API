@@ -1253,7 +1253,11 @@ export class QuestionManager implements IQuestionService {
     key: string,
     descriptor: ContentAssetDescriptor
   ): Promise<IQuestionModel['thumbnail']> {
-    const url = await this.contentAssetService.getAssetUrl(descriptor, key);
+    // Use public URL for public thumbnails (presignedUrl: false)
+    // This ensures permanent URLs that can be cached
+    const url = await this.contentAssetService.getAssetUrl(descriptor, key, {
+      presignedUrl: false,
+    });
     return {
       key,
       url,
