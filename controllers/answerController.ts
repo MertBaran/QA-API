@@ -47,14 +47,58 @@ export class AnswerController {
 
   getAllAnswersByQuestion = asyncErrorWrapper(
     async (
-      req: Request<QuestionIdParamDTO>,
-      res: Response<SuccessResponseDTO<IAnswerModel[]>>,
+      req: Request<
+        QuestionIdParamDTO,
+        {},
+        {},
+        { page?: string; limit?: string }
+      >,
+      res: Response<
+        SuccessResponseDTO<{
+          data: IAnswerModel[];
+          pagination: {
+            page: number;
+            limit: number;
+            total: number;
+            totalPages: number;
+            hasNext: boolean;
+            hasPrev: boolean;
+          };
+        }>
+      >,
       _next: NextFunction
     ): Promise<void> => {
       const { question_id } = req.params;
-      const answers =
-        await this.answerService.getAnswersByQuestion(question_id);
-      res.status(200).json({ success: true, data: answers });
+      const page = req.query.page ? parseInt(req.query.page, 10) : 1;
+      const limit = req.query.limit ? parseInt(req.query.limit, 10) : 5;
+      const result = await this.answerService.getAnswersByQuestion(
+        question_id,
+        page,
+        limit
+      );
+      res.status(200).json({ success: true, data: result });
+    }
+  );
+
+  getAnswerPageNumber = asyncErrorWrapper(
+    async (
+      req: Request<
+        QuestionIdParamDTO & AnswerIdParamDTO,
+        {},
+        {},
+        { limit?: string }
+      >,
+      res: Response<SuccessResponseDTO<{ page: number | null }>>,
+      _next: NextFunction
+    ): Promise<void> => {
+      const { question_id, answer_id } = req.params;
+      const limit = req.query.limit ? parseInt(req.query.limit, 10) : 5;
+      const page = await this.answerService.getAnswerPageNumber(
+        question_id,
+        answer_id,
+        limit
+      );
+      res.status(200).json({ success: true, data: { page } });
     }
   );
 

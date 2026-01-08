@@ -13,6 +13,9 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
   editProfileSchema,
+  requestPasswordChangeSchema,
+  verifyPasswordChangeCodeSchema,
+  confirmPasswordChangeSchema,
 } from '../infrastructure/validation/schemas/authSchemas';
 
 let loggerProvider: any;
@@ -87,6 +90,27 @@ router.put(
   authController.updateProfileImage
 );
 router.post('/loginGoogle', authController.googleLogin);
+router.post('/registerGoogle', authController.googleRegister);
+router.post(
+  '/change-password/request',
+  getAccessToRoute,
+  validator.validateBody(requestPasswordChangeSchema),
+  auditMiddleware.createMiddleware('PASSWORD_CHANGE_REQUEST'),
+  authController.requestPasswordChange
+);
+router.post(
+  '/change-password/verify',
+  getAccessToRoute,
+  validator.validateBody(verifyPasswordChangeCodeSchema),
+  authController.verifyPasswordChangeCode
+);
+router.post(
+  '/change-password/confirm',
+  getAccessToRoute,
+  validator.validateBody(confirmPasswordChangeSchema),
+  auditMiddleware.createMiddleware('PASSWORD_UPDATE'),
+  authController.confirmPasswordChange
+);
 
 router.get('/test-error', authController.testError);
 

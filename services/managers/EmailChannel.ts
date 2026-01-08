@@ -1,15 +1,16 @@
-import { injectable } from 'tsyringe';
+import { injectable, inject } from 'tsyringe';
 import { NotificationChannel } from '../contracts/NotificationChannel';
 import { NotificationPayload } from '../contracts/NotificationPayload';
 import { createSMTPTransporter } from '../../config/smtpConfig';
 import { ILoggerProvider } from '../../infrastructure/logging/ILoggerProvider';
+import { TOKENS } from '../TOKENS';
 
 @injectable()
 export class EmailChannel extends NotificationChannel {
   readonly type = 'email';
   private logger: ILoggerProvider;
 
-  constructor(logger: ILoggerProvider) {
+  constructor(@inject(TOKENS.ILoggerProvider) logger: ILoggerProvider) {
     super();
     this.logger = logger;
   }
@@ -19,40 +20,93 @@ export class EmailChannel extends NotificationChannel {
   }
 
   async send(payload: NotificationPayload): Promise<void> {
-    this.logger.info(`Email notification sent`, {
+    const smtpUser = process.env['SMTP_USER'] || '';
+    const smtpPass = process.env['SMTP_APP_PASS'] || '';
+
+    this.logger.info(`Attempting to send email notification`, {
       to: payload.to,
       subject: payload.subject,
       channel: this.type,
+      hasSmtpUser: !!smtpUser,
+      hasSmtpPass: !!smtpPass,
     });
 
-    const transporter = createSMTPTransporter();
+    if (!smtpUser) {
+      const error = 'SMTP_USER environment variable is not set';
+      this.logger.error(error);
+      throw new Error(error);
+    }
+
+    if (!smtpPass) {
+      const error = 'SMTP_APP_PASS environment variable is not set';
+      this.logger.error(error);
+      throw new Error(error);
+    }
+
+    if (!payload.to) {
+      const error = 'Email recipient (to) is not specified';
+      this.logger.error(error);
+      throw new Error(error);
+    }
+
+    let transporter;
+    try {
+      transporter = createSMTPTransporter();
+      // Verify SMTP connection
+      await transporter.verify();
+      this.logger.info('SMTP connection verified successfully');
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(
+        `SMTP connection verification failed: ${errorMessage}`,
+        {
+          error: errorMessage,
+          stack: error instanceof Error ? error.stack : undefined,
+        }
+      );
+      throw new Error(`SMTP connection failed: ${errorMessage}`);
+    }
 
     try {
       const mailOptions = {
-        from: process.env['SMTP_USER'] || '',
+        from: smtpUser,
         to: payload.to,
         subject: payload.subject || 'Notification',
         html: payload.html || payload.message,
       };
 
-      const _info = await transporter.sendMail(mailOptions);
+      this.logger.info('Sending email', {
+        from: mailOptions.from,
+        to: mailOptions.to,
+        subject: mailOptions.subject,
+        hasHtml: !!mailOptions.html,
+      });
 
-      this.logger.debug(`Email notification completed successfully`, {
+      const info = await transporter.sendMail(mailOptions);
+
+      this.logger.info(`Email notification sent successfully`, {
         to: payload.to,
         subject: payload.subject,
         channel: this.type,
+        messageId: info.messageId,
+        response: info.response,
       });
-    } catch (_error) {
-      this.logger.error(
-        `Email sending failed: ${_error instanceof Error ? _error.message : 'Unknown error'}`,
-        {
-          to: payload.to,
-          subject: payload.subject,
-          channel: this.type,
-          error: _error instanceof Error ? _error.message : 'Unknown error',
-        }
-      );
-      throw new Error('Email sending failed');
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Email sending failed: ${errorMessage}`, {
+        to: payload.to,
+        subject: payload.subject,
+        channel: this.type,
+        error: errorMessage,
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      throw new Error(`Email sending failed: ${errorMessage}`);
+    } finally {
+      if (transporter) {
+        transporter.close();
+      }
     }
   }
 

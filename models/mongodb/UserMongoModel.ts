@@ -24,6 +24,11 @@ export interface IUserMongo extends Document {
   resetPasswordToken?: string;
   resetPasswordExpire?: Date;
   lastPasswordChange?: Date;
+  passwordChangeCode?: string;
+  passwordChangeCodeExpire?: Date;
+  passwordChangeVerificationToken?: string;
+  passwordChangeVerificationTokenExpire?: Date;
+  isGoogleUser?: boolean;
   // Notification için yeni alanlar
   phoneNumber?: string;
   webhookUrl?: string;
@@ -94,6 +99,22 @@ const userSchema = new Schema<IUserMongo>({
   },
   lastPasswordChange: {
     type: Date,
+  },
+  passwordChangeCode: {
+    type: String,
+  },
+  passwordChangeCodeExpire: {
+    type: Date,
+  },
+  passwordChangeVerificationToken: {
+    type: String,
+  },
+  passwordChangeVerificationTokenExpire: {
+    type: Date,
+  },
+  isGoogleUser: {
+    type: Boolean,
+    default: false,
   },
   // Notification için yeni alanlar
   phoneNumber: {

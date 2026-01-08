@@ -21,4 +21,5 @@ export interface UserResponseDTO {
   followingCount?: number;
   isFollowing?: boolean; // Authenticated user için
   background_asset_key?: string; // Profile background asset key (for Magnefite theme)
+  isGoogleUser?: boolean; // Whether user registered with Google
 }
