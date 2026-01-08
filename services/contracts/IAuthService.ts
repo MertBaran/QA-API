@@ -12,6 +12,7 @@ export interface IAuthService {
   }): Promise<IUserModel>;
   loginUser(email: string, password: string): Promise<IUserModel>;
   googleLogin(token: string): Promise<IUserModel>;
+  googleRegister(token: string): Promise<IUserModel>;
   forgotPassword(email: string, locale?: string): Promise<void>;
   resetPassword(token: string, newPassword: string): Promise<void>;
   updateProfileImage(
@@ -39,4 +40,18 @@ export interface IAuthService {
     payload: { id: string; name: string; lang?: string },
     rememberMe?: boolean
   ): string;
+  requestPasswordChange(
+    userId: EntityId,
+    oldPassword: string | undefined,
+    newPassword: string
+  ): Promise<void>;
+  verifyPasswordChangeCode(
+    userId: EntityId,
+    code: string
+  ): Promise<string>; // Returns verification token
+  confirmPasswordChange(
+    userId: EntityId,
+    verificationToken: string,
+    newPassword: string
+  ): Promise<void>;
 }
