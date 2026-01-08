@@ -200,10 +200,6 @@ export class QuestionRepository
           aValue = a.answers.length;
           bValue = b.answers.length;
           break;
-        case 'views':
-          aValue = a.views || 0;
-          bValue = b.views || 0;
-          break;
         default:
           aValue = new Date(a.createdAt).getTime();
           bValue = new Date(b.createdAt).getTime();

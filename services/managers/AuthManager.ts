@@ -197,6 +197,19 @@ export class AuthManager implements IAuthService {
     return user;
   }
 
+  async updateProfileBackground(
+    userId: EntityId,
+    backgroundAssetKey: string | null
+  ): Promise<IUserModel> {
+    const user = await this.userRepository.updateById(userId, {
+      background_asset_key: backgroundAssetKey || undefined,
+    });
+    if (!user) {
+      throw ApplicationError.notFoundError(AuthServiceMessages.UserNotFound.en);
+    }
+    return user;
+  }
+
   async updateProfile(
     userId: EntityId,
     profileData: {

@@ -36,7 +36,7 @@ export interface PresignedAssetUploadResult {
 }
 
 export interface AssetUrlOptions {
-  forcePresignedUrl?: boolean;
+  presignedUrl?: boolean;
   expiresInSeconds?: number;
   download?: boolean;
   responseContentType?: string;

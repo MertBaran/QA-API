@@ -37,6 +37,9 @@ export class UserMongooseDataSource implements IDataSource<IUserModel> {
       phoneNumber: mongoDoc.phoneNumber,
       webhookUrl: mongoDoc.webhookUrl,
       notificationPreferences: mongoDoc.notificationPreferences,
+      following: mongoDoc.following?.map((id: any) => id.toString()),
+      followers: mongoDoc.followers?.map((id: any) => id.toString()),
+      background_asset_key: mongoDoc.background_asset_key,
     };
   }
 

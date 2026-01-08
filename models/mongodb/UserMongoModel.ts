@@ -35,6 +35,11 @@ export interface IUserMongo extends Document {
   };
   // Dil tercihi
   language?: string;
+  // Follow relationships
+  following?: EntityId[];
+  followers?: EntityId[];
+  // Profile background asset (for Magnefite theme)
+  background_asset_key?: string;
   generateJWTFromUser(): string;
   getResetPasswordTokenFromUser(): string;
 }
@@ -119,6 +124,19 @@ const userSchema = new Schema<IUserMongo>({
     type: String,
     enum: SUPPORTED_LANGUAGE_LIST,
     default: DEFAULT_LANGUAGE,
+  },
+  // Follow relationships
+  following: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+  }],
+  followers: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+  }],
+  // Profile background asset (for Magnefite theme)
+  background_asset_key: {
+    type: String,
   },
 });
 
