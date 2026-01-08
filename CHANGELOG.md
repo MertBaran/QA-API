@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.0] - 2026-01-08
+
+### Added
+- Password change feature with email verification (6-digit code, 3-minute expiry)
+- Google registration endpoint separate from Google login
+- Direct notification mode support (bypasses RabbitMQ for email sending)
+- Template notification support for MultiChannelNotificationManager
+- Answer pagination support (5 answers per page)
+- Answer page number endpoint for navigation
+- `isGoogleUser` field to user model and responses
+
+### Fixed
+- Email notification system now works in direct mode without RabbitMQ
+- MultiChannelNotificationManager now supports template-based notifications
+- Profile image and background image loading and resolution
+- Token storage key standardized to `access_token`
+- Asset key structure updated to `type/entityId/filename` format
+
+### Changed
+- `forceLogout` renamed to `logout` for better semantics
+- `forcePresignedUrl` parameter renamed to `presignedUrl` across codebase
+- Improved profile image resolution from Cloudflare keys
+- Enhanced logging for email notification system
+
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
