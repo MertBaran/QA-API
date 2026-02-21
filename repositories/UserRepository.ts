@@ -28,7 +28,7 @@ export class UserRepository
     return user;
   }
 
-  async findByEmailWithPassword(email: string): Promise<IUserModel> {
+  async findByEmailWithPassword(email: string): Promise<IUserModel | null> {
     // Eğer dataSource'da özel metot varsa onu kullan
     if (
       typeof (this.dataSource as any).findByEmailWithPassword === 'function'
@@ -37,12 +37,7 @@ export class UserRepository
     }
     // Uyarı: Bu fallback, password alanı select:false ise undefined dönebilir
     const all = await this.dataSource.findAll();
-    const user = all.find(user => user.email === email);
-    if (!user) {
-      throw ApplicationError.notFoundError(
-        RepositoryConstants.BASE.FIND_BY_FIELD_VALUE_ERROR.en
-      );
-    }
+    const user = all.find(user => user.email === email) ?? null;
     return user;
   }
 
