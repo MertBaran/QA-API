@@ -7,6 +7,7 @@ import { ApplicationState } from './ApplicationState';
 import { InternalWebSocketClient } from './InternalWebSocketClient';
 import { TOKENS } from './TOKENS';
 import { IObjectStorageProvider } from '../infrastructure/storage/IObjectStorageProvider';
+import { IDatabaseAdapter } from '../repositories/adapters/IDatabaseAdapter';
 
 export interface ConnectionStatus {
   service: 'database' | 'cache' | 'queue' | 'email' | 'object-storage';
@@ -63,7 +64,8 @@ export class WebSocketMonitorService {
     @inject('InternalWebSocketClient')
     private internalClient: InternalWebSocketClient,
     @inject(TOKENS.IObjectStorageProvider)
-    private objectStorageProvider: IObjectStorageProvider
+    private objectStorageProvider: IObjectStorageProvider,
+    @inject('IDatabaseAdapter') private databaseAdapter: IDatabaseAdapter
   ) {
     this.initializeStatus();
     // Don't start internal client immediately - wait for app to be ready
@@ -284,7 +286,7 @@ export class WebSocketMonitorService {
 
     const config = this.appState.config;
     const checks = [
-      this.checkDatabaseConnection(config.MONGO_URI),
+      this.checkDatabaseConnection(config),
       // Skip cache check to avoid Redis connection issues
       // this.checkCacheConnection(config),
       this.checkQueueConnection(),
@@ -336,36 +338,62 @@ export class WebSocketMonitorService {
     }
   }
 
-  private async checkDatabaseConnection(mongoUri: string): Promise<void> {
+  private async checkDatabaseConnection(config: { MONGO_URI?: string }): Promise<void> {
     if (this.shouldSkipCheck('database')) {
       return;
     }
 
+    const mongoUri = config.MONGO_URI || '';
+    let host = 'unknown';
+    let database = 'unknown';
     try {
-      // Real MongoDB connection test
-      const mongoose = require('mongoose');
+      if (mongoUri) {
+        const url = new URL(mongoUri);
+        host = url.hostname;
+        database = url.pathname.substring(1) || 'unknown';
+      }
+    } catch {
+      // Invalid URI
+    }
 
-      // Try to ping the database
-      await mongoose.connection.db.admin().ping();
+    try {
+      const isAlive = await this.databaseAdapter.ping();
 
       const previousStatus = this.connectionStatus.get('database');
       const newStatus: ConnectionStatus = {
         service: 'database',
-        status: 'connected',
+        status: isAlive ? 'connected' : 'disconnected',
         lastCheck: new Date(),
         details: {
-          host: new URL(mongoUri).hostname,
-          database: new URL(mongoUri).pathname.substring(1),
-          testResult: 'success',
+          host,
+          database,
+          testResult: isAlive ? 'success' : 'failed',
         },
       };
 
       this.updateConnectionStatus('database', newStatus, previousStatus);
-      this.recordSuccess('database');
+      if (isAlive) {
+        this.recordSuccess('database');
+      } else {
+        this.recordFailure('database');
+      }
+
+      if (!isAlive) {
+        this.broadcast({
+          type: 'alert',
+          data: {
+            type: 'connection_lost',
+            service: 'database',
+            message: 'Database connection lost',
+            timestamp: new Date(),
+            details: 'Ping failed',
+          },
+          timestamp: new Date(),
+        });
+      }
     } catch (error) {
       this.recordFailure('database');
 
-      // Database connection failed - notify clients but don't crash
       const previousStatus = this.connectionStatus.get('database');
       const newStatus: ConnectionStatus = {
         service: 'database',
@@ -373,23 +401,20 @@ export class WebSocketMonitorService {
         lastCheck: new Date(),
         error: error instanceof Error ? error.message : String(error),
         details: {
-          host: mongoUri ? new URL(mongoUri).hostname : 'unknown',
-          database: mongoUri
-            ? new URL(mongoUri).pathname.substring(1)
-            : 'unknown',
+          host,
+          database,
           testResult: 'failed',
         },
       };
 
       this.updateConnectionStatus('database', newStatus, previousStatus);
 
-      // Notify WebSocket clients about database failure
       this.broadcast({
         type: 'alert',
         data: {
           type: 'connection_lost',
           service: 'database',
-          message: 'MongoDB database connection lost',
+          message: 'Database connection lost',
           timestamp: new Date(),
           details: error instanceof Error ? error.message : String(error),
         },
@@ -626,7 +651,7 @@ export class WebSocketMonitorService {
       const config = this.appState.config;
       const notificationPayload = {
         channel: 'email' as const,
-        to: config.ADMIN_EMAIL || 'admin@example.com',
+        to: config.ADMIN_EMAIL,
         subject: `Connection Alert: ${alert.service.toUpperCase()}`,
         message: alert.message,
         data: {
