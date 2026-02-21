@@ -26,6 +26,7 @@ import { UserRepository } from '../repositories/UserRepository';
 import { QuestionRepository } from '../repositories/QuestionRepository';
 import { AnswerRepository } from '../repositories/AnswerRepository';
 import { NotificationRepository } from '../repositories/NotificationRepository';
+import { NotificationMongooseDataSource } from '../repositories/mongodb/NotificationMongooseDataSource';
 import { UserMongooseDataSource } from '../repositories/mongodb/UserMongooseDataSource';
 import { QuestionMongooseDataSource } from '../repositories/mongodb/QuestionMongooseDataSource';
 import { AnswerMongooseDataSource } from '../repositories/mongodb/AnswerMongooseDataSource';
@@ -63,6 +64,8 @@ import { UserRoleMongooseDataSource } from '../repositories/mongodb/UserRoleMong
 import { BookmarkManager } from './managers/BookmarkManager';
 import { BookmarkRepository } from '../repositories/BookmarkRepository';
 import { BookmarkMongooseDataSource } from '../repositories/mongodb/BookmarkMongooseDataSource';
+import { BookmarkCollectionMongooseDataSource } from '../repositories/mongodb/BookmarkCollectionMongooseDataSource';
+import { BookmarkCollectionItemMongooseDataSource } from '../repositories/mongodb/BookmarkCollectionItemMongooseDataSource';
 import { ContentRelationMongooseDataSource } from '../repositories/mongodb/ContentRelationMongooseDataSource';
 import { ContentRelationRepository } from '../repositories/ContentRelationRepository';
 import ContentRelationMongo from '../models/mongodb/ContentRelationMongoModel';
@@ -94,6 +97,16 @@ container.registerSingleton(TOKENS.BootstrapService, BootstrapService);
 export async function initializeContainer() {
   const bootstrapService = container.resolve(BootstrapService);
   const config = await bootstrapService.bootstrap();
+
+  // Update database config with bootstrap value (container default uses process.env)
+  const mongoUri =
+    process.env['MONGO_URI'] ||
+    config.MONGO_URI ||
+    'mongodb://localhost:27017/qa-platform';
+  container.register(TOKENS.IDatabaseConnectionConfig, {
+    useValue: { connectionString: mongoUri },
+  });
+
   return config;
 }
 
@@ -178,8 +191,20 @@ container.registerSingleton(
   BookmarkMongooseDataSource
 );
 container.registerSingleton(
+  TOKENS.IBookmarkCollectionDataSource,
+  BookmarkCollectionMongooseDataSource
+);
+container.registerSingleton(
+  TOKENS.IBookmarkCollectionItemDataSource,
+  BookmarkCollectionItemMongooseDataSource
+);
+container.registerSingleton(
   TOKENS.IContentRelationDataSource,
   ContentRelationMongooseDataSource
+);
+container.registerSingleton(
+  TOKENS.INotificationDataSource,
+  NotificationMongooseDataSource
 );
 
 // Register repositories
@@ -279,8 +304,12 @@ container.register(TOKENS.INotificationTemplateModel, {
 
 // Register typed configuration
 container.register(TOKENS.AppConfig, { useValue: null });
+// Use process.env so test setup (which loads dotenv before this) provides MONGO_URI
 container.register(TOKENS.IDatabaseConnectionConfig, {
-  useValue: { connectionString: '' },
+  useValue: {
+    connectionString:
+      process.env['MONGO_URI'] || 'mongodb://localhost:27017/qa-platform',
+  },
 });
 container.register(TOKENS.ICacheConnectionConfig, {
   useValue: { host: '', port: 0, url: '' },

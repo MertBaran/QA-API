@@ -79,9 +79,11 @@ export class ApplicationSetup {
       // Set application state
       this.appState.setReady(config);
 
-      // Configure database connection
+      // Configure database connection (prefer process.env for test - config can diverge)
+      const mongoUri =
+        process.env['MONGO_URI'] || config.MONGO_URI || 'mongodb://localhost:27017/test';
       const databaseConfig = {
-        connectionString: config.MONGO_URI,
+        connectionString: mongoUri,
       };
       container.register('IDatabaseConnectionConfig', {
         useValue: databaseConfig,
@@ -100,7 +102,7 @@ export class ApplicationSetup {
       // Connect to database - CRITICAL: Exit if database connection fails
       console.log('🔌 Attempting to connect to database...');
       console.log(
-        `📡 Database URI: ${config.MONGO_URI.replace(/\/\/.*@/, '//***:***@')}`
+        `📡 Database URI: ${mongoUri.replace(/\/\/.*@/, '//***:***@')}`
       ); // Hide credentials
 
       let databaseAdapter: any = null;
@@ -167,7 +169,7 @@ export class ApplicationSetup {
         });
         console.error(
           '\x1b[31m🔍 Connection string:\x1b[0m',
-          config.MONGO_URI.replace(/\/\/.*@/, '//***:***@')
+          mongoUri.replace(/\/\/.*@/, '//***:***@')
         );
         console.error('');
         console.error(
