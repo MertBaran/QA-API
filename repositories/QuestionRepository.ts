@@ -194,6 +194,17 @@ export class QuestionRepository
       filtered = filtered.filter(q => q.category === filters.category);
     }
 
+    if ((filters as any).savedIds) {
+      const ids = (filters as any).savedIds
+        .split(',')
+        .map((id: string) => id.trim())
+        .filter(Boolean);
+      if (ids.length > 0) {
+        const idSet = new Set(ids);
+        filtered = filtered.filter(q => idSet.has(q._id));
+      }
+    }
+
     // Sort
     filtered.sort((a, b) => {
       let aValue: any, bValue: any;

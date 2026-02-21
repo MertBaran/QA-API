@@ -205,7 +205,7 @@ export class QuestionMongooseDataSource implements IDataSource<IQuestionModel> {
   async findPaginated(
     filters: PaginationQueryDTO
   ): Promise<PaginatedResponse<IQuestionModel>> {
-    const { page, limit, sortBy, sortOrder, search, category, tags } = filters;
+    const { page, limit, sortBy, sortOrder, search, category, tags, savedIds } = filters;
 
     // Build query
     const query: any = {};
@@ -223,6 +223,13 @@ export class QuestionMongooseDataSource implements IDataSource<IQuestionModel> {
 
     if (tags) {
       query.tags = { $in: tags.split(',').map((tag: string) => tag.trim()) };
+    }
+
+    if (savedIds && savedIds.trim()) {
+      const ids = savedIds.split(',').map((id: string) => id.trim()).filter(Boolean);
+      if (ids.length > 0) {
+        query._id = { $in: ids };
+      }
     }
 
     // Build sort

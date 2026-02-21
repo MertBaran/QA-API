@@ -19,6 +19,7 @@ export const PaginationQuerySchema = z.object({
   search: z.string().optional(),
   category: z.string().optional(),
   tags: z.string().optional(),
+  savedIds: z.string().optional(), // Comma-separated question IDs (for bookmarked/saved filter)
 });
 
 export type PaginationQueryDTO = z.infer<typeof PaginationQuerySchema>;
