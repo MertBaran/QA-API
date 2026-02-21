@@ -58,10 +58,16 @@ export interface ElasticsearchConnectionConfig {
   enabled: boolean;
 }
 
+export enum DatabaseType {
+  MongoDB = 'mongodb',
+  PostgreSQL = 'postgresql',
+}
+
 export interface IConfigurationService {
   getConfig(): EnvironmentConfig;
   getEnvironment(): string;
   getDatabaseConnectionConfig(): DatabaseConnectionConfig;
+  getDatabaseType(): DatabaseType;
   getCacheConnectionConfig(): CacheConnectionConfig;
   getExceptionTrackingConfig(): EnvironmentConfig['exceptionTracking'];
   getFileLoggingConfig(): EnvironmentConfig['fileLogging'];

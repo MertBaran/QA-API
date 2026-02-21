@@ -13,6 +13,11 @@ export type EnvironmentType = keyof typeof ENVIRONMENT_CONFIG_MAP;
 // Configuration schemas
 export const DatabaseConfigSchema = z.object({
   MONGO_URI: z.string().url('Invalid MongoDB URI'),
+  /** Database type for future PostgreSQL support. Default: 'mongodb' */
+  DATABASE_TYPE: z
+    .enum(['mongodb', 'postgresql'])
+    .optional()
+    .default('mongodb'),
 });
 
 export const CacheConfigSchema = z.object({

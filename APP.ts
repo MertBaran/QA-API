@@ -1,5 +1,22 @@
 import 'reflect-metadata';
 
+// CRITICAL: Config dosyasını container'dan ÖNCE yükle - yoksa container
+// default qa-platform ile kayıt yapar ve yanlış DB'ye bağlanır
+import dotenv from 'dotenv';
+import path from 'path';
+
+const nodeEnv = process.env['NODE_ENV'] || 'development';
+const configFile =
+  nodeEnv === 'production'
+    ? 'config.env.prod'
+    : nodeEnv === 'test'
+      ? 'config.env.test'
+      : 'config.env.dev';
+dotenv.config({
+  path: path.resolve(process.cwd(), `./config/env/${configFile}`),
+  override: true,
+});
+
 import { ApplicationSetup } from './services/ApplicationSetup';
 import { ApplicationState } from './services/ApplicationState';
 import { container } from './services/container';

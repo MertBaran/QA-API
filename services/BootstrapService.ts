@@ -125,8 +125,8 @@ export class BootstrapService {
 
   private loadAndValidateConfig(configPath: string): ValidationResult {
     try {
-      // Load environment variables from file
-      const result = dotenv.config({ path: configPath });
+      // override: true - config.env.{dev|test|prod} her zaman kazansın (shell/.env'deki değerleri ez)
+      const result = dotenv.config({ path: configPath, override: true });
 
       if (result.error) {
         return {

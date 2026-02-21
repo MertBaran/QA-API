@@ -79,7 +79,8 @@ export class EnvironmentProvider implements IEnvironmentProvider {
       return;
     }
 
-    const result = dotenv.config({ path: configPath });
+    // override: true - config dosyası env değişkenlerini her zaman ezsin
+    const result = dotenv.config({ path: configPath, override: true });
 
     if (result.error) {
       console.error(`❌ Error loading config file: ${result.error.message}`);
