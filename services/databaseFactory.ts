@@ -1,16 +1,14 @@
 import { IDatabaseAdapter } from '../repositories/adapters/IDatabaseAdapter';
-
+import { DatabaseType } from './contracts/IConfigurationService';
 import { PostgreSQLAdapter } from '../repositories/adapters/PostgreSQLAdapter';
 import { container } from 'tsyringe';
-
-export type DatabaseType = 'mongodb' | 'postgresql';
 
 export class DatabaseFactory {
   static createDatabase(type: DatabaseType): IDatabaseAdapter {
     switch (type) {
-      case 'mongodb':
+      case DatabaseType.MongoDB:
         return container.resolve<IDatabaseAdapter>('DatabaseAdapter');
-      case 'postgresql':
+      case DatabaseType.PostgreSQL:
         return new PostgreSQLAdapter();
       default:
         throw new Error(`Unsupported database type: ${type}`);

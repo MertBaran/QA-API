@@ -56,6 +56,11 @@ export class PostgreSQLAdapter implements IDatabaseAdapter {
     return this.isConnectedFlag;
   }
 
+  async ping(): Promise<boolean> {
+    // TODO: Implement real pg ping when PostgreSQL connection is added
+    return this.isConnectedFlag;
+  }
+
   getIdAdapter(): PostgreSQLIdAdapter {
     return this.idAdapter;
   }
