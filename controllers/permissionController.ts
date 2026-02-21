@@ -50,9 +50,15 @@ export class PermissionController {
 
       // Kullanıcının var olup olmadığını kontrol et
       const user = await this.userService.findById(userId);
+      if (!user) {
+        throw ApplicationError.notFoundError('User not found');
+      }
 
       // Role'ün var olup olmadığını kontrol et
       const role = await this.roleService.findById(roleId);
+      if (!role) {
+        throw ApplicationError.notFoundError('Role not found');
+      }
 
       // Role'ün aktif olup olmadığını kontrol et
       if (!role.isActive) {
@@ -115,7 +121,13 @@ export class PermissionController {
       const { userId, roleId } = req.body;
       // Kullanıcı ve role'ü bul
       const user = await this.userService.findById(userId);
+      if (!user) {
+        throw ApplicationError.notFoundError('User not found');
+      }
       const role = await this.roleService.findById(roleId);
+      if (!role) {
+        throw ApplicationError.notFoundError('Role not found');
+      }
       // Kullanıcıdan role'ü kaldır
       const removedUserRole = await this.userRoleService.removeRoleFromUser(
         user._id,
@@ -146,6 +158,9 @@ export class PermissionController {
 
       // Kullanıcının var olup olmadığını kontrol et
       const user = await this.userService.findById(userId);
+      if (!user) {
+        throw ApplicationError.notFoundError('User not found');
+      }
 
       // Kullanıcının tüm role'lerini al
       const userRoles = await this.userRoleService.getUserRoles(user._id);

@@ -42,11 +42,12 @@ async function getUserPermissions(userId: string): Promise<string[]> {
     roles.forEach(role => {
       if (role && role.isActive && role.permissions) {
         role.permissions.forEach((permission: any) => {
-          // Permission string ise direkt ekle, obje ise _id'sini al
           if (typeof permission === 'string') {
             permissionIds.push(permission);
           } else if (permission && permission._id) {
             permissionIds.push(permission._id.toString());
+          } else if (permission && typeof permission.toString === 'function') {
+            permissionIds.push(permission.toString()); // ObjectId
           }
         });
       }
