@@ -79,8 +79,15 @@ export class QuestionRepository
         400
       );
     }
+    // Remove from dislikes if exists (switching from dislike to like)
+    if (question.dislikes.includes(userId)) {
+      question.dislikes = question.dislikes.filter(dislike => dislike !== userId);
+    }
     question.likes.push(userId);
-    return this.updateById(questionId, { likes: question.likes });
+    return this.updateById(questionId, {
+      likes: question.likes,
+      dislikes: question.dislikes,
+    });
   }
 
   async unlikeQuestion(
