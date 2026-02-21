@@ -31,8 +31,8 @@ describe('RabbitMQProvider', () => {
   let rabbitMQProvider: RabbitMQProvider;
 
   beforeEach(() => {
-    rabbitMQProvider = new RabbitMQProvider(mockLogger);
     jest.clearAllMocks();
+    rabbitMQProvider = new RabbitMQProvider(mockLogger);
   });
 
   describe('Connection Management', () => {
@@ -57,11 +57,8 @@ describe('RabbitMQProvider', () => {
         close: jest.fn(),
       };
 
+      (amqp.connect as jest.Mock).mockClear();
       (amqp.connect as jest.Mock).mockResolvedValue(mockConnection);
-
-      // Mock the logger calls
-      mockLogger.info = jest.fn();
-      mockLogger.error = jest.fn();
 
       await rabbitMQProvider.connect();
 
@@ -72,14 +69,10 @@ describe('RabbitMQProvider', () => {
     });
 
     it('should handle connection errors', async () => {
-      (amqp.connect as jest.Mock).mockRejectedValue(new Error('Connection failed'));
+      const connError = new Error('Connection failed');
+      (amqp.connect as jest.Mock).mockRejectedValue(connError);
 
-      try {
-        await rabbitMQProvider.connect();
-      } catch (_error: any) {
-        expect(_error.message).toBe('Connection failed');
-      }
-      // Some implementations may choose to log or rethrow; asserting thrown error is sufficient
+      await expect(rabbitMQProvider.connect()).rejects.toThrow();
     });
 
     it('should disconnect successfully', async () => {

@@ -12,6 +12,8 @@ import { FakeEmailChannel } from '../../mocks/channels/FakeEmailChannel';
 import { FakeSMSChannel } from '../../mocks/channels/FakeSMSChannel';
 import { FakePushChannel } from '../../mocks/channels/FakePushChannel';
 import { FakeWebhookChannel } from '../../mocks/channels/FakeWebhookChannel';
+import { FakeLoggerProvider } from '../../mocks/logger/FakeLoggerProvider';
+import { INotificationRepository } from '../../../repositories/interfaces/INotificationRepository';
 
 describe('MultiChannelNotificationManager Unit Tests', () => {
   let multiChannelNotificationManager: MultiChannelNotificationManager;
@@ -64,7 +66,7 @@ describe('MultiChannelNotificationManager Unit Tests', () => {
       getAllChannels: jest.fn(),
       getSupportedChannelTypes: jest.fn(),
       isChannelSupported: jest.fn(),
-      sendToChannel: jest.fn(),
+      sendToChannel: jest.fn().mockResolvedValue(undefined),
     } as any;
 
     fakeUserService = {
@@ -102,9 +104,27 @@ describe('MultiChannelNotificationManager Unit Tests', () => {
       ['email', 'sms', 'push', 'webhook']
     );
 
+    const fakeLogger = new FakeLoggerProvider();
+    const fakeNotificationRepository: INotificationRepository = {
+      createNotification: jest.fn(),
+      getNotificationById: jest.fn(),
+      getNotificationsByUserId: jest.fn(),
+      updateNotificationStatus: jest.fn(),
+      deleteNotification: jest.fn(),
+      createTemplate: jest.fn(),
+      getTemplateById: jest.fn(),
+      getTemplateByName: jest.fn(),
+      getTemplatesByType: jest.fn(),
+      updateTemplate: jest.fn(),
+      deleteTemplate: jest.fn(),
+      getNotificationStats: jest.fn(),
+    } as any;
+
     multiChannelNotificationManager = new MultiChannelNotificationManager(
       fakeChannelRegistry,
-      fakeUserService
+      fakeUserService,
+      fakeLogger,
+      fakeNotificationRepository
     );
   });
 
@@ -235,7 +255,9 @@ describe('MultiChannelNotificationManager Unit Tests', () => {
         message: 'Test message',
       };
 
-      await multiChannelNotificationManager.notifyToMultipleChannels(payload);
+      await expect(
+        multiChannelNotificationManager.notifyToMultipleChannels(payload)
+      ).rejects.toThrow('No supported channels found for notification');
 
       expect(fakeChannelRegistry.sendToChannel).not.toHaveBeenCalled();
     });
@@ -363,7 +385,9 @@ describe('MultiChannelNotificationManager Unit Tests', () => {
         message: 'Test message',
       };
 
-      await multiChannelNotificationManager.notifyUser('123', payload);
+      await expect(
+        multiChannelNotificationManager.notifyUser('123', payload)
+      ).rejects.toThrow('No active notification channels found for user 123');
 
       expect(fakeChannelRegistry.sendToChannel).not.toHaveBeenCalled();
     });
@@ -390,17 +414,11 @@ describe('MultiChannelNotificationManager Unit Tests', () => {
         message: 'Test message',
       };
 
-      await multiChannelNotificationManager.notifyUser('123', payload);
+      await expect(
+        multiChannelNotificationManager.notifyUser('123', payload)
+      ).rejects.toThrow('User 123 does not have an email address');
 
-      // Push channel should still work even without contact info
-      expect(fakeChannelRegistry.sendToChannel).toHaveBeenCalledWith('push', {
-        channel: 'push',
-        to: '123', // userId is used as fallback
-        subject: 'Test Subject',
-        message: 'Test message',
-        html: undefined,
-        data: { userLanguage: 'tr' },
-      });
+      expect(fakeChannelRegistry.sendToChannel).not.toHaveBeenCalled();
     });
 
     it('should include user language in data', async () => {

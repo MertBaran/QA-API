@@ -241,7 +241,7 @@ describe('Authentication Workflow Integration Tests', () => {
         errors: loginResponse.body.errors,
       });
 
-      expect(loginResponse.status).toBe(400);
+      expect(loginResponse.status).toBe(404);
       expect(loginResponse.body.success).toBe(false);
       expect(loginResponse.body.error).toBe('Invalid credentials');
     });

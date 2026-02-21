@@ -186,9 +186,10 @@ describe('Answer Workflow Integration Tests', () => {
 
       expect(getAllResponse.status).toBe(200);
       expect(getAllResponse.body.success).toBe(true);
-      expect(getAllResponse.body.data.length).toBeGreaterThanOrEqual(
-        answers.length
-      );
+      const answerList = Array.isArray(getAllResponse.body.data)
+        ? getAllResponse.body.data
+        : getAllResponse.body.data?.data ?? [];
+      expect(answerList.length).toBeGreaterThanOrEqual(answers.length);
 
       // Clean up - delete created answers
       for (const answer of createdAnswers) {
@@ -349,11 +350,13 @@ describe('Answer Workflow Integration Tests', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(Array.isArray(response.body.data)).toBe(true);
-      expect(response.body.data.length).toBeGreaterThanOrEqual(answers.length);
+      const answerList = Array.isArray(response.body.data)
+        ? response.body.data
+        : response.body.data?.data ?? [];
+      expect(answerList.length).toBeGreaterThanOrEqual(answers.length);
 
       // Clean up
-      for (const answer of response.body.data) {
+      for (const answer of answerList) {
         await request(testApp)
           .delete(`/api/questions/${questionId}/answers/${answer._id}/delete`)
           .set('Authorization', `Bearer ${authToken}`);
