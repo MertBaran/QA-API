@@ -11,6 +11,7 @@ import { ElasticsearchIndexService } from '../../../../infrastructure/elasticsea
 import { IConfigurationService } from '../../../../services/contracts/IConfigurationService';
 import { ElasticsearchIngestPipeline } from '../../../../infrastructure/elasticsearch/ElasticsearchIngestPipeline';
 import { QuestionProjector } from '../../../../infrastructure/search/projectors/QuestionProjector';
+import { AnswerProjector } from '../../../../infrastructure/search/projectors/AnswerProjector';
 import { ElasticsearchSyncService } from '../../../../infrastructure/elasticsearch/ElasticsearchSyncService';
 import { ContentType } from '../../../../types/content/RelationType';
 import { QuestionSearchDoc } from '../../../../infrastructure/search/SearchDocument';
@@ -65,6 +66,7 @@ describe('QuestionManager.searchQuestions()', () => {
     );
 
     questionProjector = new QuestionProjector();
+    const answerProjector = new AnswerProjector();
     indexClient = new ElasticsearchSyncService(
       searchService,
       fakeConfigService,
@@ -81,6 +83,7 @@ describe('QuestionManager.searchQuestions()', () => {
       indexClient,
       searchService,
       questionProjector,
+      answerProjector,
       {} as any, // IContentAssetService
       fakeLogger
     );

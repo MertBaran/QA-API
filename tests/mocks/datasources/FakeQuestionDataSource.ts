@@ -15,6 +15,7 @@ export class FakeQuestionDataSource implements IDataSource<IQuestionModel> {
       tags: data.tags || ['test'],
       category: data.category || 'general',
       likes: data.likes || [],
+      dislikes: (data as any).dislikes || [],
       answers: data.answers || [],
       views: data.views || 0,
       createdAt: data.createdAt || new Date(),

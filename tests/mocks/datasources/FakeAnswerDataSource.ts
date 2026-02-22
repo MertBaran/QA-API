@@ -15,6 +15,7 @@ export class FakeAnswerDataSource implements IDataSource<IAnswerModel> {
           question: data.question || 'question1',
           user: data.user || 'user1',
           likes: data.likes || [],
+          dislikes: (data as any).dislikes || [],
           createdAt: data.createdAt || new Date(),
         };
         this.answers.push(answer);

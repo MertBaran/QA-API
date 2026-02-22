@@ -1,4 +1,4 @@
-import express, { Router } from 'express';
+import express, { Router, Request, Response, NextFunction } from 'express';
 import { container } from 'tsyringe';
 import { AuthController } from '../controllers/authController';
 import { IValidationProvider } from '../infrastructure/validation/IValidationProvider';
@@ -27,16 +27,24 @@ try {
 
 import { TOKENS } from '../services/TOKENS';
 
-const authController = new AuthController(
-  container.resolve('IAuthService'),
-  container.resolve('IUserService'),
-  container.resolve('IUserRoleService'),
-  container.resolve('IRoleService'),
-  container.resolve('IPermissionService'),
-  container.resolve(TOKENS.IContentAssetService),
-  loggerProvider,
-  container.resolve('IExceptionTracker')
-);
+// Lazy resolve: initializeContainer (PostgreSQL/MongoDB seçimi) ilk request'ten ÖNCE çalışır,
+// böylece doğru datasource resolve edilir
+let _authController: AuthController;
+function getAuthController(): AuthController {
+  if (!_authController) {
+    _authController = new AuthController(
+      container.resolve('IAuthService'),
+      container.resolve('IUserService'),
+      container.resolve('IUserRoleService'),
+      container.resolve('IRoleService'),
+      container.resolve('IPermissionService'),
+      container.resolve(TOKENS.IContentAssetService),
+      loggerProvider,
+      container.resolve('IExceptionTracker')
+    );
+  }
+  return _authController;
+}
 const validator = container.resolve<IValidationProvider>('IValidationProvider');
 const auditMiddleware = new AuditMiddleware(
   container.resolve('IAuditProvider')
@@ -46,79 +54,79 @@ router.post(
   '/register',
   validator.validateBody(registerSchema),
   auditMiddleware.createMiddleware('USER_CREATE'),
-  authController.register
+  (req: Request, res: Response, next: NextFunction) => getAuthController().register(req, res, next)
 );
 router.post(
   '/login',
   validator.validateBody(loginSchema),
   auditMiddleware.createMiddleware('USER_LOGIN'),
-  authController.login
+  (req: Request, res: Response, next: NextFunction) => getAuthController().login(req, res, next)
 );
-router.get('/logout', authController.logout);
+router.get('/logout', (req: Request, res: Response, next: NextFunction) => getAuthController().logout(req, res, next));
 router.post(
   '/forgotpassword',
   validator.validateBody(forgotPasswordSchema),
-  authController.forgotpassword
+  (req: Request, res: Response, next: NextFunction) => getAuthController().forgotpassword(req, res, next)
 );
 router.put(
   '/resetpassword',
   validator.validateBody(resetPasswordSchema),
   auditMiddleware.createMiddleware('PASSWORD_UPDATE'),
-  authController.resetPassword
+  (req: Request, res: Response, next: NextFunction) => getAuthController().resetPassword(req, res, next)
 );
-router.get('/profile', getAccessToRoute, authController.getUser);
+router.get('/profile', getAccessToRoute, (req: Request, res: Response, next: NextFunction) => getAuthController().getUser(req, res, next));
 router.put(
   '/edit',
   getAccessToRoute,
   validator.validateBody(editProfileSchema),
   auditMiddleware.createMiddleware('PROFILE_UPDATE'),
-  authController.editProfile
+  (req: Request, res: Response, next: NextFunction) => getAuthController().editProfile(req, res, next)
 );
 router.post(
   '/upload',
   [getAccessToRoute, profileImageUpload.single('profile_image')],
-  authController.imageUpload
+  (req: Request, res: Response, next: NextFunction) => getAuthController().imageUpload(req, res, next)
 );
 router.put(
   '/background',
   getAccessToRoute,
-  authController.updateProfileBackground
+  (req: Request, res: Response, next: NextFunction) => getAuthController().updateProfileBackground(req, res, next)
 );
 router.put(
   '/profile-image',
   getAccessToRoute,
-  authController.updateProfileImage
+  (req: Request, res: Response, next: NextFunction) => getAuthController().updateProfileImage(req, res, next)
 );
-router.post('/loginGoogle', authController.googleLogin);
-router.post('/registerGoogle', authController.googleRegister);
+router.post('/loginGoogle', (req: Request, res: Response, next: NextFunction) => getAuthController().googleLogin(req, res, next));
+router.post('/registerGoogle', (req: Request, res: Response, next: NextFunction) => getAuthController().googleRegister(req, res, next));
 router.post(
   '/change-password/request',
   getAccessToRoute,
   validator.validateBody(requestPasswordChangeSchema),
   auditMiddleware.createMiddleware('PASSWORD_CHANGE_REQUEST'),
-  authController.requestPasswordChange
+  (req: Request, res: Response, next: NextFunction) => getAuthController().requestPasswordChange(req, res, next)
 );
 router.post(
   '/change-password/verify',
   getAccessToRoute,
   validator.validateBody(verifyPasswordChangeCodeSchema),
-  authController.verifyPasswordChangeCode
+  (req: Request, res: Response, next: NextFunction) => getAuthController().verifyPasswordChangeCode(req, res, next)
 );
 router.post(
   '/change-password/confirm',
   getAccessToRoute,
   validator.validateBody(confirmPasswordChangeSchema),
   auditMiddleware.createMiddleware('PASSWORD_UPDATE'),
-  authController.confirmPasswordChange
+  (req: Request, res: Response, next: NextFunction) => getAuthController().confirmPasswordChange(req, res, next)
 );
 
-router.get('/test-error', authController.testError);
+router.get('/test-error', (req: Request, res: Response, next: NextFunction) => getAuthController().testError(req, res, next));
 
 // Admin permission check endpoint'i
 router.get(
   '/check-admin-permissions',
   getAccessToRoute,
-  authController.checkAdminPermissions
+  (req: Request, res: Response, next: NextFunction) => getAuthController().checkAdminPermissions(req, res, next)
 );
 
 export default router;

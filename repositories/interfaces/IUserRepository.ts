@@ -4,7 +4,7 @@ import { IRepository } from './IRepository';
 
 export interface IUserRepository extends IRepository<IUserModel> {
   findByEmail(email: string): Promise<IUserModel>;
-  findByEmailWithPassword(email: string): Promise<IUserModel>;
+  findByEmailWithPassword(email: string): Promise<IUserModel | null>;
   findByResetToken(token: string): Promise<IUserModel>;
   updateResetToken(
     userId: EntityId,

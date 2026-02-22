@@ -1,14 +1,15 @@
-import { injectable } from 'tsyringe';
+import { injectable, inject } from 'tsyringe';
 import { NotificationChannel } from '../contracts/NotificationChannel';
 import { NotificationPayload } from '../contracts/NotificationPayload';
 import { ILoggerProvider } from '../../infrastructure/logging/ILoggerProvider';
+import { TOKENS } from '../TOKENS';
 
 @injectable()
 export class WebhookChannel extends NotificationChannel {
   readonly type = 'webhook';
   private logger: ILoggerProvider;
 
-  constructor(logger: ILoggerProvider) {
+  constructor(@inject(TOKENS.ILoggerProvider) logger: ILoggerProvider) {
     super();
     this.logger = logger;
   }

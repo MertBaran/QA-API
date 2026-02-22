@@ -2,9 +2,11 @@ import { ISeedStrategy } from '../interfaces/ISeedStrategy';
 import { IDatabaseAdapter } from '../../repositories/adapters/IDatabaseAdapter';
 import { PostgreSQLAdapter } from '../../repositories/adapters/PostgreSQLAdapter';
 import { PermissionSeed } from '../seeds/postgresql/PermissionSeed';
+import { RoleSeed } from '../seeds/postgresql/RoleSeed';
+import { NotificationTemplateSeed } from '../seeds/postgresql/NotificationTemplateSeed';
 
 export class PostgreSQLSeedStrategy implements ISeedStrategy {
-  private seeds = [new PermissionSeed()];
+  private seeds = [new PermissionSeed(), new RoleSeed(), new NotificationTemplateSeed()];
 
   async runSeeds(databaseAdapter: IDatabaseAdapter): Promise<void> {
     if (!(databaseAdapter instanceof PostgreSQLAdapter)) {

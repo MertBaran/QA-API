@@ -7,6 +7,7 @@ export default {
   transform: {
     '^.+\\.ts$': 'ts-jest',
   },
+  setupFiles: ['<rootDir>/tests/jest.env.ts'],
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
   testTimeout: 60000, // Increased to 60 seconds
   verbose: true,

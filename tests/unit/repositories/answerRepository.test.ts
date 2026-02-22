@@ -49,7 +49,8 @@ describe('AnswerRepository Unit Tests', () => {
     });
     const deleted = await answerRepository.deleteById(answer._id);
     expect(deleted).toBeDefined();
-    const found = await answerRepository.findById(answer._id);
-    expect(found).toBeNull();
+    await expect(answerRepository.findById(answer._id)).rejects.toThrow(
+      'Resource not found'
+    );
   });
 });

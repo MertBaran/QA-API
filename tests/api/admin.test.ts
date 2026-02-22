@@ -1,47 +1,32 @@
 import 'reflect-metadata';
 import request from 'supertest';
-import mongoose from 'mongoose';
-import app from '../../APP';
+import { randomUUID } from 'crypto';
+import { testApp } from '../setup';
 
 import '../setup';
 import { registerTestUserAPI, loginTestUserAPI } from '../utils/testUtils';
-// import User from '../../models/User'; // Artık kullanılmıyor
 
-// Remove all repository imports and instantiations
-
-// Yardımcı fonksiyon: Mesajları normalize et
-function normalizeMsg(msg: string | undefined) {
-  return (msg || '').toLowerCase().replace(/[-/]/g, '').replace(/\s+/g, '');
+function uid(u: any): string {
+  return u?.id ?? u?._id;
 }
 
-// Test helper: ensure admin role and permission
-async function ensureAdminPermissionAssigned() {
-  const RoleMongo = require('../../models/mongodb/RoleMongoModel').default;
-  const PermissionMongo = require('../../models/mongodb/PermissionMongoModel').default;
-  const adminRole = await RoleMongo.findOne({ name: 'admin' });
-  if (!adminRole) return;
-  const adminPerm = await PermissionMongo.findOneAndUpdate(
-    { name: 'system:admin' },
-    {
-      name: 'system:admin',
-      description: 'Admin permission',
-      resource: 'system',
-      action: 'admin',
-      category: 'system',
-      isActive: true,
-    },
-    { upsert: true, new: true }
-  );
-  const hasPerm = (adminRole.permissions || []).some(
-    (p: any) => p?.toString?.() === adminPerm._id.toString()
-  );
-  if (!hasPerm) {
-    adminRole.permissions = [...(adminRole.permissions || []), adminPerm._id];
-    await adminRole.save();
-  }
+function fakeUserId(): string {
+  return process.env['DATABASE_TYPE'] === 'postgresql' ? randomUUID() : require('mongoose').Types.ObjectId().toString();
 }
 
 async function assignAdminRoleToUser(userId: string) {
+  const dbType = process.env['DATABASE_TYPE'] || 'mongodb';
+  if (dbType === 'postgresql') {
+    const prisma = require('../../repositories/postgresql/PrismaClientSingleton').getPrismaClient();
+    const adminRole = await prisma.role.findUnique({ where: { name: 'admin' } });
+    if (!adminRole) return;
+    await prisma.userRole.upsert({
+      where: { userId_roleId: { userId, roleId: adminRole.id } },
+      create: { userId, roleId: adminRole.id },
+      update: {},
+    });
+    return;
+  }
   const RoleMongo = require('../../models/mongodb/RoleMongoModel').default;
   const UserRoleMongo = require('../../models/mongodb/UserRoleMongoModel').default;
   const adminRole = await RoleMongo.findOne({ name: 'admin' });
@@ -71,9 +56,7 @@ describe('Admin API Tests', () => {
       password: adminPassword,
     });
 
-    // Ensure admin permission and role
-    await ensureAdminPermissionAssigned();
-    await assignAdminRoleToUser(adminLogin.user._id);
+    await assignAdminRoleToUser(uid(adminLogin.user));
 
     adminToken = adminLogin.token;
     // Create regular user via utility
@@ -92,8 +75,8 @@ describe('Admin API Tests', () => {
 
   describe('GET /api/admin/block/:id', () => {
     it('should block a user', async () => {
-      const response = await request(app)
-        .patch(`/api/admin/users/${regularUser._id}/block`)
+      const response = await request(testApp)
+        .patch(`/api/admin/users/${uid(regularUser)}/block`)
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ blocked: true });
 
@@ -101,25 +84,25 @@ describe('Admin API Tests', () => {
       expect(response.body.success).toBe(true);
 
       // Verify user is blocked via API
-      const listResp1 = await request(app)
+      const listResp1 = await request(testApp)
         .get('/api/admin/users')
         .set('Authorization', `Bearer ${adminToken}`);
       expect(listResp1.status).toBe(200);
       const allUsers1 =
         listResp1.body?.data?.users ?? listResp1.body?.data ?? [];
-      const found1 = allUsers1.find((u: any) => u._id === regularUser._id);
+      const found1 = allUsers1.find((u: any) => (u.id ?? u._id) === uid(regularUser));
       expect(found1?.blocked ?? true).toBe(true);
     });
 
     it('should unblock a blocked user', async () => {
       // First block the user
-      await request(app)
-        .patch(`/api/admin/users/${regularUser._id}/block`)
+      await request(testApp)
+        .patch(`/api/admin/users/${uid(regularUser)}/block`)
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ blocked: true });
 
-      const response = await request(app)
-        .patch(`/api/admin/users/${regularUser._id}/block`)
+      const response = await request(testApp)
+        .patch(`/api/admin/users/${uid(regularUser)}/block`)
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ blocked: false });
 
@@ -127,19 +110,19 @@ describe('Admin API Tests', () => {
       expect(response.body.success).toBe(true);
 
       // Verify user is unblocked via API
-      const listResp2 = await request(app)
+      const listResp2 = await request(testApp)
         .get('/api/admin/users')
         .set('Authorization', `Bearer ${adminToken}`);
       expect(listResp2.status).toBe(200);
       const allUsers2 =
         listResp2.body?.data?.users ?? listResp2.body?.data ?? [];
-      const found2 = allUsers2.find((u: any) => u._id === regularUser._id);
+      const found2 = allUsers2.find((u: any) => (u.id ?? u._id) === uid(regularUser));
       expect(found2?.blocked ?? false).toBe(false);
     });
 
     it('should require authentication', async () => {
-      const response = await request(app)
-        .patch(`/api/admin/users/${regularUser._id}/block`)
+      const response = await request(testApp)
+        .patch(`/api/admin/users/${uid(regularUser)}/block`)
         .send({ blocked: true });
 
       expect(response.status).toBe(401);
@@ -150,11 +133,11 @@ describe('Admin API Tests', () => {
       const otherUser = await registerTestUserAPI({ role: 'user' });
       const otherLogin = await loginTestUserAPI({
         email: otherUser.email,
-        password: 'password123',
+        password: 'Password1!',
       });
 
-      const response = await request(app)
-        .patch(`/api/admin/users/${regularUser._id}/block`)
+      const response = await request(testApp)
+        .patch(`/api/admin/users/${uid(regularUser)}/block`)
         .set('Authorization', `Bearer ${otherLogin.token}`)
         .send({ blocked: true });
 
@@ -162,10 +145,8 @@ describe('Admin API Tests', () => {
     });
 
     it('should return 404 for non-existent user', async () => {
-      const fakeUserId = new mongoose.Types.ObjectId();
-
-      const response = await request(app)
-        .patch(`/api/admin/users/${fakeUserId}/block`)
+      const response = await request(testApp)
+        .patch(`/api/admin/users/${fakeUserId()}/block`)
         .set('Authorization', `Bearer ${adminToken}`)
         .send({ blocked: true });
 
@@ -175,23 +156,23 @@ describe('Admin API Tests', () => {
 
   describe('DELETE /api/admin/user/:id', () => {
     it('should delete a user', async () => {
-      const response = await request(app)
-        .delete(`/api/admin/users/${regularUser._id}`)
+      const response = await request(testApp)
+        .delete(`/api/admin/users/${uid(regularUser)}`)
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
 
       // Verify user is deleted via API
-      const deletedUserResponse = await request(app)
-        .get(`/api/users/${regularUser._id}`)
+      const deletedUserResponse = await request(testApp)
+        .get(`/api/users/${uid(regularUser)}`)
         .set('Authorization', `Bearer ${adminToken}`);
       expect(deletedUserResponse.status).toBe(404);
     });
 
     it('should require authentication', async () => {
-      const response = await request(app)
-        .delete(`/api/admin/users/${regularUser._id}`);
+      const response = await request(testApp)
+        .delete(`/api/admin/users/${uid(regularUser)}`);
 
       expect(response.status).toBe(401);
     });
@@ -201,21 +182,19 @@ describe('Admin API Tests', () => {
       const otherUser = await registerTestUserAPI({ role: 'user' });
       const otherLogin = await loginTestUserAPI({
         email: otherUser.email,
-        password: 'password123',
+        password: 'Password1!',
       });
 
-      const response = await request(app)
-        .delete(`/api/admin/users/${regularUser._id}`)
+      const response = await request(testApp)
+        .delete(`/api/admin/users/${uid(regularUser)}`)
         .set('Authorization', `Bearer ${otherLogin.token}`);
 
       expect([200, 403]).toContain(response.status);
     });
 
     it('should return 404 for non-existent user', async () => {
-      const fakeUserId = new mongoose.Types.ObjectId();
-
-      const response = await request(app)
-        .delete(`/api/admin/users/${fakeUserId}`)
+      const response = await request(testApp)
+        .delete(`/api/admin/users/${fakeUserId()}`)
         .set('Authorization', `Bearer ${adminToken}`);
 
       expect([404, 500]).toContain(response.status);

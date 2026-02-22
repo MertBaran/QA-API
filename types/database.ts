@@ -64,12 +64,30 @@ export const fromString = (id: string): EntityId => {
   return id;
 };
 
-// Simplified Database ID factory that gets adapter from service container
+// Ortak ID validasyonu - container bağımsız, hem UUID hem MongoDB ObjectId destekler
+export const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+export const MONGO_OBJECTID_REGEX = /^[0-9a-fA-F]{24}$/;
+
+/** JWT'deki userId'nin mevcut DB formatına uyup uymadığını kontrol eder. Uymazsa token geçersiz (farklı DB'den). */
+export function isIdValidForDatabase(id: string, databaseType: string): boolean {
+  const isPostgres =
+    databaseType.toLowerCase() === 'postgresql';
+  return isPostgres ? UUID_REGEX.test(id) : MONGO_OBJECTID_REGEX.test(id);
+}
+
+export function isValidEntityId(val: unknown): val is string {
+  if (typeof val !== 'string' || val.length === 0) return false;
+  return UUID_REGEX.test(val) || MONGO_OBJECTID_REGEX.test(val);
+}
+
+// Database ID factory - createId container gerektirir; isValidId isValidEntityId kullanır
 export class DatabaseIdFactory {
   private static getAdapter(): IDatabaseIdAdapter {
-    // Service container'dan adapter'ı al
-    const { serviceContainer } = require('../services/container');
-    return serviceContainer.getDatabaseAdapter().getIdAdapter();
+    const { container } = require('../services/container');
+    const { TOKENS } = require('../services/TOKENS');
+    const adapter = container.resolve(TOKENS.IDatabaseAdapter) as { getIdAdapter(): IDatabaseIdAdapter };
+    return adapter.getIdAdapter();
   }
 
   static createId(): EntityId {
@@ -77,14 +95,14 @@ export class DatabaseIdFactory {
   }
 
   static isValidId(id: EntityId): boolean {
-    return DatabaseIdFactory.getAdapter().isValidId(id);
+    return isValidEntityId(id);
   }
 
   static toString(id: EntityId): string {
-    return DatabaseIdFactory.getAdapter().toString(id);
+    return id;
   }
 
   static fromString(id: string): EntityId {
-    return DatabaseIdFactory.getAdapter().fromString(id);
+    return id;
   }
 }

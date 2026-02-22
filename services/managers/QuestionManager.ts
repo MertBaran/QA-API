@@ -226,7 +226,7 @@ export class QuestionManager implements IQuestionService {
     // Currently only uses Elasticsearch when search term is provided
     // Potential improvement: if (filters.search || filters.category || filters.tags) { ... }
     // Search client kullan - SearchDocument bazlı
-    if (filters.search && filters.search.trim().length > 0) {
+    if (filters.search && filters.search.trim().length > 0 && !filters.savedIds) {
       try {
         const searchResult = await this.searchClient.search<QuestionSearchDoc>(
           this.questionProjector.indexName,

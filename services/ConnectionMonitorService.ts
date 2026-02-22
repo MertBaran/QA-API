@@ -3,6 +3,7 @@ import { EventEmitter } from 'events';
 import { ILoggerProvider } from '../infrastructure/logging/ILoggerProvider';
 import { INotificationService } from './contracts/INotificationService';
 import { ApplicationState } from './ApplicationState';
+import { IDatabaseAdapter } from '../repositories/adapters/IDatabaseAdapter';
 
 export interface ConnectionStatus {
   service: 'database' | 'cache' | 'queue' | 'email';
@@ -31,7 +32,8 @@ export class ConnectionMonitorService extends EventEmitter {
   constructor(
     @inject('ILoggerProvider') private logger: ILoggerProvider,
     @inject('INotificationService')
-    private notificationService: INotificationService
+    private notificationService: INotificationService,
+    @inject('IDatabaseAdapter') private databaseAdapter: IDatabaseAdapter
   ) {
     super();
     this.initializeStatus();
@@ -96,7 +98,7 @@ export class ConnectionMonitorService extends EventEmitter {
 
     const config = this.appState.config;
     const checks = [
-      this.checkDatabaseConnection(config.MONGO_URI),
+      this.checkDatabaseConnection(config),
       this.checkCacheConnection(config),
       this.checkQueueConnection(),
       this.checkEmailConnection(config),
@@ -105,21 +107,31 @@ export class ConnectionMonitorService extends EventEmitter {
     await Promise.allSettled(checks);
   }
 
-  private async checkDatabaseConnection(mongoUri: string): Promise<void> {
+  private async checkDatabaseConnection(config: {
+    MONGO_URI?: string;
+  }): Promise<void> {
     try {
-      // Simulate database connection check
-      // In real implementation, you'd ping the database
-      const isConnected = mongoUri && mongoUri.includes('mongodb');
+      const mongoUri = config.MONGO_URI || '';
+      const isConnected = await this.databaseAdapter.ping();
+
+      let host = 'unknown';
+      let database = 'unknown';
+      try {
+        if (mongoUri) {
+          const url = new URL(mongoUri);
+          host = url.hostname;
+          database = url.pathname.substring(1) || 'unknown';
+        }
+      } catch {
+        // Invalid URI - use defaults
+      }
 
       const previousStatus = this.connectionStatus.get('database');
       const newStatus: ConnectionStatus = {
         service: 'database',
         status: isConnected ? 'connected' : 'disconnected',
         lastCheck: new Date(),
-        details: {
-          host: new URL(mongoUri).hostname,
-          database: new URL(mongoUri).pathname.substring(1),
-        },
+        details: { host, database },
       };
 
       this.updateConnectionStatus('database', newStatus, previousStatus);
@@ -285,7 +297,7 @@ export class ConnectionMonitorService extends EventEmitter {
       const config = this.appState.config;
       const notificationPayload = {
         channel: 'email' as const,
-        to: config.ADMIN_EMAIL || 'admin@example.com', // Config'den al
+        to: config.ADMIN_EMAIL,
         subject: `Connection Alert: ${alert.service.toUpperCase()}`,
         message: alert.message,
         data: {

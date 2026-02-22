@@ -1,0 +1,420 @@
+// Prisma schema - QA Platform PostgreSQL
+// MongoDB'dan farklı: ilişki tabloları, enum'lar, @updatedAt, DateTime doğruluğu
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---- Enums ----
+
+enum PermissionCategory {
+  content
+  user
+  system
+}
+
+enum NotificationChannel {
+  email
+  sms
+  push
+  webhook
+}
+
+enum NotificationCategory {
+  system
+  marketing
+  security
+  notification
+}
+
+enum NotificationPriority {
+  urgent
+  high
+  normal
+  low
+}
+
+enum NotificationStatus {
+  pending
+  sent
+  failed
+  delivered
+  read
+}
+
+enum NotificationStrategy {
+  direct
+  queue
+}
+
+enum ContentType {
+  question
+  answer
+}
+
+enum BookmarkTargetType {
+  question
+  answer
+  note
+  article
+  comment
+}
+
+enum ContentRelationType {
+  reply_to_question
+  reply_to_answer
+  follow_up
+  clarification
+  related
+}
+
+// ---- Setup Tabloları ----
+
+model Permission {
+  id          String           @id @default(uuid())
+  name        String           @unique
+  description String
+  resource    String
+  action      String
+  category    PermissionCategory @default(content)
+  isActive    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  roles RolePermission[]
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String
+  isSystem    Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  permissions RolePermission[]
+  userRoles   UserRole[]
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+model NotificationTemplate {
+  id        String               @id @default(uuid())
+  name      String               @unique
+  type      NotificationChannel
+  category  NotificationCategory
+  subject   Json                 // L10n: { en, tr, de }
+  message   Json
+  html      Json?
+  variables String[]
+  isActive  Boolean              @default(true)
+  priority  NotificationPriority @default(normal)
+  description Json?
+  tags      String[]
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+
+  notifications Notification[]
+}
+
+// ---- Auth & Kullanıcı ----
+
+model User {
+  id                  String    @id @default(uuid())
+  name                String
+  email               String    @unique
+  password            String
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  title               String?
+  about               String?
+  place               String?
+  website             String?
+  profile_image       String    @default("default.jpg")
+  blocked             Boolean   @default(false)
+  lastPasswordChange  DateTime?
+  isGoogleUser        Boolean   @default(false)
+  phoneNumber         String?
+  webhookUrl          String?
+  notificationPreferences Json?  // { email, push, sms, webhook }
+  language            String    @default("en")
+  background_asset_key String?
+
+  // Auth token fields (UserToken tablosu ile paralel - UserRepository uyumluluğu için)
+  resetPasswordToken   String?
+  resetPasswordExpire DateTime?
+  // Password change (profilde şifre değiştirme - email ile doğrulama)
+  passwordChangeCode              String?
+  passwordChangeCodeExpire        DateTime?
+  passwordChangeVerificationToken String?
+  passwordChangeVerificationTokenExpire DateTime?
+
+  roles                UserRole[]
+  questions            Question[]
+  answers              Answer[]
+  bookmarks            Bookmark[]
+  bookmarkCollections  BookmarkCollection[]
+  notifications        Notification[]
+  contentRelationsCreated ContentRelation[] @relation("CreatedBy")
+  tokens               UserToken[]
+  following            UserFollow[] @relation("Following")
+  followers            UserFollow[] @relation("Follower")
+  contentReactions     ContentReaction[]
+}
+
+// Token'lar hash'li saklanmalı; plain token DB'ye yazılmamalı
+model UserToken {
+  id        String   @id @default(uuid())
+  userId    String
+  type      String   // reset_password, password_change, email_verify
+  tokenHash String   // SHA256 veya bcrypt hash
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@index([tokenHash])
+  @@index([expiresAt])
+}
+
+model UserFollow {
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+model UserRole {
+  id         String    @id @default(uuid())
+  userId     String
+  roleId     String
+  assignedAt DateTime  @default(now())
+  assignedBy String?
+  expiresAt  DateTime?
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([userId, isActive])
+  @@index([expiresAt, isActive])
+}
+
+// ---- Soru & Cevap ----
+
+model Question {
+  id              String    @id @default(uuid())
+  contentType     String    @default("question")
+  title           String
+  content         String
+  slug            String?   @unique
+  category        String    @default("General")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  userId          String
+  parentId        String?
+  parentType      ContentType?
+  ancestors       Json?     // [{ id, type, depth }] - sade tut, ihtiyaç olunca normalize et
+  relatedContents String[]
+  thumbnailKey    String?
+  thumbnailUrl    String?
+
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers  Answer[]
+  tags     QuestionTag[]
+
+  @@index([userId])
+  @@index([createdAt(sort: Desc)])
+  @@index([parentId])
+  @@index([slug])
+}
+
+model QuestionTag {
+  questionId String
+  tag        String
+  createdAt  DateTime @default(now())
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@id([questionId, tag])
+  @@index([tag])
+}
+
+model Answer {
+  id             String    @id @default(uuid())
+  content        String
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  userId         String
+  questionId     String
+  isAccepted     Boolean   @default(false)
+  parentId       String?
+  parentType     ContentType?
+  ancestors      Json?
+  relatedContents String[]
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([questionId])
+  @@index([createdAt(sort: Desc)])
+  @@index([parentId])
+}
+
+// like/dislike tek tablo; aynı user iki kere atamaz (@@unique)
+model ContentReaction {
+  id           String      @id @default(uuid())
+  contentType  ContentType // question, answer
+  contentId    String      // polymorphic - FK yok, silince uygulama cascade cleanup
+  userId       String
+  type         String      // like, dislike
+  createdAt    DateTime   @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([contentType, contentId, userId])
+  @@index([contentType, contentId])
+  @@index([userId])
+}
+
+// ---- İlişkiler (polymorphic - FK yok, uygulama cascade) ----
+
+model ContentRelation {
+  id               String   @id @default(uuid())
+  sourceContentType ContentType
+  sourceContentId   String
+  targetContentType ContentType
+  targetContentId   String
+  relationType      ContentRelationType
+  metadata         Json?    // { weight, description }
+  createdAt        DateTime @default(now())
+  createdById      String?
+
+  createdBy User? @relation("CreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([sourceContentType, sourceContentId])
+  @@index([targetContentType, targetContentId])
+  @@index([relationType])
+}
+
+// ---- Bookmark ----
+
+model Bookmark {
+  id               String   @id @default(uuid())
+  userId           String
+  targetType       BookmarkTargetType
+  targetId         String
+  targetTitle      String
+  targetContent    String
+  targetAuthor     String?
+  targetAuthorId   String?
+  targetCreatedAt  DateTime  // DateTime - sıralama/filtreleme için kritik
+  targetUrl        String?
+  tags             String[]
+  notes            String?
+  isPublic         Boolean  @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  user      User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  collectionItems BookmarkCollectionItem[]
+
+  @@unique([userId, targetType, targetId])
+  @@index([userId, targetType])
+  @@index([userId, isPublic])
+  @@index([targetType, targetId])
+}
+
+model BookmarkCollection {
+  id          String   @id @default(uuid())
+  userId      String
+  name        String
+  description String?
+  color       String?
+  isPublic    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user   User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items  BookmarkCollectionItem[]
+
+  @@unique([userId, name])
+  @@index([userId, isPublic])
+}
+
+model BookmarkCollectionItem {
+  id           String   @id @default(uuid())
+  bookmarkId   String
+  collectionId String
+  addedAt      DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  bookmark   Bookmark         @relation(fields: [bookmarkId], references: [id], onDelete: Cascade)
+  collection BookmarkCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  @@unique([bookmarkId, collectionId])
+  @@index([collectionId, addedAt(sort: Desc)])
+}
+
+// ---- Bildirim ----
+
+model Notification {
+  id           String             @id @default(uuid())
+  userId       String
+  type         NotificationChannel
+  status       NotificationStatus @default(pending)
+  subject      String
+  message      String
+  html         String?
+  data         Json?
+  from         String
+  to           String
+  createdAt    DateTime           @default(now())
+  sentAt       DateTime?
+  deliveredAt  DateTime?
+  readAt       DateTime?
+  strategy     NotificationStrategy
+  priority     NotificationPriority @default(normal)
+  retryCount   Int                @default(0)
+  maxRetries   Int                @default(3)
+  errorMessage String?
+  errorCode    String?
+  messageId    String?
+  externalId   String?
+  tags         String[]
+  templateId   String?
+  templateName String?
+
+  user     User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template NotificationTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  @@index([templateId])
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([status, createdAt(sort: Desc)])
+  @@index([type, status])
+  @@index([priority, createdAt(sort: Desc)])
+}

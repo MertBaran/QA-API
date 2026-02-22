@@ -5,14 +5,30 @@ services:
     container_name: qa-api
     ports:
       - '3000:3000'
-      - '3001:3001' # WebSocket port
+      - '3001:3001'
+    command:
+      - sh
+      - -c
+      - |
+        echo "🔄 Running migrations..."
+        npx prisma migrate deploy --schema=./prisma/schema.prisma
+        echo "🌱 Seeding..."
+        npx prisma db seed
+        echo "🚀 Starting app..."
+        exec node dist/APP.js
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=docker
+      - CONFIG_FILE=config.env.docker
+      - DATABASE_TYPE=postgresql
+      - DATABASE_URL=postgresql://postgres:mbsusurluk1905@postgres:5432/QA_Platform
+      - CLIENT_URL=http://localhost:3002
     depends_on:
-      - mongodb
-      - redis
-      - elasticsearch
-      - rabbitmq
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      elasticsearch:
+        condition: service_started
 
   mongodb:
     image: mongo:6
@@ -21,6 +37,23 @@ services:
       - '27017:27017'
     volumes:
       - mongodb_data:/data/db
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: qa-postgres
+    ports:
+      - '5435:5432'
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=mbsusurluk1905
+      - POSTGRES_DB=QA_Platform
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
@@ -70,5 +103,6 @@ services:
 
 volumes:
   mongodb_data:
+  postgres_data:
   elasticsearch_data:
   rabbitmq_data:

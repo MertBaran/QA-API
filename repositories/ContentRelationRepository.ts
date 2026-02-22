@@ -1,7 +1,7 @@
 import { injectable, inject } from 'tsyringe';
 import { IContentRelationRepository } from './interfaces/IContentRelationRepository';
 import { IContentRelationModel } from '../models/interfaces/IContentRelationModel';
-import { IDataSource } from './interfaces/IDataSource';
+import { IContentRelationDataSource } from './interfaces/IContentRelationDataSource';
 import { EntityId } from '../types/database';
 import { ContentType, RelationType } from '../types/content/RelationType';
 import { ApplicationError } from '../infrastructure/error/ApplicationError';
@@ -11,7 +11,7 @@ import { RepositoryConstants } from './constants/RepositoryMessages';
 export class ContentRelationRepository implements IContentRelationRepository {
   constructor(
     @inject('IContentRelationDataSource')
-    private dataSource: IDataSource<IContentRelationModel>
+    private dataSource: IContentRelationDataSource
   ) {}
 
   async findById(id: EntityId): Promise<IContentRelationModel | null> {
@@ -55,33 +55,7 @@ export class ContentRelationRepository implements IContentRelationRepository {
     contentType: ContentType,
     contentIds: EntityId[]
   ): Promise<IContentRelationModel[]> {
-    if (!contentIds.length) {
-      return [];
-    }
-    // Access model directly for $in query
-    const ContentRelationMongo =
-      require('../models/mongodb/ContentRelationMongoModel').default;
-    const mongoose = require('mongoose');
-
-    const uniqueIds = contentIds.map(
-      id => new mongoose.Types.ObjectId(id.toString())
-    );
-    const results = await ContentRelationMongo.find({
-      sourceContentType: contentType,
-      sourceContentId: { $in: uniqueIds },
-    });
-
-    return results.map((doc: any) => ({
-      _id: doc._id.toString(),
-      sourceContentType: doc.sourceContentType,
-      sourceContentId: doc.sourceContentId.toString(),
-      targetContentType: doc.targetContentType,
-      targetContentId: doc.targetContentId.toString(),
-      relationType: doc.relationType,
-      metadata: doc.metadata,
-      createdAt: doc.createdAt,
-      createdBy: doc.createdBy?.toString(),
-    }));
+    return this.dataSource.findBySourceIds(contentType, contentIds);
   }
 
   async findByTarget(

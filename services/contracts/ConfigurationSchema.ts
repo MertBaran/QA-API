@@ -11,9 +11,47 @@ export const ENVIRONMENT_CONFIG_MAP = {
 export type EnvironmentType = keyof typeof ENVIRONMENT_CONFIG_MAP;
 
 // Configuration schemas
-export const DatabaseConfigSchema = z.object({
-  MONGO_URI: z.string().url('Invalid MongoDB URI'),
-});
+export const DatabaseConfigSchema = z
+  .object({
+    /** MongoDB URI - zorunlu: mongodb modunda ana DB, postgresql modunda audit için */
+    MONGO_URI: z.string().optional(),
+    /** PostgreSQL connection string - postgresql modunda zorunlu */
+    DATABASE_URL: z.string().optional(),
+    /** Database type. Default: 'mongodb' */
+    DATABASE_TYPE: z
+      .enum(['mongodb', 'postgresql'])
+      .optional()
+      .default('mongodb'),
+  })
+  .superRefine((data, ctx) => {
+    const mongoUri =
+      data.MONGO_URI && String(data.MONGO_URI).trim()
+        ? String(data.MONGO_URI).trim()
+        : undefined;
+    const dbUrl =
+      data.DATABASE_URL && String(data.DATABASE_URL).trim()
+        ? String(data.DATABASE_URL).trim()
+        : undefined;
+
+    if (data.DATABASE_TYPE === 'mongodb') {
+      if (!mongoUri) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'MONGO_URI is required when DATABASE_TYPE=mongodb',
+          path: ['MONGO_URI'],
+        });
+      }
+    } else if (data.DATABASE_TYPE === 'postgresql') {
+      if (!dbUrl) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'DATABASE_URL is required when DATABASE_TYPE=postgresql',
+          path: ['DATABASE_URL'],
+        });
+      }
+      // MONGO_URI opsiyonel: Yoksa NoOpAuditProvider kullanılır, audit log yazılmaz
+    }
+  });
 
 export const CacheConfigSchema = z.object({
   REDIS_URL: z.string().url().optional(),
@@ -70,10 +108,24 @@ export const ElasticsearchConfigSchema = z.object({
   ELASTICSEARCH_REQUEST_TIMEOUT: z.string().default('30000'),
 });
 
+// URL validasyonu - Zod .url() localhost'ta bazen hata veriyor, refine kullan
+const clientUrlSchema = z
+  .string()
+  .default('http://localhost:3001')
+  .refine(val => {
+    if (!val || !val.trim()) return false;
+    try {
+      new URL(val.trim());
+      return true;
+    } catch {
+      return false;
+    }
+  }, 'Invalid URL');
+
 export const AppConfigSchema = z.object({
   PORT: z.string().default('3000'),
   NODE_ENV: z.enum(['production', 'development', 'test', 'docker']),
-  CLIENT_URL: z.string().url().default('http://localhost:3001'),
+  CLIENT_URL: clientUrlSchema,
   GOOGLE_CLIENT_ID: z.string().optional(),
   RESET_PASSWORD_EXPIRE: z.string().default('3600'),
   DOCKERHUB_USERNAME: z.string().optional(),
@@ -118,6 +170,13 @@ export const maskSensitiveData = (
     masked.MONGO_URI = masked.MONGO_URI.replace(
       /mongodb\+srv:\/\/([^:]+):([^@]+)@/,
       'mongodb+srv://***:***@'
+    );
+  }
+
+  if (masked.DATABASE_URL) {
+    masked.DATABASE_URL = masked.DATABASE_URL.replace(
+      /postgres(?:ql)?:\/\/([^:]+):([^@]+)@/,
+      'postgresql://***:***@'
     );
   }
 

@@ -5,8 +5,13 @@ node_modules/
 .env
 config/env/
 
+# PostgreSQL credentials (şifre içerir)
+config/env/config.env.dev.postgres
+config/env/config.env.test.postgres
+
 # Log dosyaları
 logs/
+qa-api-logs/
 *.log
 
 # Yüklenen dosyalar
@@ -66,3 +71,5 @@ examples/
 # Test files
 tests/files/
 
+
+/generated/prisma

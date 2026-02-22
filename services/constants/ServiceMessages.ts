@@ -60,9 +60,9 @@ export const AuthServiceMessages = {
     de: 'Ein Konto mit dieser Google-E-Mail existiert bereits. Bitte melden Sie sich stattdessen an.',
   },
   EmailNotFound: {
-    en: 'There is no user with that email',
-    tr: 'Bu e-posta ile kullanıcı bulunamadı',
-    de: 'Kein Benutzer mit dieser E-Mail gefunden',
+    en: 'No registered email address found',
+    tr: 'Sistemde kayıtlı mail adresi bulunamadı',
+    de: 'Keine registrierte E-Mail-Adresse gefunden',
   },
   EmailSendError: {
     en: 'Email could not be sent',

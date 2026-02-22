@@ -79,13 +79,7 @@ export class ApplicationSetup {
       // Set application state
       this.appState.setReady(config);
 
-      // Configure database connection
-      const databaseConfig = {
-        connectionString: config.MONGO_URI,
-      };
-      container.register('IDatabaseConnectionConfig', {
-        useValue: databaseConfig,
-      });
+      // IDatabaseConnectionConfig ve IDatabaseAdapter initializeContainer'da DATABASE_TYPE'a göre ayarlandı
 
       // Configure cache connection
       const cacheConfig = {
@@ -98,9 +92,16 @@ export class ApplicationSetup {
       });
 
       // Connect to database - CRITICAL: Exit if database connection fails
+      const configService = container.resolve<any>('IConfigurationService');
+      const dbConnConfig = configService.getDatabaseConnectionConfig();
+      const dbType = configService.getDatabaseType();
+      const connStrMasked = dbConnConfig.connectionString.replace(
+        /(mongodb\+srv|postgresql):\/\/[^:]+:[^@]+@/,
+        '$1://***:***@'
+      );
       console.log('🔌 Attempting to connect to database...');
       console.log(
-        `📡 Database URI: ${config.MONGO_URI.replace(/\/\/.*@/, '//***:***@')}`
+        `📡 Database: ${dbType} - ${connStrMasked}`
       ); // Hide credentials
 
       let databaseAdapter: any = null;
@@ -167,14 +168,16 @@ export class ApplicationSetup {
         });
         console.error(
           '\x1b[31m🔍 Connection string:\x1b[0m',
-          config.MONGO_URI.replace(/\/\/.*@/, '//***:***@')
+          connStrMasked
         );
         console.error('');
         console.error(
           '\x1b[31m🛑 Application cannot start without database connection.\x1b[0m'
         );
         console.error('\x1b[31m💡 Please check:\x1b[0m');
-        console.error('\x1b[31m   - MongoDB server is running\x1b[0m');
+        console.error(
+          `\x1b[31m   - ${dbType === 'postgresql' ? 'PostgreSQL' : 'MongoDB'} server is running\x1b[0m`
+        );
         console.error('\x1b[31m   - Connection string is correct\x1b[0m');
         console.error('\x1b[31m   - Network connectivity\x1b[0m');
         console.error('\x1b[31m   - Database credentials\x1b[0m');
@@ -386,10 +389,22 @@ export class ApplicationSetup {
   async shutdown(): Promise<void> {
     console.log('🔄 Shutting down server...');
 
+    try {
+      const webSocketMonitor = container.resolve<WebSocketMonitorService>(
+        'WebSocketMonitorService'
+      );
+      await webSocketMonitor.close();
+      console.log('✅ WebSocket server closed');
+    } catch (error) {
+      // WebSocket may not be initialized yet
+      const errMsg = error instanceof Error ? error.message : String(error);
+      console.warn('⚠️ WebSocket shutdown:', errMsg);
+    }
+
     return new Promise<void>(resolve => {
       if (this.server) {
         this.server.close(() => {
-          console.log('✅ Server closed');
+          console.log('✅ HTTP server closed');
           resolve();
         });
       } else {

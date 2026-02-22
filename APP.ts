@@ -1,20 +1,22 @@
 import 'reflect-metadata';
+// Side-effect import: dotenv'i TÜM diğer modüllerden önce yükler.
+// TypeScript import'ları hoist ettiği için, dotenv.config() inline yazılsa bile
+// diğer import'lar (container.ts vs.) ondan ÖNCE çalışır. Ayrı modül bunu çözer.
+import './config/env/loadEnv';
 
 import { ApplicationSetup } from './services/ApplicationSetup';
 import { ApplicationState } from './services/ApplicationState';
-import { container } from './services/container';
+import { container, initializeContainer } from './services/container';
 
-// Main application instance
-const appSetup = new ApplicationSetup();
-const app = appSetup.getApp();
+let appSetup: ApplicationSetup;
+let app: ReturnType<ApplicationSetup['getApp']> | undefined = undefined;
 
 // Graceful shutdown handler
 const gracefulShutdown = async (signal: string) => {
   console.log(`\n🛑 Received ${signal}. Shutting down gracefully...`);
 
   try {
-    // Shutdown server first
-    await appSetup.shutdown();
+    if (appSetup) await appSetup.shutdown();
   } catch (error) {
     const shutdownErrorMsg =
       error instanceof Error ? error.message : String(error);
@@ -55,6 +57,10 @@ async function startServer() {
     console.log('🚀 Starting QA API Server...');
     console.log('📊 Environment:', process.env['NODE_ENV'] || 'development');
 
+    // Container init ÖNCE - router'lar ApplicationSetup ile yüklenecek, doğru datasource (PG/Mongo) seçilmiş olacak
+    await initializeContainer();
+    appSetup = new ApplicationSetup();
+    app = appSetup.getApp();
     await appSetup.initialize();
 
     const config = ApplicationState.getInstance().config;
@@ -90,4 +96,5 @@ if (require.main === module) {
   startServer();
 }
 
+// Testler setup.ts'teki testApp kullanmalı; bu export sadece sunucu çalışırken dolu
 export default app;

@@ -71,9 +71,9 @@ describe('AdminService Unit Tests', () => {
   });
 
   it('should throw error when deleting non-existent user', async () => {
-    // deleteUserByAdmin throws CustomError for non-existent users
+    // deleteUserByAdmin throws when BaseRepository.deleteById throws "Resource not found"
     await expect(
       adminService.deleteUserByAdmin('nonexistentid')
-    ).rejects.toThrow('User not found');
+    ).rejects.toThrow('Resource not found');
   });
 });

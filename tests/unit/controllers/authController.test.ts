@@ -84,7 +84,7 @@ describe('AuthController Unit Tests', () => {
         firstName: 'Test',
         lastName: 'User',
         email: 'test@example.com',
-        password: 'password123',
+        password: 'Password1!',
       },
       locale: 'en',
     } as any;
@@ -103,7 +103,7 @@ describe('AuthController Unit Tests', () => {
       firstName: 'Test',
       lastName: 'User',
       email: 'test@example.com',
-      password: 'password123',
+      password: 'Password1!',
     });
   });
 
@@ -130,7 +130,7 @@ describe('AuthController Unit Tests', () => {
     const req = {
       body: {
         email: 'test@example.com',
-        password: 'password123',
+        password: 'Password1!',
       },
       locale: 'en',
     } as any;
@@ -147,7 +147,7 @@ describe('AuthController Unit Tests', () => {
     // Since asyncErrorWrapper doesn't work in tests, we just verify the method completes
     expect(req.body).toEqual({
       email: 'test@example.com',
-      password: 'password123',
+      password: 'Password1!',
     });
   });
 });
