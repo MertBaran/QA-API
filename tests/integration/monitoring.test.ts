@@ -3,8 +3,38 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { testApp } from '../setup';
 
-// Create user and token directly via Mongoose (matches seed structure)
 async function createTestUserAndToken() {
+  const dbType = process.env['DATABASE_TYPE'] || 'mongodb';
+
+  if (dbType === 'postgresql') {
+    const prisma = require('../../repositories/postgresql/PrismaClientSingleton').getPrismaClient();
+    let user = await prisma.user.findUnique({ where: { email: 'monitoring@example.com' } });
+    if (!user) {
+      const hashedPassword = await bcrypt.hash('password123', 10);
+      user = await prisma.user.create({
+        data: {
+          name: 'Monitoring User',
+          email: 'monitoring@example.com',
+          password: hashedPassword,
+        },
+      });
+    }
+    const adminRole = await prisma.role.findUnique({ where: { name: 'admin' } });
+    if (!adminRole) throw new Error('Admin role not found in seed');
+    await prisma.userRole.upsert({
+      where: { userId_roleId: { userId: user.id, roleId: adminRole.id } },
+      create: { userId: user.id, roleId: adminRole.id },
+      update: {},
+    });
+    const secret = process.env['JWT_SECRET_KEY'] || 'insaninsanderleridi';
+    const token = jwt.sign(
+      { id: user.id, name: user.name, lang: 'en' },
+      secret,
+      { expiresIn: '24h' }
+    );
+    return { userId: user.id, authToken: token };
+  }
+
   const UserMongo = require('../../models/mongodb/UserMongoModel').default;
   const UserRoleMongo = require('../../models/mongodb/UserRoleMongoModel').default;
   const RoleMongo = require('../../models/mongodb/RoleMongoModel').default;

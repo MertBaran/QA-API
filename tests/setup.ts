@@ -1,22 +1,19 @@
 /// <reference types="jest" />
 import 'reflect-metadata';
-import dotenv from 'dotenv';
+import { execSync } from 'child_process';
 import path from 'path';
 import { initializeContainer } from '../services/container';
 import { ApplicationSetup } from '../services/ApplicationSetup';
 
-// Test environment variables
-process.env['NODE_ENV'] = 'test';
+// Test environment variables (env loaded by jest.env.ts setupFiles)
 process.env['JWT_SECRET_KEY'] = 'test-secret-key';
+console.log(`📂 Test config: ${process.env['CONFIG_FILE'] || 'config.env.test'}`);
 
-// Load test environment variables
-dotenv.config({
-  path: path.resolve(__dirname, '../config/env/config.env.test'),
-});
-
-// Ensure MONGO_URI points to test database for consistent app + seed connection
-process.env['MONGO_URI'] =
-  process.env['MONGO_URI'] || 'mongodb://localhost:27017/test';
+// Ensure MONGO_URI for MongoDB tests
+if (process.env['DATABASE_TYPE'] !== 'postgresql') {
+  process.env['MONGO_URI'] =
+    process.env['MONGO_URI'] || 'mongodb://localhost:27017/test';
+}
 
 // i18n cache'i temizle
 import { clearI18nCache } from '../types/i18n';
@@ -64,13 +61,103 @@ const PERMISSIONS_TO_SEED = [
   { name: 'system:admin', description: 'System administration', resource: 'system', action: 'admin', category: 'system' },
 ];
 
-// Seed test database - structure aligned with remote (question-answer-test)
+// PostgreSQL PermissionCategory enum
+type PermissionCategory = 'content' | 'user' | 'system';
+
+// Seed test database - MongoDB or PostgreSQL
 async function seedTestDatabase(): Promise<void> {
+  const dbType = process.env['DATABASE_TYPE'] || 'mongodb';
+
+  if (dbType === 'postgresql') {
+    await seedPostgreSQL();
+  } else {
+    await seedMongoDB();
+  }
+}
+
+async function seedPostgreSQL(): Promise<void> {
+  try {
+    const { getPrismaClient } = require('../repositories/postgresql/PrismaClientSingleton');
+    const prisma = getPrismaClient();
+
+    console.log('🧹 Cleaning PostgreSQL test database...');
+    await prisma.rolePermission.deleteMany({});
+    await prisma.userRole.deleteMany({});
+    await prisma.role.deleteMany({});
+    await prisma.permission.deleteMany({});
+    console.log('✅ Test database cleaned');
+
+    const permByName = new Map<string, string>();
+    for (const p of PERMISSIONS_TO_SEED) {
+      const created = await prisma.permission.upsert({
+        where: { name: p.name },
+        create: {
+          name: p.name,
+          description: p.description,
+          resource: p.resource,
+          action: p.action,
+          category: p.category as PermissionCategory,
+          isActive: true,
+        },
+        update: { isActive: true },
+      });
+      permByName.set(p.name, created.id);
+    }
+    console.log('✅ Permissions created');
+
+    const userPermNames = ['questions:create', 'questions:read', 'answers:create', 'answers:read'];
+    const userPermIds = userPermNames.map(n => permByName.get(n)!).filter(Boolean);
+    const userRole = await prisma.role.upsert({
+      where: { name: 'user' },
+      create: { name: 'user', description: 'Basic user permissions', isSystem: true, isActive: true },
+      update: {},
+    });
+    await prisma.rolePermission.deleteMany({ where: { roleId: userRole.id } });
+    if (userPermIds.length) {
+      await prisma.rolePermission.createMany({
+        data: userPermIds.map(pid => ({ roleId: userRole.id, permissionId: pid })),
+      });
+    }
+    console.log('✅ User role created');
+
+    const modPermNames = [...userPermNames, 'questions:moderate', 'answers:delete', 'users:read'];
+    const modPermIds = modPermNames.map(n => permByName.get(n)!).filter(Boolean);
+    const modRole = await prisma.role.upsert({
+      where: { name: 'moderator' },
+      create: { name: 'moderator', description: 'Can moderate content', isSystem: true, isActive: true },
+      update: {},
+    });
+    await prisma.rolePermission.deleteMany({ where: { roleId: modRole.id } });
+    if (modPermIds.length) {
+      await prisma.rolePermission.createMany({
+        data: modPermIds.map(pid => ({ roleId: modRole.id, permissionId: pid })),
+      });
+    }
+    console.log('✅ Moderator role created');
+
+    const systemAdminId = permByName.get('system:admin');
+    if (!systemAdminId) throw new Error('system:admin permission not found');
+    const adminRole = await prisma.role.upsert({
+      where: { name: 'admin' },
+      create: { name: 'admin', description: 'Full system access', isSystem: true, isActive: true },
+      update: {},
+    });
+    await prisma.rolePermission.deleteMany({ where: { roleId: adminRole.id } });
+    await prisma.rolePermission.create({
+      data: { roleId: adminRole.id, permissionId: systemAdminId },
+    });
+    console.log('✅ Admin role created');
+  } catch (error) {
+    console.error('❌ Failed to seed PostgreSQL test database:', error);
+    throw error;
+  }
+}
+
+async function seedMongoDB(): Promise<void> {
   try {
     const mongoose = require('mongoose');
     const db = mongoose.connection;
 
-    // Clean test database first
     console.log('🧹 Cleaning test database...');
     await db.dropDatabase();
     console.log('✅ Test database cleaned');
@@ -78,7 +165,6 @@ async function seedTestDatabase(): Promise<void> {
     const PermissionModel = require('../models/mongodb/PermissionMongoModel').default;
     const RoleModel = require('../models/mongodb/RoleMongoModel').default;
 
-    // Create all permissions (matching remote)
     const permDocs = await Promise.all(
       PERMISSIONS_TO_SEED.map(p =>
         PermissionModel.findOneAndUpdate(
@@ -91,7 +177,6 @@ async function seedTestDatabase(): Promise<void> {
     const permByName = new Map(PERMISSIONS_TO_SEED.map((p, i) => [p.name, permDocs[i]._id]));
     console.log('✅ Permissions created');
 
-    // User role: questions:create, questions:read, answers:create, answers:read
     const userPermNames = ['questions:create', 'questions:read', 'answers:create', 'answers:read'];
     const userPermIds = userPermNames.map(n => permByName.get(n)).filter(Boolean);
     await RoleModel.findOneAndUpdate(
@@ -101,7 +186,6 @@ async function seedTestDatabase(): Promise<void> {
     );
     console.log('✅ User role created');
 
-    // Moderator role: user perms + questions:moderate, answers:delete, users:read
     const modPermNames = [...userPermNames, 'questions:moderate', 'answers:delete', 'users:read'];
     const modPermIds = modPermNames.map(n => permByName.get(n)).filter(Boolean);
     await RoleModel.findOneAndUpdate(
@@ -111,7 +195,6 @@ async function seedTestDatabase(): Promise<void> {
     );
     console.log('✅ Moderator role created');
 
-    // Admin role: ONLY system:admin (matching remote)
     const systemAdminId = permByName.get('system:admin');
     if (!systemAdminId) throw new Error('system:admin permission not found');
     await RoleModel.findOneAndUpdate(
@@ -135,15 +218,31 @@ beforeAll(async () => {
     await initializeContainer();
     console.log('✅ Container initialized');
 
-    // Test MongoDB connection (config.env.test veya MONGO_URI env override)
-    console.log('🔌 Testing MongoDB connection...');
-    const mongoose = require('mongoose');
-    const mongoUri =
-      process.env['MONGO_URI'] || 'mongodb://localhost:27017/test';
-    const testConnection = await mongoose.createConnection(mongoUri);
-    await testConnection.asPromise();
-    console.log('✅ MongoDB connection test successful');
-    await testConnection.close();
+    // Test database connection
+    const dbType = process.env['DATABASE_TYPE'] || 'mongodb';
+    if (dbType === 'postgresql') {
+      console.log('🔌 Testing PostgreSQL connection...');
+      const { getPrismaClient } = require('../repositories/postgresql/PrismaClientSingleton');
+      const prisma = getPrismaClient();
+      await prisma.$connect();
+      console.log('✅ PostgreSQL connection test successful');
+      console.log('📦 Applying Prisma migrations to test DB...');
+      execSync('npx prisma migrate deploy', {
+        cwd: path.resolve(__dirname, '..'),
+        stdio: 'pipe',
+        env: process.env,
+      });
+      console.log('✅ Migrations applied');
+    } else {
+      console.log('🔌 Testing MongoDB connection...');
+      const mongoose = require('mongoose');
+      const mongoUri =
+        process.env['MONGO_URI'] || 'mongodb://localhost:27017/test';
+      const testConnection = await mongoose.createConnection(mongoUri);
+      await testConnection.asPromise();
+      console.log('✅ MongoDB connection test successful');
+      await testConnection.close();
+    }
 
     // Create test app instance
     console.log('🚀 Creating test app...');
