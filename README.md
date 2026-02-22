@@ -33,7 +33,11 @@ npm run dev:postgres     # PostgreSQL ile
 ### Docker Setup
 
 ```bash
-# PostgreSQL stack ile çalıştır (migration + seed otomatik)
+# 1) .env oluştur (şifreler için - zorunlu)
+cp .env.example .env
+# .env içinde POSTGRES_PASSWORD ve RABBITMQ_PASS değerlerini güncelleyin
+
+# 2) PostgreSQL stack ile çalıştır (migration + seed otomatik)
 docker-compose up -d
 
 # Manuel build
@@ -41,7 +45,7 @@ docker build -t qa-api .
 docker run -p 3000:3000 --env-file config/env/config.env.docker qa-api
 ```
 
-Docker Compose: PostgreSQL, Redis, Elasticsearch, RabbitMQ ve API servisini başlatır. İlk çalıştırmada Prisma migration ve seed otomatik uygulanır.
+Docker Compose: PostgreSQL, Redis, Elasticsearch, RabbitMQ ve API servisini başlatır. İlk çalıştırmada Prisma migration ve seed otomatik uygulanır. Şifreler `.env` dosyasından okunur (`.env.example` şablonu).
 
 ## API Endpoints
 

@@ -391,7 +391,7 @@ describe('RabbitMQProvider', () => {
   describe('Connection URL', () => {
     it('should generate correct connection URL with default values', () => {
       const url = (rabbitMQProvider as any).getConnectionUrl();
-      expect(url).toBe('amqp://admin:admin123@localhost:5672/');
+      expect(url).toBe('amqp://guest:guest@localhost:5672/');
     });
 
     it('should generate correct connection URL with environment variables', () => {

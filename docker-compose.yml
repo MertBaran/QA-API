@@ -20,8 +20,10 @@ services:
       - NODE_ENV=docker
       - CONFIG_FILE=config.env.docker
       - DATABASE_TYPE=postgresql
-      - DATABASE_URL=postgresql://postgres:mbsusurluk1905@postgres:5432/QA_Platform
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       - CLIENT_URL=http://localhost:3002
+      - RABBITMQ_USER=${RABBITMQ_USER:-admin}
+      - RABBITMQ_PASS=${RABBITMQ_PASS}
     depends_on:
       postgres:
         condition: service_healthy
@@ -44,9 +46,9 @@ services:
     ports:
       - '5435:5432'
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=mbsusurluk1905
-      - POSTGRES_DB=QA_Platform
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB:-QA_Platform}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -82,9 +84,9 @@ services:
       - ELASTICSEARCH_USERNAME=
       - ELASTICSEARCH_PASSWORD=
       - xpack.security.enabled=false
-      - xpack.encryptedSavedObjects.encryptionKey=minimal-32-character-secret-key-here
-      - xpack.reporting.encryptionKey=minimal-32-character-secret-key-here
-      - xpack.security.encryptionKey=minimal-32-character-secret-key-here
+      - xpack.encryptedSavedObjects.encryptionKey=${KIBANA_ENCRYPTION_KEY:-minimal-32-character-secret-key-here}
+      - xpack.reporting.encryptionKey=${KIBANA_ENCRYPTION_KEY:-minimal-32-character-secret-key-here}
+      - xpack.security.encryptionKey=${KIBANA_ENCRYPTION_KEY:-minimal-32-character-secret-key-here}
       - xpack.security.enrollment.enabled=false
     depends_on:
       - elasticsearch
@@ -96,8 +98,8 @@ services:
       - '5672:5672'
       - '15672:15672'
     environment:
-      - RABBITMQ_DEFAULT_USER=admin
-      - RABBITMQ_DEFAULT_PASS=admin123
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:-admin}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS}
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
 

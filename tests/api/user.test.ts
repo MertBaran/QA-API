@@ -14,7 +14,7 @@ async function ensureAdminPermissions(token: string) {
   const dbType = process.env['DATABASE_TYPE'] || 'mongodb';
   if (dbType === 'postgresql') {
     const jwt = require('jsonwebtoken');
-    const decoded = jwt.verify(token, process.env['JWT_SECRET_KEY'] || 'insaninsanderleridi') as { id: string };
+    const decoded = jwt.verify(token, process.env['JWT_SECRET_KEY'] || 'test-secret-key') as { id: string };
     const prisma = require('../../repositories/postgresql/PrismaClientSingleton').getPrismaClient();
     const adminRole = await prisma.role.findUnique({ where: { name: 'admin' } });
     if (!adminRole) return;

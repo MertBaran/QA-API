@@ -44,52 +44,52 @@ const BASE_URL = 'http://localhost:3000';
 const stressTestUsers = [
   {
     email: 'stress.test1@example.com',
-    password: 'password123',
+    password: 'Password1!',
     name: 'Stress Test User 1',
   },
   {
     email: 'stress.test2@example.com',
-    password: 'password123',
+    password: 'Password1!',
     name: 'Stress Test User 2',
   },
   {
     email: 'stress.test3@example.com',
-    password: 'password123',
+    password: 'Password1!',
     name: 'Stress Test User 3',
   },
   {
     email: 'stress.test4@example.com',
-    password: 'password123',
+    password: 'Password1!',
     name: 'Stress Test User 4',
   },
   {
     email: 'stress.test5@example.com',
-    password: 'password123',
+    password: 'Password1!',
     name: 'Stress Test User 5',
   },
   {
     email: 'stress.test6@example.com',
-    password: 'password123',
+    password: 'Password1!',
     name: 'Stress Test User 6',
   },
   {
     email: 'stress.test7@example.com',
-    password: 'password123',
+    password: 'Password1!',
     name: 'Stress Test User 7',
   },
   {
     email: 'stress.test8@example.com',
-    password: 'password123',
+    password: 'Password1!',
     name: 'Stress Test User 8',
   },
   {
     email: 'stress.test9@example.com',
-    password: 'password123',
+    password: 'Password1!',
     name: 'Stress Test User 9',
   },
   {
     email: 'stress.test10@example.com',
-    password: 'password123',
+    password: 'Password1!',
     name: 'Stress Test User 10',
   },
 ];
