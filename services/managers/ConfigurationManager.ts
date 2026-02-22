@@ -1,6 +1,7 @@
 import { injectable } from 'tsyringe';
 import {
   IConfigurationService,
+  DatabaseType,
   EnvironmentConfig,
   DatabaseConnectionConfig,
   CacheConnectionConfig,
@@ -111,12 +112,44 @@ export class ConfigurationManager implements IConfigurationService {
   }
 
   public getDatabaseConnectionConfig(): DatabaseConnectionConfig {
+    const dbType = this.getDatabaseType();
+    if (dbType === DatabaseType.PostgreSQL) {
+      const url = this.environmentProvider.getEnvironmentVariable(
+        'DATABASE_URL',
+        ''
+      );
+      return { connectionString: url || 'postgresql://localhost:5432/qa_platform' };
+    }
     return {
       connectionString: this.environmentProvider.getEnvironmentVariable(
         'MONGO_URI',
         'mongodb://localhost:27017/qa-platform'
       ),
     };
+  }
+
+  /** MongoDB connection - ana DB (mongodb modu) veya audit (postgresql modu) için */
+  public getMongoConnectionConfig(): DatabaseConnectionConfig {
+    return {
+      connectionString: this.environmentProvider.getEnvironmentVariable(
+        'MONGO_URI',
+        'mongodb://localhost:27017/qa-platform'
+      ),
+    };
+  }
+
+  /** Database type for adapter selection. Faz 2'de PostgreSQL eklenince kullanılacak. */
+  public getDatabaseType(): DatabaseType {
+    const type = this.environmentProvider
+      .getEnvironmentVariable('DATABASE_TYPE', 'mongodb')
+      .toLowerCase();
+    if (Object.values(DatabaseType).includes(type as DatabaseType)) {
+      return type as DatabaseType;
+    }
+    console.warn(
+      `Invalid DATABASE_TYPE="${type}", using ${DatabaseType.MongoDB}`
+    );
+    return DatabaseType.MongoDB;
   }
 
   public getCacheConnectionConfig(): CacheConnectionConfig {

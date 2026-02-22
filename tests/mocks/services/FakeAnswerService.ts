@@ -81,8 +81,35 @@ export class FakeAnswerService implements IAnswerService {
   getAnswersByQuestion = jest
     .fn()
     .mockImplementation(
-      async (questionId: EntityId): Promise<IAnswerModel[]> => {
-        return this.answers.filter(answer => answer.question === questionId);
+      async (
+        questionId: EntityId,
+        _page?: number,
+        _limit?: number
+      ): Promise<{
+        data: IAnswerModel[];
+        pagination: {
+          page: number;
+          limit: number;
+          total: number;
+          totalPages: number;
+          hasNext: boolean;
+          hasPrev: boolean;
+        };
+      }> => {
+        const data = this.answers.filter(
+          answer => String(answer.question) === String(questionId)
+        );
+        return {
+          data,
+          pagination: {
+            page: 1,
+            limit: 5,
+            total: data.length,
+            totalPages: Math.ceil(data.length / 5) || 1,
+            hasNext: false,
+            hasPrev: false,
+          },
+        };
       }
     );
 

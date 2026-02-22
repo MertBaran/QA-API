@@ -60,31 +60,30 @@ export class RoleSeed implements SeedInterface {
 
     for (const roleData of this.ROLES) {
       try {
-        let role = await Role.findOne({ name: roleData.name });
-
-        if (!role) {
-          // Get permission IDs
-          const permissionIds = [];
-          for (const permName of roleData.permissions) {
-            const permission = await Permission.findOne({ name: permName });
-            if (permission) {
-              permissionIds.push(permission._id);
-            }
+        // Get permission IDs
+        const permissionIds = [];
+        for (const permName of roleData.permissions) {
+          const permission = await Permission.findOne({ name: permName });
+          if (permission) {
+            permissionIds.push(permission._id);
           }
+        }
 
-          role = await Role.create({
+        // Upsert: create or update role to match remote structure
+        const role = await Role.findOneAndUpdate(
+          { name: roleData.name },
+          {
             name: roleData.name,
             description: roleData.description,
             permissions: permissionIds,
             isSystem: true,
             isActive: true,
-          });
-          console.log(
-            `✅ Created role: ${roleData.name} with ${permissionIds.length} permissions`
-          );
-        } else {
-          console.log(`✅ Role exists: ${roleData.name}`);
-        }
+          },
+          { upsert: true, new: true }
+        );
+        console.log(
+          `✅ Role ${roleData.name} synced with ${permissionIds.length} permissions`
+        );
 
         roleMap.set(roleData.name, role._id);
       } catch (error) {

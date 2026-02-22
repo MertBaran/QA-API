@@ -1,6 +1,7 @@
 import { IUserRoleService } from '../../../services/contracts/IUserRoleService';
 import { IUserRoleModel } from '../../../models/interfaces/IUserRoleModel';
 import { EntityId } from '../../../types/database';
+import { ApplicationError } from '../../../infrastructure/error/ApplicationError';
 
 export class FakeUserRoleService implements IUserRoleService {
   private userRoles: IUserRoleModel[] = [];
@@ -277,7 +278,7 @@ export class FakeUserRoleService implements IUserRoleService {
       ur => ur.userId === userId && ur.roleId === roleId
     );
     if (!userRole) {
-      throw new Error('UserRole not found');
+      throw ApplicationError.notFoundError('UserRole not found');
     }
     return userRole;
   }

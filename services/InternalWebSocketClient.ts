@@ -12,6 +12,7 @@ export interface WebSocketMessage {
 export class InternalWebSocketClient {
   private client: WebSocket | null = null;
   private isConnected = false;
+  private isShuttingDown = false;
   private reconnectAttempts = 0;
   private readonly maxReconnectAttempts = 5;
   private readonly reconnectDelay = 5000; // 5 seconds
@@ -40,8 +41,9 @@ export class InternalWebSocketClient {
 
       this.client.on('close', () => {
         this.isConnected = false;
-        // Silent close
-        this.scheduleReconnect(wsUrl);
+        if (!this.isShuttingDown) {
+          this.scheduleReconnect(wsUrl);
+        }
       });
 
       this.client.on('error', () => {
@@ -55,6 +57,8 @@ export class InternalWebSocketClient {
   };
 
   public disconnect(): void {
+    this.isShuttingDown = true;
+
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout);
       this.reconnectTimeout = null;
@@ -66,7 +70,6 @@ export class InternalWebSocketClient {
     }
 
     this.isConnected = false;
-    this.logger.info('🔌 Internal WebSocket client disconnected manually');
   }
 
   public isClientConnected(): boolean {

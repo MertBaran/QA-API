@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 import { container } from 'tsyringe';
 import { initializeContainer } from '../services/container';
+import { TOKENS } from '../services/TOKENS';
 import { IDatabaseAdapter } from '../repositories/adapters/IDatabaseAdapter';
 import { IQuestionRepository } from '../repositories/interfaces/IQuestionRepository';
 import { IAnswerRepository } from '../repositories/interfaces/IAnswerRepository';
@@ -170,16 +171,21 @@ class ReindexCLI {
 
       const config = await initializeContainer();
 
-      // Configure database connection
-      const databaseConfig = {
-        connectionString: config.MONGO_URI,
-      };
-      container.register('IDatabaseConnectionConfig', {
-        useValue: databaseConfig,
+      // Database connection - --db=postgresql veya --db=mongodb ile seçilen DB'ye göre
+      const dbType = (process.env['DATABASE_TYPE'] || 'mongodb').toLowerCase();
+      const connectionString =
+        dbType === 'postgresql'
+          ? (config.DATABASE_URL || process.env['DATABASE_URL'] || 'postgresql://localhost:5432/qa_platform')
+          : (config.MONGO_URI || process.env['MONGO_URI'] || '');
+      if (!connectionString && dbType === 'mongodb') {
+        throw new Error('MONGO_URI is required when --db=mongodb');
+      }
+      container.register(TOKENS.IDatabaseConnectionConfig, {
+        useValue: { connectionString },
       });
 
       // Connect to database
-      console.log('🔗 Connecting to database...');
+      console.log(`🔗 Connecting to database (${dbType})...`);
       const databaseAdapter =
         container.resolve<IDatabaseAdapter>('IDatabaseAdapter');
       await databaseAdapter.connect();
@@ -684,7 +690,9 @@ async function main() {
   const recreate =
     process.argv.includes('--recreate') || process.argv.includes('-r');
 
+  const dbSource = process.env['DATABASE_TYPE'] || 'mongodb';
   console.log(`📋 Command: ${command || 'help'}`);
+  console.log(`📋 Source database: ${dbSource}`);
   console.log(`📋 Recreate flag: ${recreate ? 'YES' : 'NO'}`);
   console.log('');
 
@@ -733,18 +741,27 @@ async function main() {
         console.log('📚 ========================================');
         console.log('');
         console.log('Commands:');
-        console.log('  npm run reindex:questions - Reindex all questions');
-        console.log('  npm run reindex:answers   - Reindex all answers');
-        console.log('  npm run reindex:all       - Reindex all data');
+        console.log('  npm run reindex:questions  - Reindex all questions');
+        console.log('  npm run reindex:answers    - Reindex all answers');
+        console.log('  npm run reindex:all         - Reindex all data');
         console.log('');
         console.log('Options:');
         console.log(
-          '  --recreate, -r           - Delete and recreate indexes before reindexing'
+          '  --db=<postgresql|mongodb>   - Source database (default: env DATABASE_TYPE or mongodb)'
+        );
+        console.log(
+          '  --recreate, -r              - Delete and recreate indexes before reindexing'
         );
         console.log('');
         console.log('Examples:');
         console.log(
-          '  npm run reindex:all --recreate  - Delete indexes, recreate, then reindex'
+          '  npm run reindex:all -- --db=postgresql      - Reindex from PostgreSQL'
+        );
+        console.log(
+          '  npm run reindex:all -- --db=mongodb        - Reindex from MongoDB'
+        );
+        console.log(
+          '  npm run reindex:all -- --db=postgresql --recreate  - Recreate + reindex from PostgreSQL'
         );
         console.log('');
         break;

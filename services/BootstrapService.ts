@@ -119,14 +119,15 @@ export class BootstrapService {
   }
 
   private getConfigPath(environment: EnvironmentType): string {
-    const configFile = ENVIRONMENT_CONFIG_MAP[environment];
+    const configFile =
+      process.env['CONFIG_FILE'] ?? ENVIRONMENT_CONFIG_MAP[environment];
     return path.resolve(process.cwd(), `./config/env/${configFile}`);
   }
 
   private loadAndValidateConfig(configPath: string): ValidationResult {
     try {
-      // Load environment variables from file
-      const result = dotenv.config({ path: configPath });
+      // override: true - config.env.{dev|test|prod} her zaman kazansın (shell/.env'deki değerleri ez)
+      const result = dotenv.config({ path: configPath, override: true });
 
       if (result.error) {
         return {

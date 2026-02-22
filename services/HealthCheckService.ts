@@ -1,6 +1,8 @@
-import { injectable } from 'tsyringe';
+import { injectable, inject } from 'tsyringe';
 import { BootstrapService, ParsedConfiguration } from './BootstrapService';
 import { ApplicationState } from './ApplicationState';
+import { IConfigurationService } from './contracts/IConfigurationService';
+import { TOKENS } from './TOKENS';
 
 export interface HealthStatus {
   status: 'healthy' | 'unhealthy' | 'starting';
@@ -51,7 +53,11 @@ export class HealthCheckService implements IHealthCheckService {
   private startTime: number;
   private appState = ApplicationState.getInstance();
 
-  constructor(private bootstrapService: BootstrapService) {
+  constructor(
+    private bootstrapService: BootstrapService,
+    @inject(TOKENS.IConfigurationService)
+    private configService: IConfigurationService
+  ) {
     this.startTime = Date.now();
   }
 
@@ -121,8 +127,10 @@ export class HealthCheckService implements IHealthCheckService {
   }
 
   private async checkServices(config: ParsedConfiguration) {
+    const dbConnStr = this.configService.getDatabaseConnectionConfig()
+      .connectionString;
     const [database, cache, email] = await Promise.allSettled([
-      this.checkDatabase(config.MONGO_URI),
+      this.checkDatabase(dbConnStr),
       this.checkCache(config),
       Promise.resolve(this.checkEmail(config)),
     ]);
@@ -144,34 +152,44 @@ export class HealthCheckService implements IHealthCheckService {
   }
 
   private async checkDatabase(
-    mongoUri: string
+    connectionString: string
   ): Promise<HealthStatus['services']['database']> {
     try {
-      // Parse MongoDB URI to extract details
-      const uri = new URL(mongoUri);
-      const database = uri.pathname.substring(1); // Remove leading slash
+      if (!connectionString || !connectionString.trim()) {
+        return { status: 'unknown' };
+      }
 
-      // Get database adapter from container to check actual connection
       const { container } = require('./container');
       const databaseAdapter = container.resolve('IDatabaseAdapter');
 
-      // Check if database is actually connected
-      if (databaseAdapter && databaseAdapter.isConnected()) {
-        return {
-          status: 'connected',
-          details: {
-            host: uri.hostname,
-            port: parseInt(uri.port) || 27017,
-            database,
-            connectionString: mongoUri.replace(
-              /\/\/[^:]+:[^@]+@/,
-              '//***:***@'
-            ), // Mask credentials
-          },
-        };
-      } else {
+      if (!databaseAdapter || !databaseAdapter.isConnected()) {
         return { status: 'disconnected' };
       }
+
+      let details: HealthStatus['services']['database']['details'];
+      try {
+        const uri = new URL(connectionString);
+        const database = uri.pathname.substring(1).split('?')[0] || '';
+        const defaultPort = uri.protocol.includes('postgres') ? 5432 : 27017;
+        details = {
+          host: uri.hostname,
+          port: parseInt(uri.port) || defaultPort,
+          database,
+          connectionString: connectionString.replace(
+            /(mongodb\+srv|postgresql):\/\/[^:]+:[^@]+@/,
+            '$1://***:***@'
+          ),
+        };
+      } catch {
+        details = {
+          connectionString: connectionString.replace(
+            /(mongodb\+srv|postgresql):\/\/[^:]+:[^@]+@/,
+            '$1://***:***@'
+          ),
+        };
+      }
+
+      return { status: 'connected', details };
     } catch (error) {
       console.error('Database health check failed:', error);
       return { status: 'disconnected' };

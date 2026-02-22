@@ -2,7 +2,17 @@ import 'reflect-metadata';
 import { QuestionManager } from '../../../services/managers/QuestionManager';
 import { QuestionRepository } from '../../../repositories/QuestionRepository';
 import { FakeQuestionDataSource } from '../../mocks/datasources/FakeQuestionDataSource';
+import { FakeAnswerDataSource } from '../../mocks/datasources/FakeAnswerDataSource';
+import { AnswerRepository } from '../../../repositories/AnswerRepository';
 import { FakeCacheProvider } from '../../mocks/cache/FakeCacheProvider';
+import { FakeLoggerProvider } from '../../mocks/logger/FakeLoggerProvider';
+import { QuestionProjector } from '../../../infrastructure/search/projectors/QuestionProjector';
+import { AnswerProjector } from '../../../infrastructure/search/projectors/AnswerProjector';
+
+const createMockIndexClient = () => ({ sync: jest.fn().mockResolvedValue(undefined) });
+const createMockSearchClient = () => ({
+  search: jest.fn().mockResolvedValue({ hits: [], total: 0, page: 1, limit: 10, totalPages: 0 }),
+});
 
 describe('QuestionService Unit Tests', () => {
   let questionService: QuestionManager;
@@ -13,10 +23,20 @@ describe('QuestionService Unit Tests', () => {
   beforeEach(() => {
     fakeQuestionDataSource = new FakeQuestionDataSource();
     questionRepository = new QuestionRepository(fakeQuestionDataSource);
+    const fakeAnswerDataSource = new FakeAnswerDataSource();
+    const answerRepository = new AnswerRepository(fakeAnswerDataSource);
     fakeCacheProvider = new FakeCacheProvider();
     questionService = new QuestionManager(
       questionRepository,
-      fakeCacheProvider
+      answerRepository,
+      {} as any, // IContentRelationRepository
+      fakeCacheProvider,
+      createMockIndexClient() as any,
+      createMockSearchClient() as any,
+      new QuestionProjector(),
+      new AnswerProjector(),
+      {} as any, // IContentAssetService
+      new FakeLoggerProvider()
     );
   });
 
@@ -75,9 +95,9 @@ describe('QuestionService Unit Tests', () => {
     const deleted = await questionService.deleteQuestion(question._id);
     expect(deleted).toBeDefined();
 
-    // After deletion, getting the question should throw "Question not found" error
+    // After deletion, BaseRepository.findById throws "Resource not found"
     await expect(questionService.getQuestionById(question._id)).rejects.toThrow(
-      'Question not found'
+      'Resource not found'
     );
   });
 });

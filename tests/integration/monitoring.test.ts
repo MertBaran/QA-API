@@ -1,55 +1,49 @@
 import request from 'supertest';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import { testApp } from '../setup';
 
-// Helper to assign admin role directly in DB for tests
-async function assignAdminRoleToUser(userId: string) {
+// Create user and token directly via Mongoose (matches seed structure)
+async function createTestUserAndToken() {
+  const UserMongo = require('../../models/mongodb/UserMongoModel').default;
+  const UserRoleMongo = require('../../models/mongodb/UserRoleMongoModel').default;
   const RoleMongo = require('../../models/mongodb/RoleMongoModel').default;
-  const UserRoleMongo =
-    require('../../models/mongodb/UserRoleMongoModel').default;
+
+  let user = await UserMongo.findOne({ email: 'monitoring@example.com' });
+  if (!user) {
+    const hashedPassword = await bcrypt.hash('password123', 10);
+    user = await UserMongo.create({
+      name: 'Monitoring User',
+      email: 'monitoring@example.com',
+      password: hashedPassword,
+      profile_image: '',
+      blocked: false,
+    });
+  }
+
   const adminRole = await RoleMongo.findOne({ name: 'admin' });
-  if (!adminRole) throw new Error('Admin role not found in test DB');
-  // Upsert user-role (unique index on userId+roleId prevents duplicates)
-  try {
+  if (!adminRole) throw new Error('Admin role not found in seed');
+
+  const existingUserRole = await UserRoleMongo.findOne({
+    userId: String(user._id),
+    roleId: String(adminRole._id),
+  });
+  if (!existingUserRole) {
     await UserRoleMongo.create({
-      userId,
-      roleId: adminRole._id.toString(),
+      userId: String(user._id),
+      roleId: String(adminRole._id),
       isActive: true,
       assignedAt: new Date(),
     });
-  } catch (_e) {
-    // ignore duplicate errors between runs
   }
-}
 
-// Ensure system:admin permission exists and linked to admin role
-async function ensureAdminPermissionAssigned() {
-  const RoleMongo = require('../../models/mongodb/RoleMongoModel').default;
-  const PermissionMongo =
-    require('../../models/mongodb/PermissionMongoModel').default;
-  const adminRole = await RoleMongo.findOne({ name: 'admin' });
-  if (!adminRole) throw new Error('Admin role not found');
-
-  const adminPerm = await PermissionMongo.findOneAndUpdate(
-    { name: 'system:admin' },
-    {
-      name: 'system:admin',
-      description: 'Admin permission',
-      resource: 'system',
-      action: 'admin',
-      category: 'system',
-      isActive: true,
-    },
-    { upsert: true, new: true }
+  const secret = process.env['JWT_SECRET_KEY'] || 'insaninsanderleridi';
+  const token = jwt.sign(
+    { id: String(user._id), name: user.name, lang: 'en' },
+    secret,
+    { expiresIn: '24h' }
   );
-
-  // Add to role if not present
-  const hasPerm = (adminRole.permissions || []).some(
-    (p: any) => p?.toString?.() === adminPerm._id.toString()
-  );
-  if (!hasPerm) {
-    adminRole.permissions = [...(adminRole.permissions || []), adminPerm._id];
-    await adminRole.save();
-  }
+  return { userId: String(user._id), authToken: token };
 }
 
 describe('Monitoring Integration Tests', () => {
@@ -58,51 +52,17 @@ describe('Monitoring Integration Tests', () => {
   let userId: string;
 
   beforeAll(async () => {
-    // Test user oluştur
     testUser = {
       email: 'monitoring@example.com',
       password: 'password123',
       firstName: 'Monitoring',
       lastName: 'User',
-      title: 'Admin',
-      bio: 'Test bio',
-      location: 'Test Location',
-      website: 'https://test.com',
-      github: 'monitoringuser',
-      twitter: 'monitoringuser',
-      linkedin: 'monitoringuser',
-      avatar: 'https://test.com/avatar.jpg',
-      profile_image: 'https://test.com/avatar.jpg',
-      blocked: false,
     };
 
-    // Register user
-    const registerResponse = await request(testApp)
-      .post('/api/auth/register')
-      .send(testUser);
-
-    expect(registerResponse.status).toBe(200);
-
-    // Login user
-    const loginResponse = await request(testApp).post('/api/auth/login').send({
-      email: testUser.email,
-      password: testUser.password,
-      captchaToken: 'test-captcha-token-12345',
-    });
-
-    expect(loginResponse.status).toBe(200);
-    authToken = loginResponse.body.access_token;
-
-    // Fetch profile to get user id
-    const profileResponse = await request(testApp)
-      .get('/api/auth/profile')
-      .set('Authorization', `Bearer ${authToken}`);
-    expect(profileResponse.status).toBe(200);
-    userId = profileResponse.body.data._id;
-
-    // Assign admin role and ensure admin permission exists on that role
-    await assignAdminRoleToUser(userId);
-    await ensureAdminPermissionAssigned();
+    // Create user with admin role via Mongoose (seed has system:admin on admin role)
+    const { userId: uid, authToken: tok } = await createTestUserAndToken();
+    userId = uid;
+    authToken = tok;
   });
 
   describe('GET /api/monitoring/connections', () => {

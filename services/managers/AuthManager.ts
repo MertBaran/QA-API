@@ -39,7 +39,12 @@ export class AuthManager implements IAuthService {
   }): Promise<IUserModel> {
     const { firstName, lastName, email, password, roleId, language } = userData;
 
-    const existingUser = await this.userRepository.findByEmail(email);
+    let existingUser: IUserModel | null = null;
+    try {
+      existingUser = await this.userRepository.findByEmail(email);
+    } catch {
+      existingUser = null;
+    }
     if (existingUser) {
       throw ApplicationError.businessError(
         AuthServiceMessages.EmailExists.en,

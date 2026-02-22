@@ -57,30 +57,38 @@ The collection includes all API endpoints, request examples, and automatic token
 POST   /api/auth/register                   # User registration
 POST   /api/auth/login                      # User login (auto-saves token)
 POST   /api/auth/loginGoogle                # Google OAuth login
+POST   /api/auth/registerGoogle             # Google OAuth registration
 GET    /api/auth/logout                     # User logout
 POST   /api/auth/forgotpassword             # Password reset request
 PUT    /api/auth/resetpassword              # Password reset
 GET    /api/auth/profile                    # Get user profile
 PUT    /api/auth/edit                       # Edit user profile
 POST   /api/auth/upload                     # Upload profile image
+PUT    /api/auth/background                 # Update profile background
+PUT    /api/auth/profile-image              # Update profile image
+POST   /api/auth/change-password/request    # Request password change
+POST   /api/auth/change-password/verify     # Verify password change code
+POST   /api/auth/change-password/confirm    # Confirm password change
 GET    /api/auth/check-admin-permissions    # Check admin permissions
 ```
 
 ### Questions
 
 ```
-GET    /api/questions                  # List all questions
-GET    /api/questions/paginated        # Get paginated questions (with filters, search, sort)
-GET    /api/questions/:id              # Get question details
-GET    /api/questions/user/:userId     # Get questions by user
-GET    /api/questions/parent/:id       # Get questions related to a parent content
-POST   /api/questions/ask              # Create question (supports optional parent & thumbnailKey)
-PUT    /api/questions/:id/edit         # Update question (title/content/thumbnailKey/removeThumbnail)
-DELETE /api/questions/:id/delete       # Delete question
-GET    /api/questions/:id/like         # Like question
-GET    /api/questions/:id/undo_like    # Unlike question
-GET    /api/questions/:id/dislike      # Dislike question
-GET    /api/questions/:id/undo_dislike # Undo dislike question
+GET    /api/questions                        # List all questions
+GET    /api/questions/search                 # Search questions
+GET    /api/questions/paginated              # Get paginated questions (with filters, search, sort)
+GET    /api/questions/paginated/with-parents # Get paginated questions with parent information
+GET    /api/questions/:id                    # Get question details
+GET    /api/questions/user/:userId           # Get questions by user
+GET    /api/questions/parent/:id             # Get questions related to a parent content
+POST   /api/questions/ask                    # Create question (supports optional parent & thumbnailKey)
+PUT    /api/questions/:id/edit               # Update question (title/content/thumbnailKey/removeThumbnail)
+DELETE /api/questions/:id/delete             # Delete question
+GET    /api/questions/:id/like               # Like question
+GET    /api/questions/:id/undo_like          # Unlike question
+GET    /api/questions/:id/dislike            # Dislike question
+GET    /api/questions/:id/undo_dislike       # Undo dislike question
 ```
 
 ### Content Assets
@@ -96,17 +104,19 @@ Payloads accept `type`, `filename`, optional `ownerId`, `entityId`, and visibili
 ### Answers
 
 ```
-GET    /api/questions/:question_id/answers              # Get all answers for a question
-GET    /api/questions/:question_id/answers/:answer_id   # Get specific answer
-POST   /api/questions/:question_id/answers              # Add answer to question
-PUT    /api/questions/:question_id/answers/:answer_id/edit    # Update answer
-DELETE /api/questions/:question_id/answers/:answer_id/delete  # Delete answer
-GET    /api/questions/:question_id/answers/:answer_id/like    # Like answer
+GET    /api/questions/:question_id/answers                      # Get all answers for a question
+GET    /api/questions/:question_id/answers/:answer_id           # Get specific answer
+GET    /api/questions/:question_id/answers/:answer_id/page      # Get page number of answer in paginated list
+POST   /api/questions/:question_id/answers                      # Add answer to question
+PUT    /api/questions/:question_id/answers/:answer_id/edit      # Update answer
+DELETE /api/questions/:question_id/answers/:answer_id/delete    # Delete answer
+GET    /api/questions/:question_id/answers/:answer_id/like      # Like answer
 GET    /api/questions/:question_id/answers/:answer_id/undo_like # Unlike answer
-GET    /api/questions/:question_id/answers/:answer_id/dislike  # Dislike answer
+GET    /api/questions/:question_id/answers/:answer_id/dislike   # Dislike answer
 GET    /api/questions/:question_id/answers/:answer_id/undo_dislike # Undo dislike answer
-GET    /api/answers/:id                      # Get answer by ID (standalone)
-GET    /api/answers/user/:userId             # Get answers by user
+GET    /api/answers/search                                      # Search answers
+GET    /api/answers/:id                                         # Get answer by ID (standalone)
+GET    /api/answers/user/:userId                                # Get answers by user
 ```
 
 ### Notifications (Admin Only)
@@ -146,7 +156,11 @@ GET    /api/bookmarks/stats                                  # Get bookmark stat
 ### Users
 
 ```
-GET    /api/public/users/:id           # Get public user profile (no auth required)
+GET    /api/public/users/:id           # Get public user profile (no auth required, optional auth for isFollowing)
+POST   /api/public/users/:id/follow    # Follow user (auth required)
+POST   /api/public/users/:id/unfollow  # Unfollow user (auth required)
+GET    /api/public/users/:id/followers # Get user followers (public)
+GET    /api/public/users/:id/following # Get user following (public)
 GET    /api/users                      # List all users (Admin only)
 GET    /api/users/:id                  # Get user details (Admin only)
 ```

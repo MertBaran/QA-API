@@ -65,7 +65,8 @@
     "test:asset-path": "ts-node scripts/storage/test-content-asset-path.ts",
     "test:presigned": "ts-node scripts/storage/test-presigned-url.ts",
     "test:presigned-upload": "ts-node scripts/storage/test-presigned-upload.ts",
-    "seed:test-questions": "ts-node scripts/seed-test-questions.ts"
+    "seed:test-questions": "ts-node scripts/seed-test-questions.ts",
+    "setup-notification-templates": "ts-node scripts/setup-notification-templates.ts"
   },
   "keywords": [
     "express",

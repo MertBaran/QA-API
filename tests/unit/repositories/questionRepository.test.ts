@@ -55,7 +55,8 @@ describe('QuestionRepository Unit Tests', () => {
     });
     const deleted = await questionRepository.deleteById(question._id);
     expect(deleted).toBeDefined();
-    const found = await questionRepository.findById(question._id);
-    expect(found).toBeNull();
+    await expect(questionRepository.findById(question._id)).rejects.toThrow(
+      'Resource not found'
+    );
   });
 });

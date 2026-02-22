@@ -1,5 +1,6 @@
 import { injectable } from 'tsyringe';
-import { IDataSource } from '../interfaces/IDataSource';
+import mongoose from 'mongoose';
+import { IContentRelationDataSource } from '../interfaces/IContentRelationDataSource';
 import { IContentRelationModel } from '../../models/interfaces/IContentRelationModel';
 import { IContentRelationMongo } from '../../models/mongodb/ContentRelationMongoModel';
 import { IEntityModel } from '../interfaces/IEntityModel';
@@ -9,7 +10,7 @@ import { ContentType } from '../../types/content/RelationType';
 
 @injectable()
 export class ContentRelationMongooseDataSource
-  implements IDataSource<IContentRelationModel>
+  implements IContentRelationDataSource
 {
   private model: IEntityModel<IContentRelationMongo>;
 
@@ -99,6 +100,23 @@ export class ContentRelationMongooseDataSource
     fields: Partial<IContentRelationModel>
   ): Promise<IContentRelationModel[]> {
     const results = await this.model.find(fields);
+    return results.map((doc: any) => this.toEntity(doc));
+  }
+
+  async findBySourceIds(
+    contentType: ContentType,
+    contentIds: string[]
+  ): Promise<IContentRelationModel[]> {
+    if (!contentIds.length) {
+      return [];
+    }
+    const uniqueIds = contentIds.map(
+      (id) => new mongoose.Types.ObjectId(id.toString())
+    );
+    const results = await this.model.find({
+      sourceContentType: contentType,
+      sourceContentId: { $in: uniqueIds },
+    });
     return results.map((doc: any) => this.toEntity(doc));
   }
 

@@ -64,7 +64,6 @@ export class MongoDBAdapter implements IDatabaseAdapter {
         await Promise.race([connectionPromise, timeoutPromise]);
         this.isConnectedFlag = true;
 
-        // MongoDB adapter handles its own logging with its own business logic
         const dbName = this.extractDatabaseName(mongoUri);
         console.log(
           RepositoryConstants.DATABASE_ADAPTER.MONGODB.CONNECT_SUCCESS.en.replace(
@@ -124,6 +123,18 @@ export class MongoDBAdapter implements IDatabaseAdapter {
 
   isConnected(): boolean {
     return this.isConnectedFlag && mongoose.connection.readyState === 1;
+  }
+
+  async ping(): Promise<boolean> {
+    try {
+      if (!mongoose.connection.db) {
+        return false;
+      }
+      await mongoose.connection.db.admin().ping();
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   getIdAdapter(): MongoDBIdAdapter {

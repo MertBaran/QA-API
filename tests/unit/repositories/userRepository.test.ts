@@ -62,7 +62,8 @@ describe('UserRepository Unit Tests', () => {
     });
     const deleted = await userRepository.deleteById(user._id);
     expect(deleted).toBeDefined();
-    const found = await userRepository.findById(user._id);
-    expect(found).toBeNull();
+    await expect(userRepository.findById(user._id)).rejects.toThrow(
+      'Resource not found'
+    );
   });
 });
