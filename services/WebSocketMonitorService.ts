@@ -8,6 +8,7 @@ import { InternalWebSocketClient } from './InternalWebSocketClient';
 import { TOKENS } from './TOKENS';
 import { IObjectStorageProvider } from '../infrastructure/storage/IObjectStorageProvider';
 import { IDatabaseAdapter } from '../repositories/adapters/IDatabaseAdapter';
+import { IConfigurationService } from './contracts/IConfigurationService';
 
 export interface ConnectionStatus {
   service: 'database' | 'cache' | 'queue' | 'email' | 'object-storage';
@@ -65,7 +66,8 @@ export class WebSocketMonitorService {
     private internalClient: InternalWebSocketClient,
     @inject(TOKENS.IObjectStorageProvider)
     private objectStorageProvider: IObjectStorageProvider,
-    @inject('IDatabaseAdapter') private databaseAdapter: IDatabaseAdapter
+    @inject('IDatabaseAdapter') private databaseAdapter: IDatabaseAdapter,
+    @inject(TOKENS.IConfigurationService) private configService: IConfigurationService
   ) {
     this.initializeStatus();
     // Don't start internal client immediately - wait for app to be ready
@@ -221,8 +223,12 @@ export class WebSocketMonitorService {
   }
 
   private sendToClient(ws: WebSocket, message: WebSocketMessage): void {
-    if (ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify(message));
+    try {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify(message));
+      }
+    } catch (err) {
+      this.clients.delete(ws);
     }
   }
 
@@ -243,12 +249,14 @@ export class WebSocketMonitorService {
 
     this.isMonitoring = true;
     this.monitoringInterval = setInterval(() => {
-      // Always monitor if internal client is connected or external clients exist
-      if (this.internalClient.isClientConnected() || this.clients.size > 0) {
-        this.checkAllConnections();
-      } else {
-        // No clients - stop monitoring to save resources
-        this.stopMonitoring();
+      try {
+        if (this.internalClient.isClientConnected() || this.clients.size > 0) {
+          void this.checkAllConnections();
+        } else {
+          this.stopMonitoring();
+        }
+      } catch (err) {
+        this.logger.debug('Monitoring tick error', { error: (err as Error).message });
       }
     }, intervalMs);
 
@@ -267,6 +275,25 @@ export class WebSocketMonitorService {
     }
     this.isMonitoring = false;
     this.logger.info('🛑 WebSocket connection monitoring stopped');
+  }
+
+  /**
+   * Graceful shutdown: closes WebSocket server, disconnects internal client,
+   * stops monitoring. Call this before HTTP server close.
+   */
+  public async close(): Promise<void> {
+    this.stopMonitoring();
+    this.internalClient.disconnect();
+
+    if (this.wss) {
+      return new Promise<void>(resolve => {
+        this.wss!.close(() => {
+          this.wss = null;
+          this.clients.clear();
+          resolve();
+        });
+      });
+    }
   }
 
   private async startInternalClient(): Promise<void> {
@@ -318,9 +345,7 @@ export class WebSocketMonitorService {
 
     if (breaker.failures >= this.MAX_FAILURES) {
       breaker.skipUntil = new Date(Date.now() + this.CIRCUIT_BREAKER_TIMEOUT);
-      this.logger.warn(
-        `Circuit breaker opened for ${service} - skipping checks for ${this.CIRCUIT_BREAKER_TIMEOUT}ms`
-      );
+      // Silent - circuit breaker is expected when DB is temporarily unavailable
     }
 
     this.circuitBreaker.set(service, breaker);
@@ -331,26 +356,25 @@ export class WebSocketMonitorService {
     if (breaker && breaker.failures > 0) {
       breaker.failures = 0;
       breaker.skipUntil = undefined;
-      this.logger.info(
-        `Circuit breaker closed for ${service} - connection restored`
-      );
+      // Silent - expected recovery, no need to log
       this.circuitBreaker.set(service, breaker);
     }
   }
 
-  private async checkDatabaseConnection(config: { MONGO_URI?: string }): Promise<void> {
+  private async checkDatabaseConnection(_config: { MONGO_URI?: string; DATABASE_URL?: string }): Promise<void> {
     if (this.shouldSkipCheck('database')) {
       return;
     }
 
-    const mongoUri = config.MONGO_URI || '';
     let host = 'unknown';
     let database = 'unknown';
     try {
-      if (mongoUri) {
-        const url = new URL(mongoUri);
+      const connStr = this.configService.getDatabaseConnectionConfig().connectionString;
+      if (connStr) {
+        const normalized = connStr.replace(/^(postgresql?|mongodb(\+srv)?):\/\//, 'https://');
+        const url = new URL(normalized);
         host = url.hostname;
-        database = url.pathname.substring(1) || 'unknown';
+        database = url.pathname.replace(/^\//, '').split('/')[0]?.split('?')[0] || 'unknown';
       }
     } catch {
       // Invalid URI
@@ -557,25 +581,27 @@ export class WebSocketMonitorService {
     newStatus: ConnectionStatus,
     previousStatus?: ConnectionStatus
   ): void {
-    this.connectionStatus.set(service, newStatus);
+    try {
+      this.connectionStatus.set(service, newStatus);
 
-    // Broadcast status update to all clients
-    this.broadcast({
-      type: 'connection_status',
-      data: Array.from(this.connectionStatus.values()),
-      timestamp: new Date(),
-    });
+      this.broadcast({
+        type: 'connection_status',
+        data: Array.from(this.connectionStatus.values()),
+        timestamp: new Date(),
+      });
 
-    // Check for status changes
-    if (previousStatus && previousStatus.status !== newStatus.status) {
-      if (newStatus.status === 'disconnected') {
-        this.handleConnectionLost(service, newStatus);
-      } else if (
-        newStatus.status === 'connected' &&
-        previousStatus.status === 'disconnected'
-      ) {
-        this.handleConnectionRestored(service, newStatus);
+      if (previousStatus && previousStatus.status !== newStatus.status) {
+        if (newStatus.status === 'disconnected') {
+          this.handleConnectionLost(service, newStatus);
+        } else if (
+          newStatus.status === 'connected' &&
+          previousStatus.status === 'disconnected'
+        ) {
+          this.handleConnectionRestored(service, newStatus);
+        }
       }
+    } catch (err) {
+      this.logger.debug('updateConnectionStatus error', { service, error: (err as Error).message });
     }
   }
 
@@ -583,32 +609,40 @@ export class WebSocketMonitorService {
     service: string,
     status: ConnectionStatus
   ): void {
-    const alert: ConnectionAlert = {
-      type: 'connection_lost',
-      service,
-      message: `${service.toUpperCase()} connection lost`,
-      timestamp: new Date(),
-      details: status.details,
-    };
+    try {
+      const alert: ConnectionAlert = {
+        type: 'connection_lost',
+        service,
+        message: `${service.toUpperCase()} connection lost`,
+        timestamp: new Date(),
+        details: status.details,
+      };
 
-    this.createAlert(alert);
-    this.sendNotification(alert);
+      this.createAlert(alert);
+      this.sendNotification(alert).catch(() => {});
+    } catch (err) {
+      this.logger.debug('Connection lost handler error', { service, error: (err as Error).message });
+    }
   }
 
   private handleConnectionRestored(
     service: string,
     status: ConnectionStatus
   ): void {
-    const alert: ConnectionAlert = {
-      type: 'connection_restored',
-      service,
-      message: `${service.toUpperCase()} connection restored`,
-      timestamp: new Date(),
-      details: status.details,
-    };
+    try {
+      const alert: ConnectionAlert = {
+        type: 'connection_restored',
+        service,
+        message: `${service.toUpperCase()} connection restored`,
+        timestamp: new Date(),
+        details: status.details,
+      };
 
-    this.createAlert(alert);
-    this.sendNotification(alert);
+      this.createAlert(alert);
+      this.sendNotification(alert).catch(() => {});
+    } catch (err) {
+      this.logger.debug('Connection restored handler error', { service, error: (err as Error).message });
+    }
   }
 
   private handleConnectionError(service: string, error: Error): void {
@@ -624,34 +658,44 @@ export class WebSocketMonitorService {
   }
 
   private createAlert(alert: ConnectionAlert): void {
-    this.alertHistory.push(alert);
+    try {
+      this.alertHistory.push(alert);
 
-    // Keep only last 100 alerts
-    if (this.alertHistory.length > 100) {
-      this.alertHistory = this.alertHistory.slice(-100);
+      // Keep only last 100 alerts
+      if (this.alertHistory.length > 100) {
+        this.alertHistory = this.alertHistory.slice(-100);
+      }
+
+      // Debug only - alert still broadcast to WebSocket clients, email sent if ADMIN_EMAIL configured
+      this.logger.debug(`Connection Alert: ${alert.message}`, {
+        service: alert.service,
+        type: alert.type,
+        timestamp: alert.timestamp,
+        details: alert.details,
+      });
+
+      // Broadcast alert to all clients
+      this.broadcast({
+        type: 'alert',
+        data: [alert],
+        timestamp: new Date(),
+      });
+    } catch (err) {
+      this.logger.debug('createAlert error', { error: (err as Error).message });
     }
-
-    this.logger.error(`🚨 Connection Alert: ${alert.message}`, {
-      service: alert.service,
-      type: alert.type,
-      timestamp: alert.timestamp,
-      details: alert.details,
-    });
-
-    // Broadcast alert to all clients
-    this.broadcast({
-      type: 'alert',
-      data: [alert],
-      timestamp: new Date(),
-    });
   }
 
   private async sendNotification(alert: ConnectionAlert): Promise<void> {
     try {
-      const config = this.appState.config;
+      const config = this.appState.config as { ADMIN_EMAIL?: string };
+      const adminEmail = config?.ADMIN_EMAIL;
+      if (!adminEmail?.trim()) {
+        this.logger.debug('Skipping connection alert email - ADMIN_EMAIL not configured');
+        return;
+      }
       const notificationPayload = {
         channel: 'email' as const,
-        to: config.ADMIN_EMAIL,
+        to: adminEmail,
         subject: `Connection Alert: ${alert.service.toUpperCase()}`,
         message: alert.message,
         data: {

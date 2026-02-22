@@ -5,6 +5,10 @@ import { BootstrapService } from './BootstrapService';
 import { HealthCheckService } from './HealthCheckService';
 import { EnvironmentProvider } from './providers/EnvironmentProvider';
 import { ConfigurationManager } from './managers/ConfigurationManager';
+import {
+  IConfigurationService,
+  DatabaseType,
+} from './contracts/IConfigurationService';
 import { AuthManager } from './managers/AuthManager';
 import { QuestionManager } from './managers/QuestionManager';
 import { AnswerManager } from './managers/AnswerManager';
@@ -22,6 +26,7 @@ import { PinoLoggerProvider } from '../infrastructure/logging/PinoLoggerProvider
 import { SentryTracker } from '../infrastructure/error/SentryTracker';
 import { RedisCacheProvider } from '../infrastructure/cache/RedisCacheProvider';
 import { MongoDBAdapter } from '../repositories/adapters/MongoDBAdapter';
+import { PostgreSQLAdapter } from '../repositories/adapters/PostgreSQLAdapter';
 import { UserRepository } from '../repositories/UserRepository';
 import { QuestionRepository } from '../repositories/QuestionRepository';
 import { AnswerRepository } from '../repositories/AnswerRepository';
@@ -31,6 +36,7 @@ import { UserMongooseDataSource } from '../repositories/mongodb/UserMongooseData
 import { QuestionMongooseDataSource } from '../repositories/mongodb/QuestionMongooseDataSource';
 import { AnswerMongooseDataSource } from '../repositories/mongodb/AnswerMongooseDataSource';
 import { MongoAuditProvider } from '../infrastructure/audit/MongoAuditProvider';
+import { NoOpAuditProvider } from '../infrastructure/audit/NoOpAuditProvider';
 import { ZodValidationProvider } from '../infrastructure/validation/ZodValidationProvider';
 import { MongoDBMigrationStrategy } from '../database/strategies/MongoDBMigrationStrategy';
 import { MongoDBSeedStrategy } from '../database/strategies/MongoDBSeedStrategy';
@@ -61,6 +67,17 @@ import { UserRoleRepository } from '../repositories/UserRoleRepository';
 import { PermissionMongooseDataSource } from '../repositories/mongodb/PermissionMongooseDataSource';
 import { RoleMongooseDataSource } from '../repositories/mongodb/RoleMongooseDataSource';
 import { UserRoleMongooseDataSource } from '../repositories/mongodb/UserRoleMongooseDataSource';
+import { PermissionPostgreSQLDataSource } from '../repositories/postgresql/PermissionPostgreSQLDataSource';
+import { RolePostgreSQLDataSource } from '../repositories/postgresql/RolePostgreSQLDataSource';
+import { UserRolePostgreSQLDataSource } from '../repositories/postgresql/UserRolePostgreSQLDataSource';
+import { UserPostgreSQLDataSource } from '../repositories/postgresql/UserPostgreSQLDataSource';
+import { QuestionPostgreSQLDataSource } from '../repositories/postgresql/QuestionPostgreSQLDataSource';
+import { AnswerPostgreSQLDataSource } from '../repositories/postgresql/AnswerPostgreSQLDataSource';
+import { BookmarkPostgreSQLDataSource } from '../repositories/postgresql/BookmarkPostgreSQLDataSource';
+import { BookmarkCollectionPostgreSQLDataSource } from '../repositories/postgresql/BookmarkCollectionPostgreSQLDataSource';
+import { BookmarkCollectionItemPostgreSQLDataSource } from '../repositories/postgresql/BookmarkCollectionItemPostgreSQLDataSource';
+import { ContentRelationPostgreSQLDataSource } from '../repositories/postgresql/ContentRelationPostgreSQLDataSource';
+import { NotificationPostgreSQLDataSource } from '../repositories/postgresql/NotificationPostgreSQLDataSource';
 import { BookmarkManager } from './managers/BookmarkManager';
 import { BookmarkRepository } from '../repositories/BookmarkRepository';
 import { BookmarkMongooseDataSource } from '../repositories/mongodb/BookmarkMongooseDataSource';
@@ -93,20 +110,35 @@ import { AnswerSearchDoc } from '../infrastructure/search/SearchDocument';
 // Register core services first
 container.registerSingleton(TOKENS.BootstrapService, BootstrapService);
 
-// Bootstrap function
+// Bootstrap function - idempotent, birden fazla çağrı güvenli
+let _initConfig: import('./BootstrapService').ParsedConfiguration | null = null;
+
 export async function initializeContainer() {
+  if (_initConfig) return _initConfig;
+
+  // DataSource'lar module-level'da _isPostgreSQL flag'ine göre zaten kayıtlı.
+  // Burada sadece connection config ve bootstrap yapılıyor.
+
+  if (_isPostgreSQL) {
+    const dbUrl = process.env['DATABASE_URL'] || 'postgresql://localhost:5432/qa_platform';
+    container.registerInstance(TOKENS.IDatabaseConnectionConfig, {
+      connectionString: dbUrl,
+    });
+    console.log('📦 Container: PostgreSQL mode');
+  }
+
   const bootstrapService = container.resolve(BootstrapService);
   const config = await bootstrapService.bootstrap();
 
-  // Update database config with bootstrap value (container default uses process.env)
-  const mongoUri =
-    process.env['MONGO_URI'] ||
-    config.MONGO_URI ||
-    'mongodb://localhost:27017/qa-platform';
-  container.register(TOKENS.IDatabaseConnectionConfig, {
-    useValue: { connectionString: mongoUri },
-  });
+  if (!_isPostgreSQL) {
+    const configManager = container.resolve<IConfigurationService>(
+      TOKENS.IConfigurationService
+    );
+    const dbConnConfig = configManager.getDatabaseConnectionConfig();
+    container.registerInstance(TOKENS.IDatabaseConnectionConfig, dbConnConfig);
+  }
 
+  _initConfig = config;
   return config;
 }
 
@@ -117,9 +149,22 @@ container.registerSingleton(TOKENS.HealthCheckService, HealthCheckService);
 container.registerSingleton(TOKENS.ILoggerProvider, PinoLoggerProvider);
 container.registerSingleton(TOKENS.IExceptionTracker, SentryTracker);
 container.registerSingleton(TOKENS.ICacheProvider, RedisCacheProvider);
-container.registerSingleton(TOKENS.IDatabaseAdapter, MongoDBAdapter);
-container.registerSingleton(TOKENS.IAuditProvider, MongoAuditProvider);
-container.registerSingleton(TOKENS.AuditProvider, MongoAuditProvider);
+// DATABASE_TYPE check: dotenv APP.ts'de container import'undan ÖNCE yükleniyor
+const _isPostgreSQL =
+  (process.env['DATABASE_TYPE'] || 'mongodb').toLowerCase() === DatabaseType.PostgreSQL;
+
+if (_isPostgreSQL) {
+  container.registerSingleton(TOKENS.IDatabaseAdapter, PostgreSQLAdapter);
+} else {
+  container.registerSingleton(TOKENS.IDatabaseAdapter, MongoDBAdapter);
+}
+if (_isPostgreSQL) {
+  container.registerSingleton(TOKENS.IAuditProvider, NoOpAuditProvider);
+  container.registerSingleton(TOKENS.AuditProvider, NoOpAuditProvider);
+} else {
+  container.registerSingleton(TOKENS.IAuditProvider, MongoAuditProvider);
+  container.registerSingleton(TOKENS.AuditProvider, MongoAuditProvider);
+}
 container.registerSingleton(TOKENS.IEnvironmentProvider, EnvironmentProvider);
 container.registerSingleton(
   TOKENS.IObjectStorageProvider,
@@ -170,42 +215,32 @@ container.registerSingleton(
 // Register queue providers
 container.registerSingleton(TOKENS.IQueueProvider, RabbitMQProvider);
 
-// Register data sources
-container.registerSingleton(TOKENS.IUserDataSource, UserMongooseDataSource);
-container.registerSingleton(
-  TOKENS.IQuestionDataSource,
-  QuestionMongooseDataSource
-);
-container.registerSingleton(TOKENS.IAnswerDataSource, AnswerMongooseDataSource);
-container.registerSingleton(
-  TOKENS.IPermissionDataSource,
-  PermissionMongooseDataSource
-);
-container.registerSingleton(TOKENS.IRoleDataSource, RoleMongooseDataSource);
-container.registerSingleton(
-  TOKENS.IUserRoleDataSource,
-  UserRoleMongooseDataSource
-);
-container.registerSingleton(
-  TOKENS.IBookmarkDataSource,
-  BookmarkMongooseDataSource
-);
-container.registerSingleton(
-  TOKENS.IBookmarkCollectionDataSource,
-  BookmarkCollectionMongooseDataSource
-);
-container.registerSingleton(
-  TOKENS.IBookmarkCollectionItemDataSource,
-  BookmarkCollectionItemMongooseDataSource
-);
-container.registerSingleton(
-  TOKENS.IContentRelationDataSource,
-  ContentRelationMongooseDataSource
-);
-container.registerSingleton(
-  TOKENS.INotificationDataSource,
-  NotificationMongooseDataSource
-);
+// Register data sources - DATABASE_TYPE'a göre PostgreSQL veya MongoDB
+if (_isPostgreSQL) {
+  container.registerSingleton(TOKENS.IUserDataSource, UserPostgreSQLDataSource);
+  container.registerSingleton(TOKENS.IQuestionDataSource, QuestionPostgreSQLDataSource);
+  container.registerSingleton(TOKENS.IAnswerDataSource, AnswerPostgreSQLDataSource);
+  container.registerSingleton(TOKENS.IPermissionDataSource, PermissionPostgreSQLDataSource);
+  container.registerSingleton(TOKENS.IRoleDataSource, RolePostgreSQLDataSource);
+  container.registerSingleton(TOKENS.IUserRoleDataSource, UserRolePostgreSQLDataSource);
+  container.registerSingleton(TOKENS.IBookmarkDataSource, BookmarkPostgreSQLDataSource);
+  container.registerSingleton(TOKENS.IBookmarkCollectionDataSource, BookmarkCollectionPostgreSQLDataSource);
+  container.registerSingleton(TOKENS.IBookmarkCollectionItemDataSource, BookmarkCollectionItemPostgreSQLDataSource);
+  container.registerSingleton(TOKENS.IContentRelationDataSource, ContentRelationPostgreSQLDataSource);
+  container.registerSingleton(TOKENS.INotificationDataSource, NotificationPostgreSQLDataSource);
+} else {
+  container.registerSingleton(TOKENS.IUserDataSource, UserMongooseDataSource);
+  container.registerSingleton(TOKENS.IQuestionDataSource, QuestionMongooseDataSource);
+  container.registerSingleton(TOKENS.IAnswerDataSource, AnswerMongooseDataSource);
+  container.registerSingleton(TOKENS.IPermissionDataSource, PermissionMongooseDataSource);
+  container.registerSingleton(TOKENS.IRoleDataSource, RoleMongooseDataSource);
+  container.registerSingleton(TOKENS.IUserRoleDataSource, UserRoleMongooseDataSource);
+  container.registerSingleton(TOKENS.IBookmarkDataSource, BookmarkMongooseDataSource);
+  container.registerSingleton(TOKENS.IBookmarkCollectionDataSource, BookmarkCollectionMongooseDataSource);
+  container.registerSingleton(TOKENS.IBookmarkCollectionItemDataSource, BookmarkCollectionItemMongooseDataSource);
+  container.registerSingleton(TOKENS.IContentRelationDataSource, ContentRelationMongooseDataSource);
+  container.registerSingleton(TOKENS.INotificationDataSource, NotificationMongooseDataSource);
+}
 
 // Register repositories
 container.registerSingleton(TOKENS.IUserRepository, UserRepository);
@@ -304,12 +339,12 @@ container.register(TOKENS.INotificationTemplateModel, {
 
 // Register typed configuration
 container.register(TOKENS.AppConfig, { useValue: null });
-// Use process.env so test setup (which loads dotenv before this) provides MONGO_URI
-container.register(TOKENS.IDatabaseConnectionConfig, {
-  useValue: {
-    connectionString:
-      process.env['MONGO_URI'] || 'mongodb://localhost:27017/qa-platform',
-  },
+// Use process.env so loadEnv/test setup provides correct values.
+// IMPORTANT: Bu değer, PostgreSQLAdapter constructor inject'i için kritik (adapter resolve anında okur).
+container.registerInstance(TOKENS.IDatabaseConnectionConfig, {
+  connectionString: _isPostgreSQL
+    ? process.env['DATABASE_URL'] || 'postgresql://localhost:5432/qa_platform'
+    : process.env['MONGO_URI'] || 'mongodb://localhost:27017/qa-platform',
 });
 container.register(TOKENS.ICacheConnectionConfig, {
   useValue: { host: '', port: 0, url: '' },

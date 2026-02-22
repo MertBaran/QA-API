@@ -112,6 +112,24 @@ export class ConfigurationManager implements IConfigurationService {
   }
 
   public getDatabaseConnectionConfig(): DatabaseConnectionConfig {
+    const dbType = this.getDatabaseType();
+    if (dbType === DatabaseType.PostgreSQL) {
+      const url = this.environmentProvider.getEnvironmentVariable(
+        'DATABASE_URL',
+        ''
+      );
+      return { connectionString: url || 'postgresql://localhost:5432/qa_platform' };
+    }
+    return {
+      connectionString: this.environmentProvider.getEnvironmentVariable(
+        'MONGO_URI',
+        'mongodb://localhost:27017/qa-platform'
+      ),
+    };
+  }
+
+  /** MongoDB connection - ana DB (mongodb modu) veya audit (postgresql modu) için */
+  public getMongoConnectionConfig(): DatabaseConnectionConfig {
     return {
       connectionString: this.environmentProvider.getEnvironmentVariable(
         'MONGO_URI',

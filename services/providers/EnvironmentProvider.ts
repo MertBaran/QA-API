@@ -54,19 +54,20 @@ export class EnvironmentProvider implements IEnvironmentProvider {
   }
 
   private loadEnvironmentConfig(): void {
-    let envFile = 'config.env';
+    let envFile = process.env['CONFIG_FILE'];
 
-    if (this.environment === 'production') {
-      envFile = 'config.env.prod';
-    } else if (this.environment === 'development') {
-      envFile = 'config.env.dev';
-    } else if (this.environment === 'test') {
-      envFile = 'config.env.test';
-    } else if (this.environment === 'docker') {
-      envFile = 'config.env.docker';
-    } else {
-      // Default to development config
-      envFile = 'config.env.dev';
+    if (!envFile) {
+      if (this.environment === 'production') {
+        envFile = 'config.env.prod';
+      } else if (this.environment === 'development') {
+        envFile = 'config.env.dev';
+      } else if (this.environment === 'test') {
+        envFile = 'config.env.test';
+      } else if (this.environment === 'docker') {
+        envFile = 'config.env.docker';
+      } else {
+        envFile = 'config.env.dev';
+      }
     }
 
     // Load the appropriate config file

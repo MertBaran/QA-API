@@ -42,6 +42,18 @@ export const sendJwtToClient = (
         Date.now() + parseInt(process.env['JWT_COOKIE'] || '60') * 1000 * 60
       ); // 1 saat
 
+  // Never expose sensitive user fields in token responses
+  const {
+    password,
+    resetPasswordToken,
+    resetPasswordExpire,
+    passwordChangeCode,
+    passwordChangeCodeExpire,
+    passwordChangeVerificationToken,
+    passwordChangeVerificationTokenExpire,
+    ...safeUser
+  } = user ?? {};
+
   return res
     .status(200)
     .cookie('access_token', token, {
@@ -52,12 +64,13 @@ export const sendJwtToClient = (
     .json({
       success: true,
       access_token: token,
+      message: 'Authentication successful',
       data: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        ...user, // Diğer alanlar da dahil olsun (güvenli alanlar)
+        _id: safeUser._id,
+        name: safeUser.name,
+        email: safeUser.email,
+        role: safeUser.role,
+        ...safeUser,
       },
     });
 };

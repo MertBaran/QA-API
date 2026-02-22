@@ -67,6 +67,8 @@ export interface IConfigurationService {
   getConfig(): EnvironmentConfig;
   getEnvironment(): string;
   getDatabaseConnectionConfig(): DatabaseConnectionConfig;
+  /** MongoDB connection config - ana DB (mongodb modu) veya audit (postgresql modu) için */
+  getMongoConnectionConfig(): DatabaseConnectionConfig;
   getDatabaseType(): DatabaseType;
   getCacheConnectionConfig(): CacheConnectionConfig;
   getExceptionTrackingConfig(): EnvironmentConfig['exceptionTracking'];

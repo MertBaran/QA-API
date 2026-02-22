@@ -1,21 +1,10 @@
 import { IDatabaseAdapter } from '../repositories/adapters/IDatabaseAdapter';
-import { DatabaseType } from './contracts/IConfigurationService';
-import { PostgreSQLAdapter } from '../repositories/adapters/PostgreSQLAdapter';
 import { container } from 'tsyringe';
+import { TOKENS } from './TOKENS';
 
 export class DatabaseFactory {
-  static createDatabase(type: DatabaseType): IDatabaseAdapter {
-    switch (type) {
-      case DatabaseType.MongoDB:
-        return container.resolve<IDatabaseAdapter>('DatabaseAdapter');
-      case DatabaseType.PostgreSQL:
-        return new PostgreSQLAdapter();
-      default:
-        throw new Error(`Unsupported database type: ${type}`);
-    }
-  }
-
-  static getDefaultDatabase(): IDatabaseAdapter {
-    return container.resolve<IDatabaseAdapter>('DatabaseAdapter');
+  /** Container'da DATABASE_TYPE'a göre register edilmiş adapter'ı döner. initializeContainer önce çağrılmalı. */
+  static getDatabase(): IDatabaseAdapter {
+    return container.resolve<IDatabaseAdapter>(TOKENS.IDatabaseAdapter);
   }
 }

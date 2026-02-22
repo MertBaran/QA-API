@@ -17,9 +17,11 @@ export class UserRepository
   }
 
   async findByEmail(email: string): Promise<IUserModel> {
-    // IDataSource'a özel bir metot yoksa, findAll ile filtreleme yapılabilir veya IDataSource'a özel metot eklenebilir
+    if (typeof (this.dataSource as any).findByEmail === 'function') {
+      return (this.dataSource as any).findByEmail(email);
+    }
     const all = await this.dataSource.findAll();
-    const user = all.find(user => user.email === email);
+    const user = all.find(u => u.email === email);
     if (!user) {
       throw ApplicationError.notFoundError(
         RepositoryConstants.BASE.FIND_BY_FIELD_VALUE_ERROR.en

@@ -119,7 +119,8 @@ export class BootstrapService {
   }
 
   private getConfigPath(environment: EnvironmentType): string {
-    const configFile = ENVIRONMENT_CONFIG_MAP[environment];
+    const configFile =
+      process.env['CONFIG_FILE'] ?? ENVIRONMENT_CONFIG_MAP[environment];
     return path.resolve(process.cwd(), `./config/env/${configFile}`);
   }
 

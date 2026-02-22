@@ -12,7 +12,7 @@ import {
   CreateCollectionDTO,
   UpdateCollectionDTO,
 } from '../contracts/IBookmarkService';
-import { EntityId } from '../../types/database';
+import { EntityId, isValidEntityId } from '../../types/database';
 import { ICacheProvider } from '../../infrastructure/cache/ICacheProvider';
 import { ILoggerProvider } from '../../infrastructure/logging/ILoggerProvider';
 import { ApplicationError } from '../../infrastructure/error/ApplicationError';
@@ -35,19 +35,14 @@ export class BookmarkManager implements IBookmarkService {
     userId: EntityId,
     bookmarkData: AddBookmarkDTO
   ): Promise<IBookmarkModel> {
-    // Validate and sanitize to avoid Mongoose Validation/Cast errors
-    const isValidObjectId = (val: any) =>
-      typeof val === 'string' && /^[0-9a-fA-F]{24}$/.test(val);
-
-    if (!isValidObjectId(bookmarkData.targetId)) {
+    if (!isValidEntityId(bookmarkData.targetId)) {
       throw ApplicationError.validationError('Geçersiz hedef kimliği');
     }
 
     const sanitizedTargetData = {
       ...bookmarkData.targetData,
       authorId:
-        bookmarkData.targetData.authorId &&
-        isValidObjectId(bookmarkData.targetData.authorId)
+        bookmarkData.targetData.authorId && isValidEntityId(bookmarkData.targetData.authorId)
           ? bookmarkData.targetData.authorId
           : undefined,
     } as any;
