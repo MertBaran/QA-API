@@ -2,6 +2,40 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9.0] - 2026-02-22
+
+### Postgres Migration
+
+#### Added
+- **Docker & PostgreSQL**: Tam Docker desteği, migration ve seed ile
+  - `docker-compose up` ile PostgreSQL, Redis, Elasticsearch, RabbitMQ stack
+  - `prisma migrate deploy` ve `prisma db seed` container başlangıcında
+  - `config.env.docker` için loadEnv önceliği
+- **Auth ID Format Kontrolü**: MongoDB ↔ PostgreSQL geçişinde JWT geçerliliği
+  - JWT userId formatı (UUID/ObjectId) mevcut DB ile uyuşmazsa 401
+  - `isIdValidForDatabase()` ile DB-uyumlu token doğrulama
+- **Şifre Sıfırlama Formu**: E-posta linkinden gelen kullanıcılar artık yeni şifre girebiliyor
+  - Önceden token varken direkt başarı gösteriliyordu, form eklenmiş oldu
+
+#### Changed
+- **Şifre Validasyonu**: Register ve reset-password profil ile uyumlu
+  - Min 8 karakter, büyük/küçük harf, rakam, özel karakter zorunlu
+  - Eski min 6 kuralı kaldırıldı
+- **Forgot Password Mesajları**:
+  - Kayıtsız e-posta: "Sistemde kayıtlı mail adresi bulunamadı"
+  - Başarı: "Şifre sıfırlama bağlantısı e-posta adresinize gönderildi" (artık "kayıtlıysa" ifadesi yok)
+- **Auth Middleware**: `process.env` bağımlılığı kaldırıldı
+  - DB tipi `IConfigurationService.getDatabaseType()` üzerinden alınıyor
+- **CLIENT_URL Validasyonu**: Zod `.url()` yerine `new URL()` ile refine (localhost uyumluluğu)
+
+#### Fixed
+- API hata yanıtları `error` alanında; frontend artık `error || message` kullanıyor
+- MongoDB çalışırken PostgreSQL JWT ile CastError ve "Invalid credentials" sorunları
+
+### Technical
+- Test şifreleri `Password1!` formatına güncellendi
+- `qa-api-logs/` .gitignore'a eklendi
+
 ## [1.8.0] - 2026-01-08
 
 ### Added

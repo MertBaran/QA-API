@@ -3,11 +3,11 @@
 ### Prerequisites
 
 - Node.js 18+
-- MongoDB 6+
+- Database: **MongoDB 6+** (varsayılan) veya **PostgreSQL 15+**
 - Redis 7+
-- Elasticsearch 8+
-- RabbitMQ 3.9+
-- Cloudflare R2 account or S3-compatible object storage (Optional)
+- Elasticsearch 8+ (opsiyonel)
+- RabbitMQ 3.9+ (opsiyonel)
+- Cloudflare R2 veya S3-uyumlu object storage (opsiyonel)
 
 ### Installation
 
@@ -26,19 +26,22 @@ cp config/env/config.env.example config/env/config.env
 npm run setup:templates
 
 # Start development server
-npm run dev
+npm run dev              # MongoDB ile
+npm run dev:postgres     # PostgreSQL ile
 ```
 
 ### Docker Setup
 
 ```bash
-# Build and run with Docker Compose
+# PostgreSQL stack ile çalıştır (migration + seed otomatik)
 docker-compose up -d
 
-# Or build manually
+# Manuel build
 docker build -t qa-api .
-docker run -p 3000:3000 --env-file config/env/config.env qa-api
+docker run -p 3000:3000 --env-file config/env/config.env.docker qa-api
 ```
+
+Docker Compose: PostgreSQL, Redis, Elasticsearch, RabbitMQ ve API servisini başlatır. İlk çalıştırmada Prisma migration ve seed otomatik uygulanır.
 
 ## API Endpoints
 
@@ -249,9 +252,13 @@ R2_ENDPOINT=https://r2.cloudflarestorage.com
 # Optional public CDN/base URL for direct access
 R2_PUBLIC_BASE_URL=https://<your-public-domain>
 
-# Database
+# Database (MongoDB varsayılan; PostgreSQL için DATABASE_TYPE=postgresql)
+DATABASE_TYPE=mongodb
 MONGO_URI=mongodb://localhost:27017/qa-platform
-MONGO_TEST_URI=mongodb://localhost:27017/qa-platform-test
+
+# PostgreSQL için:
+# DATABASE_TYPE=postgresql
+# DATABASE_URL=postgresql://user:pass@localhost:5432/qa_platform
 
 # Redis
 REDIS_URL=redis://localhost:6379
