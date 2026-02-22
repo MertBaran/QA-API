@@ -3,7 +3,7 @@
 ### Prerequisites
 
 - Node.js 18+
-- Database: **MongoDB 6+** (varsayılan) veya **PostgreSQL 15+**
+- Database: **PostgreSQL 15+** veya **MongoDB 6+**
 - Redis 7+
 - Elasticsearch 8+ (opsiyonel)
 - RabbitMQ 3.9+ (opsiyonel)
@@ -439,6 +439,7 @@ QA-API/
 
 ![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
 ![Node.js](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-%234ea94b.svg?style=for-the-badge&logo=mongodb&logoColor=white)
 ![Redis](https://img.shields.io/badge/redis-%23DD0031.svg?style=for-the-badge&logo=redis&logoColor=white)
 ![Elasticsearch](https://img.shields.io/badge/-Elasticsearch-005571?style=for-the-badge&logo=elasticsearch)
