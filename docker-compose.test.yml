@@ -1,0 +1,19 @@
+# Ephemeral PostgreSQL for Jest tests - NO volume, data lost when container stops
+# Ayrı project name: ana docker-compose ile network çakışması olmaz
+name: qa-api-test
+version: '3.8'
+services:
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: qa-postgres-test-ephemeral
+    ports:
+      - '5434:5432'
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mbsusurluk1905
+      POSTGRES_DB: QA_Platform_TEST
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 2s
+      timeout: 5s
+      retries: 15
