@@ -9,6 +9,11 @@ export class FakeAnswerRepository implements IAnswerRepository {
     return this.answers.find(a => a._id === id) || null;
   }
 
+  async findByIds(ids: EntityId[]): Promise<IAnswerModel[]> {
+    if (ids.length === 0) return [];
+    return this.answers.filter(a => ids.includes(a._id));
+  }
+
   async findByIdWithPopulate(id: EntityId): Promise<IAnswerModel | null> {
     return this.answers.find(a => a._id === id) || null;
   }

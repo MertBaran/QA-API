@@ -22,6 +22,7 @@ export const TOKENS = {
   IQuestionRepository: 'IQuestionRepository',
   IAnswerRepository: 'IAnswerRepository',
   IBookmarkRepository: 'IBookmarkRepository',
+  INotificationDataSource: 'INotificationDataSource',
   INotificationRepository: 'INotificationRepository',
   IPermissionRepository: 'IPermissionRepository',
   IRoleRepository: 'IRoleRepository',

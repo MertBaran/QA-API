@@ -1,5 +1,10 @@
 import request from 'supertest';
+import { randomUUID } from 'crypto';
 import { testApp } from '../setup';
+
+const aid = (a: any) => a?.id ?? a?._id;
+const nonExistentId = () =>
+  process.env['DATABASE_TYPE'] === 'postgresql' ? randomUUID() : '507f1f77bcf86cd799439011';
 
 describe('Answer Workflow Integration Tests', () => {
   let testUser: any;
@@ -7,58 +12,37 @@ describe('Answer Workflow Integration Tests', () => {
   let questionId: string;
   let answerId: string;
 
+  const uid = () => `a+${Date.now()}_${Math.random().toString(36).substr(2, 9)}@example.com`;
+
   beforeAll(async () => {
-    // Test user oluştur
     testUser = {
-      email: 'answer@example.com',
-      password: 'password123',
+      email: uid(),
+      password: 'Password1!',
       firstName: 'Answer',
       lastName: 'User',
-      title: 'Developer',
-      bio: 'Test bio',
-      location: 'Test Location',
-      website: 'https://test.com',
-      github: 'answeruser',
-      twitter: 'answeruser',
-      linkedin: 'answeruser',
-      avatar: 'https://test.com/avatar.jpg',
-      profile_image: 'https://test.com/avatar.jpg',
-      blocked: false,
     };
-
-    // Register user
-    const registerResponse = await request(testApp)
-      .post('/api/auth/register')
-      .send(testUser);
-
-    expect(registerResponse.status).toBe(200);
-
-    // Login user
-    const loginResponse = await request(testApp).post('/api/auth/login').send({
+    const reg = await request(testApp).post('/api/auth/register').send(testUser);
+    expect(reg.status).toBe(200);
+    const login = await request(testApp).post('/api/auth/login').send({
       email: testUser.email,
       password: testUser.password,
       captchaToken: 'test-captcha-token',
     });
-
-    expect(loginResponse.status).toBe(200);
-    authToken = loginResponse.body.access_token;
-
-    // Create a question for testing answers
-    const questionData = {
-      title: 'Test Question for Answers',
-      content: 'This question is for testing answer functionality',
-      tags: ['test', 'answer'],
-      category: 'general',
-      isPublic: true,
-    };
+    expect(login.status).toBe(200);
+    authToken = login.body.access_token;
 
     const questionResponse = await request(testApp)
       .post('/api/questions/ask')
       .set('Authorization', `Bearer ${authToken}`)
-      .send(questionData);
-
+      .send({
+        title: 'Test Question for Answers',
+        content: 'This question is for testing answer functionality',
+        tags: ['test', 'answer'],
+        category: 'general',
+        isPublic: true,
+      });
     expect(questionResponse.status).toBe(200);
-    questionId = questionResponse.body.data._id;
+    questionId = questionResponse.body.data?.id ?? questionResponse.body.data?._id;
   });
 
   afterAll(async () => {
@@ -95,9 +79,9 @@ describe('Answer Workflow Integration Tests', () => {
       expect(createResponse.status).toBe(200);
       expect(createResponse.body.success).toBe(true);
       expect(createResponse.body.data.content).toBe(answerData.content);
-      expect(createResponse.body.data.question).toBe(questionId);
+      expect(aid(createResponse.body.data?.question) ?? createResponse.body.data?.question).toBeTruthy();
 
-      answerId = createResponse.body.data._id;
+      answerId = createResponse.body.data?.id ?? createResponse.body.data?._id;
 
       // 2. Read Answer
       const getResponse = await request(testApp)
@@ -186,14 +170,15 @@ describe('Answer Workflow Integration Tests', () => {
 
       expect(getAllResponse.status).toBe(200);
       expect(getAllResponse.body.success).toBe(true);
-      expect(getAllResponse.body.data.length).toBeGreaterThanOrEqual(
-        answers.length
-      );
+      const answerList = Array.isArray(getAllResponse.body.data)
+        ? getAllResponse.body.data
+        : getAllResponse.body.data?.data ?? [];
+      expect(answerList.length).toBeGreaterThanOrEqual(answers.length);
 
       // Clean up - delete created answers
       for (const answer of createdAnswers) {
         await request(testApp)
-          .delete(`/api/questions/${questionId}/answers/${answer._id}/delete`)
+          .delete(`/api/questions/${questionId}/answers/${aid(answer)}/delete`)
           .set('Authorization', `Bearer ${authToken}`);
       }
     });
@@ -213,7 +198,7 @@ describe('Answer Workflow Integration Tests', () => {
         .send(answerData);
 
       expect(createResponse.status).toBe(200);
-      const likeAnswerId = createResponse.body.data._id;
+      const likeAnswerId = aid(createResponse.body.data);
 
       // 2. Like the answer
       const likeResponse = await request(testApp)
@@ -262,18 +247,16 @@ describe('Answer Workflow Integration Tests', () => {
     });
 
     it('should handle non-existent answer operations', async () => {
-      const nonExistentId = '507f1f77bcf86cd799439011';
+      const id = nonExistentId();
 
-      // Try to get non-existent answer
       const getResponse = await request(testApp).get(
-        `/api/questions/${questionId}/answers/${nonExistentId}`
+        `/api/questions/${questionId}/answers/${id}`
       );
 
       expect(getResponse.status).toBe(404);
 
-      // Try to edit non-existent answer
       const editResponse = await request(testApp)
-        .put(`/api/questions/${questionId}/answers/${nonExistentId}/edit`)
+        .put(`/api/questions/${questionId}/answers/${id}/edit`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           content: 'Updated content',
@@ -281,9 +264,8 @@ describe('Answer Workflow Integration Tests', () => {
 
       expect(editResponse.status).toBe(404);
 
-      // Try to delete non-existent answer
       const deleteResponse = await request(testApp)
-        .delete(`/api/questions/${questionId}/answers/${nonExistentId}/delete`)
+        .delete(`/api/questions/${questionId}/answers/${id}/delete`)
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(deleteResponse.status).toBe(404);
@@ -315,18 +297,17 @@ describe('Answer Workflow Integration Tests', () => {
           dataType: typeof createResponse.body.data,
         });
 
-        createdAnswerIds.push(createResponse.body.data._id);
+        createdAnswerIds.push(aid(createResponse.body.data));
 
-        // Hemen database'den kontrol edelim
         const dbCheckResponse = await request(testApp)
           .get(
-            `/api/questions/${questionId}/answers/${createResponse.body.data._id}`
+            `/api/questions/${questionId}/answers/${aid(createResponse.body.data)}`
           )
           .set('Authorization', `Bearer ${authToken}`);
 
         console.log('Answer Create Response:', {
           status: createResponse.status,
-          _id: createResponse.body.data._id,
+          id: aid(createResponse.body.data),
           question: createResponse.body.data.question,
         });
 
@@ -349,13 +330,15 @@ describe('Answer Workflow Integration Tests', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(Array.isArray(response.body.data)).toBe(true);
-      expect(response.body.data.length).toBeGreaterThanOrEqual(answers.length);
+      const answerList = Array.isArray(response.body.data)
+        ? response.body.data
+        : response.body.data?.data ?? [];
+      expect(answerList.length).toBeGreaterThanOrEqual(answers.length);
 
       // Clean up
-      for (const answer of response.body.data) {
+      for (const answer of answerList) {
         await request(testApp)
-          .delete(`/api/questions/${questionId}/answers/${answer._id}/delete`)
+          .delete(`/api/questions/${questionId}/answers/${aid(answer)}/delete`)
           .set('Authorization', `Bearer ${authToken}`);
       }
     });

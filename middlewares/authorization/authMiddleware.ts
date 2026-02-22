@@ -11,6 +11,9 @@ import { container } from 'tsyringe';
 import { QuestionRepository } from '../../repositories/QuestionRepository';
 import { AnswerRepository } from '../../repositories/AnswerRepository';
 import { AuthMiddlewareMessages } from '../constants/MiddlewareMessages';
+import { isIdValidForDatabase } from '../../types/database';
+import { TOKENS } from '../../services/TOKENS';
+import { IConfigurationService } from '../../services/contracts/IConfigurationService';
 
 interface DecodedToken {
   id: string;
@@ -59,6 +62,22 @@ const getAccessToRoute = (
         iat?: number;
       };
 
+      // JWT'deki userId mevcut DB formatına uymalı (UUID=PostgreSQL, ObjectId=MongoDB)
+      const configService = container.resolve<IConfigurationService>(
+        TOKENS.IConfigurationService
+      );
+      if (
+        !decodedToken.id ||
+        !isIdValidForDatabase(
+          decodedToken.id,
+          configService.getDatabaseType()
+        )
+      ) {
+        return next(
+          new ApplicationError(AuthMiddlewareMessages.Unauthorized, 401)
+        );
+      }
+
       // Token'ın oluşturulma zamanını kontrol et
       if (decodedToken.iat) {
         const tokenCreatedAt = new Date(decodedToken.iat * 1000);
@@ -77,9 +96,12 @@ const getAccessToRoute = (
               new ApplicationError(AuthMiddlewareMessages.TokenExpired, 401)
             );
           }
-        } catch (error) {
+        } catch (error: any) {
           // Veritabanı hatası durumunda token'ı kabul et (güvenlik için)
-          console.error('Password change check error:', error);
+          // CastError (ID format uyumsuzluğu) artık yukarıda yakalanıyor; yine de sessizce geç
+          if (error?.name !== 'CastError') {
+            console.error('Password change check error:', error);
+          }
         }
       }
 
@@ -161,8 +183,14 @@ const getOptionalAccess = (
       if (err) {
         return next(); // Invalid token, continue without user
       }
-      
-      if (decoded && decoded.id) {
+
+      const configService = container.resolve<IConfigurationService>(
+        TOKENS.IConfigurationService
+      );
+      if (
+        decoded?.id &&
+        isIdValidForDatabase(decoded.id, configService.getDatabaseType())
+      ) {
         req.user = {
           id: decoded.id,
           name: decoded.name || '',

@@ -85,13 +85,11 @@ describe('UserRoleRepository Unit Tests', () => {
       expect(fakeDataSource.findById).toHaveBeenCalledWith('ur1');
     });
 
-    it('should return null when user role not found', async () => {
-      // Act
-      const result = await userRoleRepository.findById('nonexistent');
-
-      // Assert
-      expect(result).toBeNull();
-      expect(fakeDataSource.findById).toHaveBeenCalledWith('nonexistent');
+    it('should throw when user role not found', async () => {
+      // BaseRepository.findById throws "Resource not found" when not found
+      await expect(userRoleRepository.findById('nonexistent')).rejects.toThrow(
+        'Resource not found'
+      );
     });
   });
 
@@ -120,22 +118,13 @@ describe('UserRoleRepository Unit Tests', () => {
       expect(fakeDataSource.updateById).toHaveBeenCalledWith('ur1', updateData);
     });
 
-    it('should return null when user role not found', async () => {
-      // Arrange
+    it('should throw when user role not found', async () => {
+      // BaseRepository.updateById throws "Resource not found" when not found
       const updateData = { isActive: false };
 
-      // Act
-      const result = await userRoleRepository.updateById(
-        'nonexistent',
-        updateData
-      );
-
-      // Assert
-      expect(result).toBeNull();
-      expect(fakeDataSource.updateById).toHaveBeenCalledWith(
-        'nonexistent',
-        updateData
-      );
+      await expect(
+        userRoleRepository.updateById('nonexistent', updateData)
+      ).rejects.toThrow('Resource not found');
     });
   });
 
@@ -150,13 +139,11 @@ describe('UserRoleRepository Unit Tests', () => {
       expect(fakeDataSource.deleteById).toHaveBeenCalledWith('ur1');
     });
 
-    it('should return null when user role not found', async () => {
-      // Act
-      const result = await userRoleRepository.deleteById('nonexistent');
-
-      // Assert
-      expect(result).toBeNull();
-      expect(fakeDataSource.deleteById).toHaveBeenCalledWith('nonexistent');
+    it('should throw when user role not found', async () => {
+      // BaseRepository.deleteById throws "Resource not found" when not found
+      await expect(
+        userRoleRepository.deleteById('nonexistent')
+      ).rejects.toThrow('Resource not found');
     });
   });
 
@@ -239,15 +226,11 @@ describe('UserRoleRepository Unit Tests', () => {
       expect(result?.roleId).toBe('role1');
     });
 
-    it('should return null when user is not assigned to role', async () => {
-      // Act
-      const result = await userRoleRepository.findByUserIdAndRoleId(
-        'user1',
-        'role3'
-      );
-
-      // Assert
-      expect(result).toBeNull();
+    it('should throw when user is not assigned to role', async () => {
+      // UserRoleRepository.findByUserIdAndRoleId throws when not found
+      await expect(
+        userRoleRepository.findByUserIdAndRoleId('user1', 'role3')
+      ).rejects.toThrow('User role not found');
     });
   });
 
@@ -282,15 +265,11 @@ describe('UserRoleRepository Unit Tests', () => {
       expect(result?.isActive).toBe(false);
     });
 
-    it('should return null when user role not found', async () => {
-      // Act
-      const result = await userRoleRepository.removeRoleFromUser(
-        'user1',
-        'role3'
-      );
-
-      // Assert
-      expect(result).toBeNull();
+    it('should throw when user role not found', async () => {
+      // removeRoleFromUser throws when findByUserIdAndRoleId finds nothing
+      await expect(
+        userRoleRepository.removeRoleFromUser('user1', 'role3')
+      ).rejects.toThrow('User role not found');
     });
   });
 });

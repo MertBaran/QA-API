@@ -1,18 +1,12 @@
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
+import 'reflect-metadata';
+import { spawn } from 'child_process';
 import path from 'path';
 import { L10n } from '../types/i18n';
-import '../models/mongodb/NotificationTemplateMongoModel';
-
-// Environment'ı yükle
-dotenv.config({ path: path.join(__dirname, '../config/env/config.env') });
-
-// MongoDB bağlantıları
-const PROD_MONGODB_URI = process.env['MONGO_URI'] || '';
-const TEST_MONGODB_URI = PROD_MONGODB_URI.replace(
-  '/question-answer?',
-  '/question-answer-test?'
-);
+import { initializeContainer } from '../services/container';
+import { container } from 'tsyringe';
+import { TOKENS } from '../services/TOKENS';
+import { INotificationRepository } from '../repositories/interfaces/INotificationRepository';
+import { IDatabaseAdapter } from '../repositories/adapters/IDatabaseAdapter';
 
 // Template interface
 interface NotificationTemplate {
@@ -470,72 +464,113 @@ const templates: NotificationTemplate[] = [
   },
 ];
 
+async function runForDatabase(envLabel: string, nodeEnv: string): Promise<void> {
+  process.env['NODE_ENV'] = nodeEnv;
+  let databaseAdapter: IDatabaseAdapter | null = null;
+
+  console.log(`\n🔗 ${envLabel} için container başlatılıyor...`);
+  await initializeContainer();
+
+  databaseAdapter = container.resolve<IDatabaseAdapter>(TOKENS.IDatabaseAdapter);
+  if (!databaseAdapter.isConnected()) {
+    await databaseAdapter.connect();
+  }
+  console.log(`✅ ${envLabel} veritabanı bağlantısı başarılı`);
+
+  const notificationRepository = container.resolve<INotificationRepository>(
+    TOKENS.INotificationRepository
+  );
+  await setupTemplatesForDatabase(notificationRepository, envLabel);
+
+  await databaseAdapter.disconnect();
+  console.log(`🔌 ${envLabel} bağlantısı kapatıldı`);
+}
+
 async function setupTemplates() {
+  const useTest = process.argv.includes('--test');
+  const useAll = process.argv.includes('--all');
+
   try {
-    console.log("🔗 MongoDB Atlas'a bağlanılıyor...");
-
-    // Test database'e bağlan
-    console.log("📝 Test database'e template'ler ekleniyor...");
-    await mongoose.connect(TEST_MONGODB_URI);
-    console.log('✅ Test database bağlantısı başarılı');
-
-    await setupTemplatesForDatabase('TEST');
-    await mongoose.disconnect();
-
-    // Production database'e bağlan
-    console.log("🚀 Production database'e template'ler ekleniyor...");
-    await mongoose.connect(PROD_MONGODB_URI);
-    console.log('✅ Production database bağlantısı başarılı');
-
-    await setupTemplatesForDatabase('PRODUCTION');
-    await mongoose.disconnect();
-
-    console.log("🎉 Tüm template'ler başarıyla oluşturuldu!");
+    if (useAll) {
+      // İki ayrı process ile test ve prod (her biri fresh container)
+      const scriptPath = path.join(__dirname, 'setup-notification-templates.ts');
+      await new Promise<void>((resolve, reject) => {
+        const child = spawn('npx', ['ts-node', scriptPath, '--test'], {
+          stdio: 'inherit',
+          env: { ...process.env, NODE_ENV: 'test' },
+          shell: true,
+        });
+        child.on('exit', code => (code === 0 ? resolve() : reject(new Error(`Test DB exit ${code}`))));
+      });
+      await new Promise<void>((resolve, reject) => {
+        const child = spawn('npx', ['ts-node', scriptPath], {
+          stdio: 'inherit',
+          env: { ...process.env, NODE_ENV: 'production' },
+          shell: true,
+        });
+        child.on('exit', code => (code === 0 ? resolve() : reject(new Error(`Prod DB exit ${code}`))));
+      });
+      console.log('\n🎉 Tüm database\'ler için template\'ler başarıyla oluşturuldu/güncellendi!');
+    } else {
+      const envLabel = useTest ? 'TEST' : 'PRODUCTION';
+      await runForDatabase(envLabel, useTest ? 'test' : 'production');
+      console.log('\n🎉 Template\'ler başarıyla oluşturuldu/güncellendi!');
+    }
   } catch (error) {
     console.error('❌ Hata:', error);
-  } finally {
-    if (mongoose.connection.readyState === 1) {
-      await mongoose.disconnect();
-    }
-    console.log('🔌 MongoDB bağlantısı kapatıldı');
+    process.exit(1);
   }
 }
 
-async function setupTemplatesForDatabase(dbType: string) {
-  // Template model'ini import et
-  const NotificationTemplate = mongoose.model('NotificationTemplate');
-
-  console.log(`📝 ${dbType} database için template'ler oluşturuluyor...`);
+async function setupTemplatesForDatabase(
+  repo: INotificationRepository,
+  dbType: string
+) {
+  console.log(`📝 ${dbType} database için template'ler işleniyor...`);
 
   for (const template of templates) {
-    // Template var mı kontrol et
-    const existingTemplate = await NotificationTemplate.findOne({
-      name: template.name,
-    });
+    const templateData = {
+      ...template,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
 
-    if (existingTemplate) {
-      console.log(
-        `⚠️  ${dbType}: Template "${template.name}" zaten mevcut, güncelleniyor...`
-      );
-      await NotificationTemplate.updateOne(
-        { name: template.name },
-        { ...template, updatedAt: new Date() }
-      );
-    } else {
+    try {
+      const existing = await repo.getTemplateByName(template.name);
+      if (existing && existing._id) {
+        console.log(
+          `⚠️  ${dbType}: Template "${template.name}" güncelleniyor...`
+        );
+        await repo.updateTemplate(String(existing._id), templateData);
+      }
+    } catch {
+      // Template bulunamadı, oluştur
       console.log(`✅ ${dbType}: Template "${template.name}" oluşturuluyor...`);
-      await NotificationTemplate.create(template);
+      await repo.createTemplate(templateData);
     }
   }
 
-  // Template'leri listele
-  const allTemplates = await NotificationTemplate.find(
-    {},
-    'name type category isActive'
-  );
+  // Template'leri listele (tüm tipler)
+  const types: Array<'email' | 'sms' | 'push' | 'webhook'> = [
+    'email',
+    'sms',
+    'push',
+    'webhook',
+  ];
+  const allTemplates: Array<{ name: string; type: string; category: string; isActive: boolean }> = [];
+  for (const type of types) {
+    const list = await repo.getTemplatesByType(type);
+    list.forEach(t => allTemplates.push({
+      name: t.name,
+      type: t.type,
+      category: t.category,
+      isActive: t.isActive,
+    }));
+  }
   console.log(`\n📋 ${dbType} Database Mevcut Template'ler:`);
-  allTemplates.forEach(template => {
+  allTemplates.forEach(t => {
     console.log(
-      `  - ${template.name} (${template.type}/${template.category}) - ${template.isActive ? 'Aktif' : 'Pasif'}`
+      `  - ${t.name} (${t.type}/${t.category}) - ${t.isActive ? 'Aktif' : 'Pasif'}`
     );
   });
 }

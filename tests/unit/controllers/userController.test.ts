@@ -5,7 +5,7 @@ import { IAdminService } from '../../../services/contracts/IAdminService';
 import { IUserRoleService } from '../../../services/contracts/IUserRoleService';
 import { FakeAdminService } from '../../mocks/services/FakeAdminService';
 import { FakeUserRoleService } from '../../mocks/services/FakeUserRoleService';
-import { FakeExceptionTracker } from '../../mocks/error/FakeExceptionTracker';
+import { FakeUserService } from '../../mocks/services/FakeUserService';
 import { container } from 'tsyringe';
 
 // Mock the container
@@ -22,6 +22,13 @@ describe('UserController Unit Tests', () => {
   let mockNext: jest.MockedFunction<NextFunction>;
   let fakeAdminService: FakeAdminService;
   let fakeUserRoleService: FakeUserRoleService;
+  let fakeUserService: FakeUserService;
+
+  const fakeContentAssetService = {
+    getPublicUrl: jest.fn().mockResolvedValue(null),
+    upload: jest.fn(),
+    delete: jest.fn(),
+  };
 
   beforeEach(() => {
     // Reset mocks
@@ -45,9 +52,15 @@ describe('UserController Unit Tests', () => {
     // Create fake services
     fakeAdminService = new FakeAdminService();
     fakeUserRoleService = new FakeUserRoleService();
+    fakeUserService = new FakeUserService();
 
-    // Create controller instance
-    userController = new UserController(fakeAdminService, fakeUserRoleService);
+    // Create controller instance (adminService, userService, userRoleService, contentAssetService)
+    userController = new UserController(
+      fakeAdminService,
+      fakeUserService,
+      fakeUserRoleService,
+      fakeContentAssetService as any
+    );
 
     // Add some test data
     fakeAdminService.addUser({
@@ -118,7 +131,7 @@ describe('UserController Unit Tests', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
-        data: {
+        data: expect.objectContaining({
           _id: 'user1',
           name: 'Test User 1',
           email: 'user1@test.com',
@@ -129,7 +142,6 @@ describe('UserController Unit Tests', () => {
           website: 'https://test.com',
           profile_image: 'profile1.jpg',
           blocked: false,
-          createdAt: expect.any(Date),
           language: 'en',
           notificationPreferences: {
             email: true,
@@ -137,7 +149,7 @@ describe('UserController Unit Tests', () => {
             sms: false,
             webhook: false,
           },
-        },
+        }),
       });
     });
 

@@ -312,10 +312,32 @@ describe('AnswerManager.searchAnswers()', () => {
         ancestorsTypes: [ContentType.ANSWER],
       };
 
-      fakeElasticsearchClient.addDocument('answers', '1', searchDoc);
+      // Use mock search client - ElasticsearchIndexService's complex query
+      // may not match FakeElasticsearchClient's simple query structure
+      const mockSearchClient = {
+        search: jest.fn().mockResolvedValue({
+          hits: [searchDoc],
+          total: 1,
+          page: 1,
+          limit: 10,
+          totalPages: 1,
+        }),
+        registerIndex: jest.fn(),
+        initializeRegisteredIndexes: jest.fn(),
+      };
+      const managerWithMockSearch = new AnswerManager(
+        fakeAnswerRepository,
+        fakeQuestionRepository,
+        indexClient,
+        mockSearchClient as any,
+        answerProjector,
+        questionProjector,
+        fakeLogger
+      );
       jest.spyOn(fakeQuestionRepository, 'findByIds').mockResolvedValueOnce([]);
 
-      const result = await answerManager.searchAnswers('answer', 1, 10);
+      const result = await managerWithMockSearch.searchAnswers('answer', 1, 10);
+      expect(result.data).toHaveLength(1);
       expect(result.data[0].parent).toEqual({
         id: 'parent1',
         type: ContentType.ANSWER,

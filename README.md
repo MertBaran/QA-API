@@ -3,11 +3,11 @@
 ### Prerequisites
 
 - Node.js 18+
-- MongoDB 6+
+- Database: **MongoDB 6+** (varsayılan) veya **PostgreSQL 15+**
 - Redis 7+
-- Elasticsearch 8+
-- RabbitMQ 3.9+
-- Cloudflare R2 account or S3-compatible object storage (Optional)
+- Elasticsearch 8+ (opsiyonel)
+- RabbitMQ 3.9+ (opsiyonel)
+- Cloudflare R2 veya S3-uyumlu object storage (opsiyonel)
 
 ### Installation
 
@@ -26,19 +26,22 @@ cp config/env/config.env.example config/env/config.env
 npm run setup:templates
 
 # Start development server
-npm run dev
+npm run dev              # MongoDB ile
+npm run dev:postgres     # PostgreSQL ile
 ```
 
 ### Docker Setup
 
 ```bash
-# Build and run with Docker Compose
+# PostgreSQL stack ile çalıştır (migration + seed otomatik)
 docker-compose up -d
 
-# Or build manually
+# Manuel build
 docker build -t qa-api .
-docker run -p 3000:3000 --env-file config/env/config.env qa-api
+docker run -p 3000:3000 --env-file config/env/config.env.docker qa-api
 ```
+
+Docker Compose: PostgreSQL, Redis, Elasticsearch, RabbitMQ ve API servisini başlatır. İlk çalıştırmada Prisma migration ve seed otomatik uygulanır.
 
 ## API Endpoints
 
@@ -57,30 +60,38 @@ The collection includes all API endpoints, request examples, and automatic token
 POST   /api/auth/register                   # User registration
 POST   /api/auth/login                      # User login (auto-saves token)
 POST   /api/auth/loginGoogle                # Google OAuth login
+POST   /api/auth/registerGoogle             # Google OAuth registration
 GET    /api/auth/logout                     # User logout
 POST   /api/auth/forgotpassword             # Password reset request
 PUT    /api/auth/resetpassword              # Password reset
 GET    /api/auth/profile                    # Get user profile
 PUT    /api/auth/edit                       # Edit user profile
 POST   /api/auth/upload                     # Upload profile image
+PUT    /api/auth/background                 # Update profile background
+PUT    /api/auth/profile-image              # Update profile image
+POST   /api/auth/change-password/request    # Request password change
+POST   /api/auth/change-password/verify     # Verify password change code
+POST   /api/auth/change-password/confirm    # Confirm password change
 GET    /api/auth/check-admin-permissions    # Check admin permissions
 ```
 
 ### Questions
 
 ```
-GET    /api/questions                  # List all questions
-GET    /api/questions/paginated        # Get paginated questions (with filters, search, sort)
-GET    /api/questions/:id              # Get question details
-GET    /api/questions/user/:userId     # Get questions by user
-GET    /api/questions/parent/:id       # Get questions related to a parent content
-POST   /api/questions/ask              # Create question (supports optional parent & thumbnailKey)
-PUT    /api/questions/:id/edit         # Update question (title/content/thumbnailKey/removeThumbnail)
-DELETE /api/questions/:id/delete       # Delete question
-GET    /api/questions/:id/like         # Like question
-GET    /api/questions/:id/undo_like    # Unlike question
-GET    /api/questions/:id/dislike      # Dislike question
-GET    /api/questions/:id/undo_dislike # Undo dislike question
+GET    /api/questions                        # List all questions
+GET    /api/questions/search                 # Search questions
+GET    /api/questions/paginated              # Get paginated questions (with filters, search, sort)
+GET    /api/questions/paginated/with-parents # Get paginated questions with parent information
+GET    /api/questions/:id                    # Get question details
+GET    /api/questions/user/:userId           # Get questions by user
+GET    /api/questions/parent/:id             # Get questions related to a parent content
+POST   /api/questions/ask                    # Create question (supports optional parent & thumbnailKey)
+PUT    /api/questions/:id/edit               # Update question (title/content/thumbnailKey/removeThumbnail)
+DELETE /api/questions/:id/delete             # Delete question
+GET    /api/questions/:id/like               # Like question
+GET    /api/questions/:id/undo_like          # Unlike question
+GET    /api/questions/:id/dislike            # Dislike question
+GET    /api/questions/:id/undo_dislike       # Undo dislike question
 ```
 
 ### Content Assets
@@ -96,17 +107,19 @@ Payloads accept `type`, `filename`, optional `ownerId`, `entityId`, and visibili
 ### Answers
 
 ```
-GET    /api/questions/:question_id/answers              # Get all answers for a question
-GET    /api/questions/:question_id/answers/:answer_id   # Get specific answer
-POST   /api/questions/:question_id/answers              # Add answer to question
-PUT    /api/questions/:question_id/answers/:answer_id/edit    # Update answer
-DELETE /api/questions/:question_id/answers/:answer_id/delete  # Delete answer
-GET    /api/questions/:question_id/answers/:answer_id/like    # Like answer
+GET    /api/questions/:question_id/answers                      # Get all answers for a question
+GET    /api/questions/:question_id/answers/:answer_id           # Get specific answer
+GET    /api/questions/:question_id/answers/:answer_id/page      # Get page number of answer in paginated list
+POST   /api/questions/:question_id/answers                      # Add answer to question
+PUT    /api/questions/:question_id/answers/:answer_id/edit      # Update answer
+DELETE /api/questions/:question_id/answers/:answer_id/delete    # Delete answer
+GET    /api/questions/:question_id/answers/:answer_id/like      # Like answer
 GET    /api/questions/:question_id/answers/:answer_id/undo_like # Unlike answer
-GET    /api/questions/:question_id/answers/:answer_id/dislike  # Dislike answer
+GET    /api/questions/:question_id/answers/:answer_id/dislike   # Dislike answer
 GET    /api/questions/:question_id/answers/:answer_id/undo_dislike # Undo dislike answer
-GET    /api/answers/:id                      # Get answer by ID (standalone)
-GET    /api/answers/user/:userId             # Get answers by user
+GET    /api/answers/search                                      # Search answers
+GET    /api/answers/:id                                         # Get answer by ID (standalone)
+GET    /api/answers/user/:userId                                # Get answers by user
 ```
 
 ### Notifications (Admin Only)
@@ -146,7 +159,11 @@ GET    /api/bookmarks/stats                                  # Get bookmark stat
 ### Users
 
 ```
-GET    /api/public/users/:id           # Get public user profile (no auth required)
+GET    /api/public/users/:id           # Get public user profile (no auth required, optional auth for isFollowing)
+POST   /api/public/users/:id/follow    # Follow user (auth required)
+POST   /api/public/users/:id/unfollow  # Unfollow user (auth required)
+GET    /api/public/users/:id/followers # Get user followers (public)
+GET    /api/public/users/:id/following # Get user following (public)
 GET    /api/users                      # List all users (Admin only)
 GET    /api/users/:id                  # Get user details (Admin only)
 ```
@@ -235,9 +252,13 @@ R2_ENDPOINT=https://r2.cloudflarestorage.com
 # Optional public CDN/base URL for direct access
 R2_PUBLIC_BASE_URL=https://<your-public-domain>
 
-# Database
+# Database (MongoDB varsayılan; PostgreSQL için DATABASE_TYPE=postgresql)
+DATABASE_TYPE=mongodb
 MONGO_URI=mongodb://localhost:27017/qa-platform
-MONGO_TEST_URI=mongodb://localhost:27017/qa-platform-test
+
+# PostgreSQL için:
+# DATABASE_TYPE=postgresql
+# DATABASE_URL=postgresql://user:pass@localhost:5432/qa_platform
 
 # Redis
 REDIS_URL=redis://localhost:6379

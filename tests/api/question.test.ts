@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import request from 'supertest';
 import mongoose from 'mongoose';
-import app from '../../APP';
+import { testApp } from '../setup';
 import '../setup';
 import {
   registerTestUserAPI,
@@ -28,7 +28,7 @@ describe('Question API Tests', () => {
 
   describe('GET /api/questions', () => {
     it('should get all questions', async () => {
-      const response = await request(app).get('/api/questions');
+      const response = await request(testApp).get('/api/questions');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -48,7 +48,7 @@ describe('Question API Tests', () => {
           'This is a new test question content that is long enough to meet the minimum requirement of 20 characters.',
       };
 
-      const response = await request(app)
+      const response = await request(testApp)
         .post('/api/questions/ask')
         .set('Authorization', `Bearer ${authToken}`)
         .send(questionData);
@@ -76,7 +76,7 @@ describe('Question API Tests', () => {
         content: 'This is a new test question content.',
       };
 
-      const response = await request(app)
+      const response = await request(testApp)
         .post('/api/questions/ask')
         .send(questionData);
 
@@ -84,7 +84,7 @@ describe('Question API Tests', () => {
     });
 
     it('should require title field', async () => {
-      const response = await request(app)
+      const response = await request(testApp)
         .post('/api/questions/ask')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
@@ -96,7 +96,7 @@ describe('Question API Tests', () => {
     });
 
     it('should require content field', async () => {
-      const response = await request(app)
+      const response = await request(testApp)
         .post('/api/questions/ask')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
@@ -109,7 +109,7 @@ describe('Question API Tests', () => {
 
   describe('GET /api/questions/:id', () => {
     it('should get single question', async () => {
-      const response = await request(app).get(
+      const response = await request(testApp).get(
         `/api/questions/${testQuestion._id}`
       );
 
@@ -123,7 +123,7 @@ describe('Question API Tests', () => {
     it('should return 404 for non-existent question', async () => {
       const fakeQuestionId = new mongoose.Types.ObjectId();
 
-      const response = await request(app).get(
+      const response = await request(testApp).get(
         `/api/questions/${fakeQuestionId}`
       );
 
@@ -137,7 +137,7 @@ describe('Question API Tests', () => {
       const newContent =
         'This is an updated test question content that is long enough to meet the minimum requirement of 20 characters.';
 
-      const response = await request(app)
+      const response = await request(testApp)
         .put(`/api/questions/${testQuestion._id}/edit`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({
@@ -152,7 +152,7 @@ describe('Question API Tests', () => {
     });
 
     it('should require authentication', async () => {
-      const response = await request(app)
+      const response = await request(testApp)
         .put(`/api/questions/${testQuestion._id}/edit`)
         .send({
           title: 'Updated Title That Is Long Enough',
@@ -166,7 +166,7 @@ describe('Question API Tests', () => {
     it('should return 404 for non-existent question', async () => {
       const fakeQuestionId = new mongoose.Types.ObjectId();
 
-      const response = await request(app)
+      const response = await request(testApp)
         .put(`/api/questions/${fakeQuestionId}/edit`)
         .set('Authorization', `Bearer ${authToken}`)
         .send({
@@ -180,26 +180,26 @@ describe('Question API Tests', () => {
 
     it('should require owner access', async () => {
       // Create another user
-      const otherUser = await request(app)
+      const otherUser = await request(testApp)
         .post('/api/auth/register')
         .send({
           firstName: 'Other User',
           lastName: 'User',
           email: `other+${Date.now()}_${Math.random().toString(36).substr(2, 9)}@example.com`,
-          password: 'password123',
+          password: 'Password1!',
           role: 'user',
         });
-      const otherLoginResponse = await request(app)
+      const otherLoginResponse = await request(testApp)
         .post('/api/auth/login')
         .send({
           email: otherUser.body.data.email,
-          password: 'password123',
+          password: 'Password1!',
           captchaToken: 'test-captcha-token-12345',
         });
 
       const otherAuthToken = otherLoginResponse.body.access_token;
 
-      const response = await request(app)
+      const response = await request(testApp)
         .put(`/api/questions/${testQuestion._id}/edit`)
         .set('Authorization', `Bearer ${otherAuthToken}`)
         .send({
@@ -214,7 +214,7 @@ describe('Question API Tests', () => {
 
   describe('DELETE /api/questions/:id/delete', () => {
     it('should delete question', async () => {
-      const response = await request(app)
+      const response = await request(testApp)
         .delete(`/api/questions/${testQuestion._id}/delete`)
         .set('Authorization', `Bearer ${authToken}`);
 
@@ -223,14 +223,14 @@ describe('Question API Tests', () => {
       expect(response.body.message).toBe('Question delete operation successful');
 
       // Verify question is deleted via API
-      const deletedQuestionResponse = await request(app).get(
+      const deletedQuestionResponse = await request(testApp).get(
         `/api/questions/${testQuestion._id}`
       );
       expect(deletedQuestionResponse.status).toBe(404);
     });
 
     it('should require authentication', async () => {
-      const response = await request(app).delete(
+      const response = await request(testApp).delete(
         `/api/questions/${testQuestion._id}/delete`
       );
 
@@ -240,7 +240,7 @@ describe('Question API Tests', () => {
     it('should return 404 for non-existent question', async () => {
       const fakeQuestionId = new mongoose.Types.ObjectId();
 
-      const response = await request(app)
+      const response = await request(testApp)
         .delete(`/api/questions/${fakeQuestionId}/delete`)
         .set('Authorization', `Bearer ${authToken}`);
 
@@ -249,26 +249,26 @@ describe('Question API Tests', () => {
 
     it('should require owner access', async () => {
       // Create another user
-      const otherUser = await request(app)
+      const otherUser = await request(testApp)
         .post('/api/auth/register')
         .send({
           firstName: 'Other User',
           lastName: 'User',
           email: `other+${Date.now()}_${Math.random().toString(36).substr(2, 9)}@example.com`,
-          password: 'password123',
+          password: 'Password1!',
           role: 'user',
         });
-      const otherLoginResponse = await request(app)
+      const otherLoginResponse = await request(testApp)
         .post('/api/auth/login')
         .send({
           email: otherUser.body.data.email,
-          password: 'password123',
+          password: 'Password1!',
           captchaToken: 'test-captcha-token-12345',
         });
 
       const otherAuthToken = otherLoginResponse.body.access_token;
 
-      const response = await request(app)
+      const response = await request(testApp)
         .delete(`/api/questions/${testQuestion._id}/delete`)
         .set('Authorization', `Bearer ${otherAuthToken}`);
 
@@ -278,7 +278,7 @@ describe('Question API Tests', () => {
 
   describe('GET /api/questions/:id/like', () => {
     it('should like a question', async () => {
-      const response = await request(app)
+      const response = await request(testApp)
         .get(`/api/questions/${testQuestion._id}/like`)
         .set('Authorization', `Bearer ${authToken}`);
 
@@ -301,7 +301,7 @@ describe('Question API Tests', () => {
     });
 
     it('should require authentication', async () => {
-      const response = await request(app).get(
+      const response = await request(testApp).get(
         `/api/questions/${testQuestion._id}/like`
       );
 
@@ -311,7 +311,7 @@ describe('Question API Tests', () => {
     it('should return 404 for non-existent question', async () => {
       const fakeQuestionId = new mongoose.Types.ObjectId();
 
-      const response = await request(app)
+      const response = await request(testApp)
         .get(`/api/questions/${fakeQuestionId}/like`)
         .set('Authorization', `Bearer ${authToken}`);
 
@@ -320,12 +320,12 @@ describe('Question API Tests', () => {
 
     it('should not allow liking same question twice', async () => {
       // First like
-      await request(app)
+      await request(testApp)
         .get(`/api/questions/${testQuestion._id}/like`)
         .set('Authorization', `Bearer ${authToken}`);
 
       // Second like attempt
-      const response = await request(app)
+      const response = await request(testApp)
         .get(`/api/questions/${testQuestion._id}/like`)
         .set('Authorization', `Bearer ${authToken}`);
 
@@ -339,13 +339,13 @@ describe('Question API Tests', () => {
   describe('GET /api/questions/:id/undo_like', () => {
     beforeEach(async () => {
       // Like the question first
-      await request(app)
+      await request(testApp)
         .get(`/api/questions/${testQuestion._id}/like`)
         .set('Authorization', `Bearer ${authToken}`);
     });
 
     it('should undo like a question', async () => {
-      const response = await request(app)
+      const response = await request(testApp)
         .get(`/api/questions/${testQuestion._id}/undo_like`)
         .set('Authorization', `Bearer ${authToken}`);
       expect([200, 400]).toContain(response.status);
@@ -373,7 +373,7 @@ describe('Question API Tests', () => {
     });
 
     it('should require authentication', async () => {
-      const response = await request(app).get(
+      const response = await request(testApp).get(
         `/api/questions/${testQuestion._id}/undo_like`
       );
 
@@ -383,7 +383,7 @@ describe('Question API Tests', () => {
     it('should return 404 for non-existent question', async () => {
       const fakeQuestionId = new mongoose.Types.ObjectId();
 
-      const response = await request(app)
+      const response = await request(testApp)
         .get(`/api/questions/${fakeQuestionId}/undo_like`)
         .set('Authorization', `Bearer ${authToken}`);
 
@@ -392,11 +392,11 @@ describe('Question API Tests', () => {
 
     it('should not allow undoing like for question not liked', async () => {
       // Remove the like first
-      await request(app)
+      await request(testApp)
         .get(`/api/questions/${testQuestion._id}/undo_like`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      const response = await request(app)
+      const response = await request(testApp)
         .get(`/api/questions/${testQuestion._id}/undo_like`)
         .set('Authorization', `Bearer ${authToken}`);
 

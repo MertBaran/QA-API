@@ -1,10 +1,11 @@
 import { IMigrationStrategy } from '../interfaces/IMigrationStrategy';
 import { IDatabaseAdapter } from '../../repositories/adapters/IDatabaseAdapter';
 import { PostgreSQLAdapter } from '../../repositories/adapters/PostgreSQLAdapter';
-import { CreatePermissionsTable001 } from '../migrations/postgresql/001_create_permissions_table';
 
+// PostgreSQL şeması Prisma migrate ile yönetiliyor (npm run migrate:postgres)
+// Bu strategy sadece seed öncesi no-op; migration için prisma migrate kullanın
 export class PostgreSQLMigrationStrategy implements IMigrationStrategy {
-  private migrations = [new CreatePermissionsTable001()];
+  private migrations: Array<{ version: string; description: string; up: (a: IDatabaseAdapter) => Promise<void>; down: (a: IDatabaseAdapter) => Promise<void> }> = [];
 
   async runMigrations(databaseAdapter: IDatabaseAdapter): Promise<void> {
     if (!(databaseAdapter instanceof PostgreSQLAdapter)) {

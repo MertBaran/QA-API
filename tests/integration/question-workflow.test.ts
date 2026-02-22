@@ -6,41 +6,24 @@ describe('Question Workflow Integration Tests', () => {
   let authToken: string;
   let questionId: string;
 
+  const uid = () => `q+${Date.now()}_${Math.random().toString(36).substr(2, 9)}@example.com`;
+
   beforeAll(async () => {
-    // Test user oluştur
     testUser = {
-      email: 'question@example.com',
-      password: 'password123',
+      email: uid(),
+      password: 'Password1!',
       firstName: 'Question',
       lastName: 'User',
-      title: 'Developer',
-      bio: 'Test bio',
-      location: 'Test Location',
-      website: 'https://test.com',
-      github: 'questionuser',
-      twitter: 'questionuser',
-      linkedin: 'questionuser',
-      avatar: 'https://test.com/avatar.jpg',
-      profile_image: 'https://test.com/avatar.jpg',
-      blocked: false,
     };
-
-    // Register user
-    const registerResponse = await request(testApp)
-      .post('/api/auth/register')
-      .send(testUser);
-
-    expect(registerResponse.status).toBe(200);
-
-    // Login user
-    const loginResponse = await request(testApp).post('/api/auth/login').send({
+    const reg = await request(testApp).post('/api/auth/register').send(testUser);
+    expect(reg.status).toBe(200);
+    const login = await request(testApp).post('/api/auth/login').send({
       email: testUser.email,
       password: testUser.password,
       captchaToken: 'test-captcha-token',
     });
-
-    expect(loginResponse.status).toBe(200);
-    authToken = loginResponse.body.access_token;
+    expect(login.status).toBe(200);
+    authToken = login.body.access_token;
   });
 
   describe('Complete Question Lifecycle', () => {
@@ -66,7 +49,7 @@ describe('Question Workflow Integration Tests', () => {
         createResponse.body.data.user.toString()
       );
 
-      questionId = createResponse.body.data._id;
+      questionId = createResponse.body.data?.id ?? createResponse.body.data?._id;
 
       // 2. Read Question
       const getResponse = await request(testApp).get(
@@ -136,7 +119,7 @@ describe('Question Workflow Integration Tests', () => {
         .send(questionData);
 
       expect(createResponse.status).toBe(200);
-      const likeQuestionId = createResponse.body.data._id;
+      const likeQuestionId = createResponse.body.data?.id ?? createResponse.body.data?._id;
 
       // 2. Like the question
       const likeResponse = await request(testApp)
@@ -187,7 +170,9 @@ describe('Question Workflow Integration Tests', () => {
     });
 
     it('should handle non-existent question operations', async () => {
-      const nonExistentId = '507f1f77bcf86cd799439011';
+      const nonExistentId = process.env['DATABASE_TYPE'] === 'postgresql'
+        ? require('crypto').randomUUID()
+        : '507f1f77bcf86cd799439011';
 
       // Try to get non-existent question
       const getResponse = await request(testApp).get(

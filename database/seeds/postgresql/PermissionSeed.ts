@@ -1,6 +1,7 @@
 import { SeedInterface } from '../../interfaces/SeedInterface';
 import { IDatabaseAdapter } from '../../../repositories/adapters/IDatabaseAdapter';
 import { PostgreSQLAdapter } from '../../../repositories/adapters/PostgreSQLAdapter';
+import { getPrismaClient } from '../../../repositories/postgresql/PrismaClientSingleton';
 
 export class PermissionSeed implements SeedInterface {
   name = 'PermissionSeed';
@@ -108,45 +109,48 @@ export class PermissionSeed implements SeedInterface {
   ];
 
   async run(databaseAdapter: IDatabaseAdapter): Promise<Map<string, any>> {
-    // Sadece PostgreSQL adapter için çalış
     if (!(databaseAdapter instanceof PostgreSQLAdapter)) {
       console.log('⏭️ Skipping PostgreSQL seed for non-PostgreSQL adapter');
       return new Map();
     }
 
-    // PostgreSQL seed logic burada olacak
-    // const client = databaseAdapter.getClient();
-    // const permissionMap = new Map();
-    //
-    // console.log('📝 Seeding PostgreSQL permissions...');
-    //
-    // for (const permData of this.PERMISSIONS) {
-    //   try {
-    //     const result = await client.query(
-    //       'INSERT INTO permissions (name, description, resource, action, category) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (name) DO NOTHING RETURNING id',
-    //       [permData.name, permData.description, permData.resource, permData.action, permData.category]
-    //     );
-    //
-    //     if (result.rows.length > 0) {
-    //       permissionMap.set(permData.name, result.rows[0].id);
-    //       console.log(`✅ Created permission: ${permData.name}`);
-    //     } else {
-    //       console.log(`✅ Permission exists: ${permData.name}`);
-    //     }
-    //   } catch (error) {
-    //     console.error(`❌ Error creating permission ${permData.name}:`, error);
-    //   }
-    // }
-    //
-    // console.log(`✅ Seeded ${permissionMap.size} PostgreSQL permissions`);
-    // return permissionMap;
+    const prisma = getPrismaClient();
+    const permissionMap = new Map<string, string>();
 
-    console.log('📝 PostgreSQL permissions seeding not implemented yet');
-    return new Map();
+    console.log('📝 Seeding PostgreSQL permissions...');
+
+    for (const permData of this.PERMISSIONS) {
+      try {
+        const existing = await prisma.permission.findUnique({
+          where: { name: permData.name },
+        });
+        if (existing) {
+          permissionMap.set(permData.name, existing.id);
+          continue;
+        }
+        const created = await prisma.permission.create({
+          data: {
+            name: permData.name,
+            description: permData.description,
+            resource: permData.resource,
+            action: permData.action,
+            category: permData.category as 'content' | 'user' | 'system',
+            isActive: true,
+          },
+        });
+        permissionMap.set(permData.name, created.id);
+        console.log(`✅ Created permission: ${permData.name}`);
+      } catch (error) {
+        console.error(`❌ Error creating permission ${permData.name}:`, error);
+        throw error;
+      }
+    }
+
+    console.log(`✅ Seeded ${permissionMap.size} PostgreSQL permissions`);
+    return permissionMap;
   }
 
   async rollback(databaseAdapter: IDatabaseAdapter): Promise<void> {
-    // Sadece PostgreSQL adapter için çalış
     if (!(databaseAdapter instanceof PostgreSQLAdapter)) {
       console.log(
         '⏭️ Skipping PostgreSQL seed rollback for non-PostgreSQL adapter'
@@ -154,20 +158,17 @@ export class PermissionSeed implements SeedInterface {
       return;
     }
 
-    // PostgreSQL rollback logic burada olacak
-    // const client = databaseAdapter.getClient();
-    //
-    // console.log('🔄 Rolling back PostgreSQL permissions...');
-    //
-    // for (const permData of this.PERMISSIONS) {
-    //   try {
-    //     await client.query('DELETE FROM permissions WHERE name = $1', [permData.name]);
-    //     console.log(`✅ Deleted permission: ${permData.name}`);
-    //   } catch (error) {
-    //     console.error(`❌ Error deleting permission ${permData.name}:`, error);
-    //   }
-    // }
+    const prisma = getPrismaClient();
+    console.log('🔄 Rolling back PostgreSQL permissions...');
 
-    console.log('🔄 PostgreSQL permissions rollback not implemented yet');
+    for (const permData of this.PERMISSIONS) {
+      try {
+        await prisma.permission.deleteMany({ where: { name: permData.name } });
+        console.log(`✅ Deleted permission: ${permData.name}`);
+      } catch (error) {
+        console.error(`❌ Error deleting permission ${permData.name}:`, error);
+        throw error;
+      }
+    }
   }
 }

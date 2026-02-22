@@ -27,6 +27,7 @@ describe('AnswerController Unit Tests', () => {
     // Create mock request
     mockRequest = {
       params: {},
+      query: {},
       body: {},
       user: { id: 'user123' },
       locale: 'en',
@@ -120,21 +121,26 @@ describe('AnswerController Unit Tests', () => {
 
       // Assert
       expect(fakeAnswerService.getAnswersByQuestion).toHaveBeenCalledWith(
-        'question1'
+        'question1',
+        1,
+        5
       );
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
-        data: expect.arrayContaining([
-          expect.objectContaining({
-            _id: 'answer1',
-            content: 'Test Answer 1',
-          }),
-          expect.objectContaining({
-            _id: 'answer2',
-            content: 'Test Answer 2',
-          }),
-        ]),
+        data: expect.objectContaining({
+          data: expect.arrayContaining([
+            expect.objectContaining({
+              _id: 'answer1',
+              content: 'Test Answer 1',
+            }),
+            expect.objectContaining({
+              _id: 'answer2',
+              content: 'Test Answer 2',
+            }),
+          ]),
+          pagination: expect.any(Object),
+        }),
       });
     });
 
@@ -151,12 +157,17 @@ describe('AnswerController Unit Tests', () => {
 
       // Assert
       expect(fakeAnswerService.getAnswersByQuestion).toHaveBeenCalledWith(
-        'question2'
+        'question2',
+        1,
+        5
       );
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith({
         success: true,
-        data: [],
+        data: expect.objectContaining({
+          data: [],
+          pagination: expect.any(Object),
+        }),
       });
     });
   });

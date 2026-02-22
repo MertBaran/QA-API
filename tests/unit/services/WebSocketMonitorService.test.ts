@@ -7,6 +7,7 @@ import {
 import { FakeLoggerProvider } from '../../mocks/logger/FakeLoggerProvider';
 import { FakeNotificationProvider } from '../../mocks/notification/FakeNotificationProvider';
 import { ApplicationState } from '../../../services/ApplicationState';
+import { IDatabaseAdapter } from '../../../repositories/adapters/IDatabaseAdapter';
 
 // Mock WebSocket
 const mockWebSocket = {
@@ -18,6 +19,7 @@ const mockWebSocket = {
 
 const mockWebSocketServer = {
   on: jest.fn(),
+  close: jest.fn((callback?: () => void) => callback?.()),
 };
 
 jest.mock('ws', () => ({
@@ -44,6 +46,14 @@ describe('WebSocketMonitorService', () => {
       'INotificationService',
       new FakeNotificationProvider()
     );
+    const fakeDatabaseAdapter: IDatabaseAdapter = {
+      connect: jest.fn(),
+      disconnect: jest.fn(),
+      isConnected: jest.fn().mockReturnValue(true),
+      ping: jest.fn().mockResolvedValue(true),
+      getIdAdapter: jest.fn(),
+    } as any;
+    container.registerInstance('IDatabaseAdapter', fakeDatabaseAdapter);
 
     // Get instances
     webSocketMonitor = container.resolve(WebSocketMonitorService);
@@ -289,23 +299,26 @@ describe('WebSocketMonitorService', () => {
       (webSocketMonitor as any)['handleConnection'](mockWebSocket);
 
       expect(webSocketMonitor.getConnectedClientsCount()).toBe(1);
+      // Service starts monitoring on first client connect (no longer logs "Client connected")
       expect(fakeLogger.info).toHaveBeenCalledWith(
-        'Client connected to WebSocket monitoring'
+        expect.stringContaining('WebSocket connection monitoring started'),
+        expect.any(Object)
       );
     });
 
     it('should handle client disconnection', () => {
       (webSocketMonitor as any)['handleConnection'](mockWebSocket);
 
-      // Simulate close event
+      // Simulate close event (stops monitoring when no clients left)
       const closeHandler = (mockWebSocket.on as jest.Mock).mock.calls.find(
         call => call[0] === 'close'
       )[1];
       closeHandler();
 
       expect(webSocketMonitor.getConnectedClientsCount()).toBe(0);
+      // Service silently handles disconnect, stops monitoring when no clients
       expect(fakeLogger.info).toHaveBeenCalledWith(
-        'Client disconnected from WebSocket monitoring'
+        '🛑 WebSocket connection monitoring stopped'
       );
     });
 
@@ -354,16 +367,15 @@ describe('WebSocketMonitorService', () => {
     it('should handle WebSocket errors gracefully', () => {
       (webSocketMonitor as any)['handleConnection'](mockWebSocket);
 
-      // Simulate error event
+      // Simulate error event (silently removes client, stops monitoring if no clients)
       const errorHandler = (mockWebSocket.on as jest.Mock).mock.calls.find(
         call => call[0] === 'error'
       )[1];
       errorHandler(new Error('WebSocket error'));
 
-      expect(fakeLogger.error).toHaveBeenCalledWith('WebSocket error:', {
-        error: 'WebSocket error',
-      });
       expect(webSocketMonitor.getConnectedClientsCount()).toBe(0);
+      // Service handles errors silently (no logger.error for client errors)
+      expect(webSocketMonitor.isMonitoringActive()).toBe(false);
     });
 
     it('should handle notification errors', async () => {

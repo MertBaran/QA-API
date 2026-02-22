@@ -38,11 +38,15 @@ describe('authMiddleware - getAccessToRoute', () => {
 
   it('should attach user and call next if token is valid', () => {
     req.headers.authorization = 'Bearer validtoken';
+    // ID must match current DB format (PostgreSQL=UUID, MongoDB=24-char hex)
+    const validId = process.env['DATABASE_TYPE'] === 'postgresql'
+      ? '8d0ce2a0-5d92-4960-be37-5b0d2b88a9a6'
+      : '507f1f77bcf86cd799439011';
     jest.spyOn(jwt, 'verify').mockImplementation((_token, _secret, cb) => {
-      (cb as Function)(null, { id: 'user1', name: 'Test User' });
+      (cb as Function)(null, { id: validId, name: 'Test User' });
     });
     getAccessToRoute(req, res, next);
-    expect(req.user).toEqual({ id: 'user1', name: 'Test User' });
+    expect(req.user).toEqual({ id: validId, name: 'Test User' });
     expect(next).toHaveBeenCalledWith();
   });
 

@@ -79,8 +79,15 @@ export class QuestionRepository
         400
       );
     }
+    // Remove from dislikes if exists (switching from dislike to like)
+    if (question.dislikes.includes(userId)) {
+      question.dislikes = question.dislikes.filter(dislike => dislike !== userId);
+    }
     question.likes.push(userId);
-    return this.updateById(questionId, { likes: question.likes });
+    return this.updateById(questionId, {
+      likes: question.likes,
+      dislikes: question.dislikes,
+    });
   }
 
   async unlikeQuestion(
@@ -185,6 +192,17 @@ export class QuestionRepository
 
     if (filters.category) {
       filtered = filtered.filter(q => q.category === filters.category);
+    }
+
+    if ((filters as any).savedIds) {
+      const ids = (filters as any).savedIds
+        .split(',')
+        .map((id: string) => id.trim())
+        .filter(Boolean);
+      if (ids.length > 0) {
+        const idSet = new Set(ids);
+        filtered = filtered.filter(q => idSet.has(q._id));
+      }
     }
 
     // Sort

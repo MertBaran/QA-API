@@ -72,12 +72,10 @@ describe('UserManager Unit Tests', () => {
       expect(result?.name).toBe('Test User 1');
     });
 
-    it('should return null when user not found', async () => {
-      // Act
-      const result = await userManager.findById('nonexistent');
-
-      // Assert
-      expect(result).toBeNull();
+    it('should throw when user not found', async () => {
+      await expect(userManager.findById('nonexistent')).rejects.toThrow(
+        'User not found'
+      );
     });
   });
 
@@ -92,12 +90,10 @@ describe('UserManager Unit Tests', () => {
       expect(result?.email).toBe('user1@test.com');
     });
 
-    it('should return null when user not found', async () => {
-      // Act
-      const result = await userManager.findByEmail('nonexistent@test.com');
-
-      // Assert
-      expect(result).toBeNull();
+    it('should throw when user not found', async () => {
+      await expect(
+        userManager.findByEmail('nonexistent@test.com')
+      ).rejects.toThrow('User not found');
     });
   });
 

@@ -7,6 +7,8 @@ import {
   BookmarkTargetType,
 } from '../models/interfaces/IBookmarkModel';
 import { IDataSource } from './interfaces/IDataSource';
+import { IBookmarkCollectionDataSource } from './interfaces/IBookmarkCollectionDataSource';
+import { IBookmarkCollectionItemDataSource } from './interfaces/IBookmarkCollectionItemDataSource';
 import { EntityId } from '../types/database';
 import { ILoggerProvider } from '../infrastructure/logging/ILoggerProvider';
 import { ApplicationError } from '../infrastructure/error/ApplicationError';
@@ -20,6 +22,10 @@ export class BookmarkRepository implements IBookmarkRepository {
   constructor(
     @inject('IBookmarkDataSource')
     private bookmarkDataSource: IDataSource<IBookmarkModel>,
+    @inject('IBookmarkCollectionDataSource')
+    private collectionDataSource: IBookmarkCollectionDataSource,
+    @inject('IBookmarkCollectionItemDataSource')
+    private collectionItemDataSource: IBookmarkCollectionItemDataSource,
     @inject('ILoggerProvider') private logger: ILoggerProvider
   ) {}
 
@@ -212,18 +218,8 @@ export class BookmarkRepository implements IBookmarkRepository {
       '_id' | 'createdAt' | 'updatedAt'
     >
   ): Promise<IBookmarkCollectionModel> {
-    // For now, we'll create a placeholder collection
-    const newCollection: IBookmarkCollectionModel = {
-      _id: Math.random().toString(36).substr(2, 9),
-      user_id: collection.user_id,
-      name: collection.name,
-      description: collection.description,
-      color: collection.color,
-      is_public: collection.is_public,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
+    const newCollection =
+      await this.collectionDataSource.create(collection);
     this.logger.info('Bookmark collection created successfully', {
       collectionId: newCollection._id,
     });
@@ -233,21 +229,23 @@ export class BookmarkRepository implements IBookmarkRepository {
   async findCollectionsByUser(
     userId: EntityId
   ): Promise<IBookmarkCollectionModel[]> {
-    // For now, return empty array - collections will be implemented later
-    return [];
+    return this.collectionDataSource.findByUserId(userId);
   }
 
   async updateCollection(
     collectionId: EntityId,
     updates: Partial<IBookmarkCollectionModel>
   ): Promise<IBookmarkCollectionModel | null> {
-    // For now, return null - collections will be implemented later
-    return null;
+    return this.collectionDataSource.updateById(collectionId, updates);
   }
 
   async deleteCollection(collectionId: EntityId): Promise<boolean> {
-    // For now, return false - collections will be implemented later
-    return false;
+    const deleted =
+      await this.collectionDataSource.deleteById(collectionId);
+    if (deleted) {
+      this.logger.info('Bookmark collection deleted', { collectionId });
+    }
+    return deleted;
   }
 
   // Collection Items
@@ -255,16 +253,10 @@ export class BookmarkRepository implements IBookmarkRepository {
     bookmarkId: EntityId,
     collectionId: EntityId
   ): Promise<IBookmarkCollectionItemModel> {
-    // For now, return a placeholder item
-    const item: IBookmarkCollectionItemModel = {
-      _id: Math.random().toString(36).substr(2, 9),
-      bookmark_id: bookmarkId,
-      collection_id: collectionId,
-      added_at: new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-
+    const item = await this.collectionItemDataSource.add(
+      bookmarkId,
+      collectionId
+    );
     this.logger.info('Bookmark added to collection', {
       bookmarkId,
       collectionId,
@@ -276,17 +268,32 @@ export class BookmarkRepository implements IBookmarkRepository {
     bookmarkId: EntityId,
     collectionId: EntityId
   ): Promise<boolean> {
-    // For now, return true - collections will be implemented later
-    this.logger.info('Bookmark removed from collection', {
+    const removed = await this.collectionItemDataSource.remove(
       bookmarkId,
-      collectionId,
-    });
-    return true;
+      collectionId
+    );
+    if (removed) {
+      this.logger.info('Bookmark removed from collection', {
+        bookmarkId,
+        collectionId,
+      });
+    }
+    return removed;
   }
 
   async findCollectionItems(collectionId: EntityId): Promise<IBookmarkModel[]> {
-    // For now, return empty array - collections will be implemented later
-    return [];
+    const items =
+      await this.collectionItemDataSource.findByCollectionId(collectionId);
+    const bookmarks: IBookmarkModel[] = [];
+    for (const item of items) {
+      try {
+        const bookmark = await this.bookmarkDataSource.findById(item.bookmark_id);
+        bookmarks.push(bookmark);
+      } catch {
+        // Skip if bookmark was deleted
+      }
+    }
+    return bookmarks;
   }
 
   // Analytics

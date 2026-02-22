@@ -1,3 +1,4 @@
+import '../config/env/loadEnv';
 import 'reflect-metadata';
 import { container } from 'tsyringe';
 import { initializeContainer } from '../services/container';
