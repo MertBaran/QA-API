@@ -1,12 +1,9 @@
 import { z } from 'zod';
 
-export const registerSchema = z.object({
-  firstName: z.string().min(2),
-  lastName: z.string().min(2),
-  email: z.email({ message: 'Invalid email address' }),
-  password: z.string().min(6),
-  role: z.enum(['user', 'admin']).optional(),
-});
+// Password validation: min 8 chars, uppercase, lowercase, number, special char
+const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]).{8,}$/;
+const passwordErr =
+  'En az 8 karakter, bir büyük harf, bir küçük harf, bir rakam ve bir özel karakter içermelidir';
 
 export const loginSchema = z.object({
   email: z.email({ message: 'Invalid email address' }),
@@ -21,7 +18,7 @@ export const forgotPasswordSchema = z.object({
 
 export const resetPasswordSchema = z.object({
   token: z.string().min(10),
-  newPassword: z.string().min(6),
+  newPassword: z.string().min(8, passwordErr).regex(passwordRegex, passwordErr),
 });
 
 export const editProfileSchema = z.object({
@@ -34,8 +31,13 @@ export const editProfileSchema = z.object({
   about: z.union([z.string().max(500), z.literal('')]).optional(),
 });
 
-// Password validation regex: min 8 chars, uppercase, lowercase, number, special char
-const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]).{8,}$/;
+export const registerSchema = z.object({
+  firstName: z.string().min(2),
+  lastName: z.string().min(2),
+  email: z.email({ message: 'Invalid email address' }),
+  password: z.string().min(8, passwordErr).regex(passwordRegex, passwordErr),
+  role: z.enum(['user', 'admin']).optional(),
+});
 
 export const requestPasswordChangeSchema = z.object({
   oldPassword: z.string().optional(), // Optional for Google users

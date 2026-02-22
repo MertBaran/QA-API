@@ -62,7 +62,6 @@ export class AuthManager implements IAuthService {
 
     // Role atama: Eğer roleId verilmişse onu kullan, yoksa varsayılan role'ü ata
     if (roleId) {
-      // Verilen role'ün var olup olmadığını kontrol et
       const role = await this.roleService.findById(roleId);
       if (!role) {
         throw ApplicationError.businessError('Specified role not found', 400);
@@ -75,11 +74,9 @@ export class AuthManager implements IAuthService {
       }
       await this.userRoleService.assignRoleToUser(user._id, roleId);
     } else {
-      // Varsayılan user role'ünü al ve ata
       const defaultRole = await this.roleService.getDefaultRole();
       await this.userRoleService.assignRoleToUser(user._id, defaultRole._id);
     }
-
     return user;
   }
 
@@ -178,9 +175,9 @@ export class AuthManager implements IAuthService {
   async forgotPassword(email: string, locale: string = 'en'): Promise<void> {
     const user = await this.userRepository.findByEmail(email);
     if (!user) {
-      throw ApplicationError.notFoundError(
-        AuthServiceMessages.EmailNotFound.en
-      );
+      const lang = getLanguageOrDefault(locale);
+      const msg = AuthServiceMessages.EmailNotFound[lang] ?? AuthServiceMessages.EmailNotFound.en;
+      throw ApplicationError.notFoundError(msg);
     }
     const { token, expire } = AuthManager.generateResetPasswordToken();
     await this.userRepository.updateById(user._id, {
@@ -316,7 +313,9 @@ export class AuthManager implements IAuthService {
       delete updateData.lastName;
     }
 
-    const user = await this.userRepository.updateById(userId, updateData);
+    // Sadece profil alanlarını güncelle - auth/notification tetikleyecek alanları geçirme
+    const { passwordChangeCode, passwordChangeCodeExpire, passwordChangeVerificationToken, passwordChangeVerificationTokenExpire, ...profileOnly } = updateData as Record<string, unknown>;
+    const user = await this.userRepository.updateById(userId, profileOnly);
     if (!user) {
       throw ApplicationError.notFoundError(AuthServiceMessages.UserNotFound.en);
     }
