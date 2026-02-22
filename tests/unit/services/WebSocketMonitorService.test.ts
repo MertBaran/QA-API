@@ -19,6 +19,7 @@ const mockWebSocket = {
 
 const mockWebSocketServer = {
   on: jest.fn(),
+  close: jest.fn((callback?: () => void) => callback?.()),
 };
 
 jest.mock('ws', () => ({

@@ -1,5 +1,5 @@
 import request from 'supertest';
-import app from '../../APP';
+import { testApp } from '../setup';
 import { container } from 'tsyringe';
 import { FakeUserDataSource } from '../mocks/datasources/FakeUserDataSource';
 // AuthManager kullanılmıyor, kaldırıldı
@@ -14,7 +14,7 @@ export async function registerTestUser({
   email = `test+${Date.now()}_${Math.random()
     .toString(36)
     .substr(2, 9)}@example.com`,
-  password = 'password123',
+  password = 'Password1!',
   role = 'user',
 }: Partial<{
   firstName: string;
@@ -62,11 +62,7 @@ export async function loginTestUser({
       // User might already exist, continue with login
     }
 
-    // Use API endpoint for login instead of direct service call
-    const request = require('supertest');
-    const app = require('../../APP').default;
-
-    const response = await request(app)
+    const response = await request(testApp)
       .post('/api/auth/login')
       .send({ email, password, captchaToken: 'test-captcha-token-12345' });
 
@@ -169,7 +165,7 @@ export async function registerTestUserAPI({
   email = `test+${Date.now()}_${Math.random()
     .toString(36)
     .substr(2, 9)}@example.com`,
-  password = 'password123',
+  password = 'Password1!',
   role = 'user',
 }: Partial<{
   firstName: string;
@@ -178,7 +174,7 @@ export async function registerTestUserAPI({
   password: string;
   role: string;
 }> = {}) {
-  const response = await request(app)
+  const response = await request(testApp)
     .post('/api/auth/register')
     .send({ firstName, lastName, email, password, role });
   if (response.status !== 200) {
@@ -195,7 +191,7 @@ export async function loginTestUserAPI({
   email: string;
   password: string;
 }) {
-  const response = await request(app)
+  const response = await request(testApp)
     .post('/api/auth/login')
     .send({ email, password, captchaToken: 'test-captcha-token-12345' });
   if (response.status !== 200) {
@@ -217,7 +213,7 @@ export async function createTestQuestionAPI({
   title?: string;
   content?: string;
 }) {
-  const response = await request(app)
+  const response = await request(testApp)
     .post('/api/questions/ask')
     .set('Authorization', `Bearer ${token}`)
     .send({ title, content });
@@ -238,7 +234,7 @@ export async function createTestAnswerAPI({
   questionId: string;
   content?: string;
 }) {
-  const response = await request(app)
+  const response = await request(testApp)
     .post(`/api/questions/${questionId}/answers`)
     .set('Authorization', `Bearer ${token}`)
     .send({ content });

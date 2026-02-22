@@ -1,5 +1,5 @@
 import request from 'supertest';
-import app from '../../APP';
+import { testApp } from '../setup';
 import { container } from 'tsyringe';
 import { IBookmarkService } from '../../services/contracts/IBookmarkService';
 import { registerTestUserAPI, loginTestUserAPI } from '../utils/testUtils';
@@ -32,7 +32,7 @@ describe('Bookmark API Tests', () => {
         isPublic: false
       };
 
-      const response = await request(app)
+      const response = await request(testApp)
         .post('/api/bookmarks/add')
         .set('Authorization', `Bearer ${authToken}`)
         .send(bookmarkData);
@@ -44,7 +44,7 @@ describe('Bookmark API Tests', () => {
     });
 
     it('should return 401 without auth token', async () => {
-      const response = await request(app)
+      const response = await request(testApp)
         .post('/api/bookmarks/add')
         .send({
           targetType: 'question',
@@ -62,7 +62,7 @@ describe('Bookmark API Tests', () => {
 
   describe('GET /api/bookmarks/user', () => {
     it('should get user bookmarks', async () => {
-      const response = await request(app)
+      const response = await request(testApp)
         .get('/api/bookmarks/user')
         .set('Authorization', `Bearer ${authToken}`);
 
@@ -71,7 +71,7 @@ describe('Bookmark API Tests', () => {
     });
 
     it('should return 401 without auth token', async () => {
-      const response = await request(app)
+      const response = await request(testApp)
         .get('/api/bookmarks/user');
 
       expect(response.status).toBe(401);
@@ -80,7 +80,7 @@ describe('Bookmark API Tests', () => {
 
   describe('GET /api/bookmarks/check/:targetType/:targetId', () => {
     it('should check if bookmark exists', async () => {
-      const response = await request(app)
+      const response = await request(testApp)
         .get('/api/bookmarks/check/question/507f1f77bcf86cd799439011')
         .set('Authorization', `Bearer ${authToken}`);
 
@@ -93,7 +93,7 @@ describe('Bookmark API Tests', () => {
   describe('DELETE /api/bookmarks/remove/:id', () => {
     it('should remove a bookmark', async () => {
       // First add a bookmark
-      const addResponse = await request(app)
+      const addResponse = await request(testApp)
         .post('/api/bookmarks/add')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
@@ -109,7 +109,7 @@ describe('Bookmark API Tests', () => {
       const bookmarkId = addResponse.body._id;
 
       // Then delete it
-      const response = await request(app)
+      const response = await request(testApp)
         .delete(`/api/bookmarks/remove/${bookmarkId}`)
         .set('Authorization', `Bearer ${authToken}`);
 
@@ -128,7 +128,7 @@ describe('Bookmark API Tests', () => {
         isPublic: false
       };
 
-      const response = await request(app)
+      const response = await request(testApp)
         .post('/api/bookmarks/collections')
         .set('Authorization', `Bearer ${authToken}`)
         .send(collectionData);
@@ -141,7 +141,7 @@ describe('Bookmark API Tests', () => {
 
   describe('GET /api/bookmarks/collections', () => {
     it('should get user collections', async () => {
-      const response = await request(app)
+      const response = await request(testApp)
         .get('/api/bookmarks/collections')
         .set('Authorization', `Bearer ${authToken}`);
 
@@ -152,7 +152,7 @@ describe('Bookmark API Tests', () => {
 
   describe('GET /api/bookmarks/stats', () => {
     it('should get bookmark stats', async () => {
-      const response = await request(app)
+      const response = await request(testApp)
         .get('/api/bookmarks/stats')
         .set('Authorization', `Bearer ${authToken}`);
 
