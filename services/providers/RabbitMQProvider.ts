@@ -344,8 +344,8 @@ export class RabbitMQProvider implements IQueueProvider {
   private getConnectionUrl(): string {
     const host = process.env['RABBITMQ_HOST'] || 'localhost';
     const port = process.env['RABBITMQ_PORT'] || '5672';
-    const user = process.env['RABBITMQ_USER'] || 'admin';
-    const password = process.env['RABBITMQ_PASS'] || 'admin123';
+    const user = process.env['RABBITMQ_USER'] || 'guest';
+    const password = process.env['RABBITMQ_PASS'] || 'guest';
     const vhost = process.env['RABBITMQ_VHOST'] || '/';
 
     return `amqp://${user}:${password}@${host}:${port}${vhost}`;

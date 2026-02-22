@@ -3,6 +3,8 @@ node_modules/
 
 # Ortak config ve environment dosyaları
 .env
+.env.docker
+.env.example
 config/env/
 
 # PostgreSQL credentials (şifre içerir)

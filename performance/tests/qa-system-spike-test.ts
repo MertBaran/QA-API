@@ -38,42 +38,42 @@ const BASE_URL = 'http://localhost:3000';
 const spikeTestUsers = [
   {
     email: 'spike.test1@example.com',
-    password: 'password123',
+    password: 'Password1!',
     name: 'Spike Test User 1',
   },
   {
     email: 'spike.test2@example.com',
-    password: 'password123',
+    password: 'Password1!',
     name: 'Spike Test User 2',
   },
   {
     email: 'spike.test3@example.com',
-    password: 'password123',
+    password: 'Password1!',
     name: 'Spike Test User 3',
   },
   {
     email: 'spike.test4@example.com',
-    password: 'password123',
+    password: 'Password1!',
     name: 'Spike Test User 4',
   },
   {
     email: 'spike.test5@example.com',
-    password: 'password123',
+    password: 'Password1!',
     name: 'Spike Test User 5',
   },
   {
     email: 'spike.test6@example.com',
-    password: 'password123',
+    password: 'Password1!',
     name: 'Spike Test User 6',
   },
   {
     email: 'spike.test7@example.com',
-    password: 'password123',
+    password: 'Password1!',
     name: 'Spike Test User 7',
   },
   {
     email: 'spike.test8@example.com',
-    password: 'password123',
+    password: 'Password1!',
     name: 'Spike Test User 8',
   },
 ];

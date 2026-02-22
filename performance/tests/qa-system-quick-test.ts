@@ -28,11 +28,11 @@ export const options = {
 // Test data
 const BASE_URL = 'http://localhost:3000';
 const testUsers = [
-  { email: 'test1@example.com', password: 'password123', name: 'Test User 1' },
-  { email: 'test2@example.com', password: 'password123', name: 'Test User 2' },
-  { email: 'test3@example.com', password: 'password123', name: 'Test User 3' },
-  { email: 'test4@example.com', password: 'password123', name: 'Test User 4' },
-  { email: 'test5@example.com', password: 'password123', name: 'Test User 5' },
+  { email: 'test1@example.com', password: 'Password1!', name: 'Test User 1' },
+  { email: 'test2@example.com', password: 'Password1!', name: 'Test User 2' },
+  { email: 'test3@example.com', password: 'Password1!', name: 'Test User 3' },
+  { email: 'test4@example.com', password: 'Password1!', name: 'Test User 4' },
+  { email: 'test5@example.com', password: 'Password1!', name: 'Test User 5' },
 ];
 
 // Sample questions and answers

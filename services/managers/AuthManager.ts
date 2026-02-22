@@ -330,8 +330,10 @@ export class AuthManager implements IAuthService {
     },
     rememberMe: boolean = false
   ): string {
-    const secret = (process.env['JWT_SECRET_KEY'] ||
-      'default_secret') as jwt.Secret;
+    const secret = process.env['JWT_SECRET_KEY'];
+    if (!secret) {
+      throw new Error('JWT_SECRET_KEY is required. Set it in config/env.');
+    }
 
     // Remember me durumuna göre token süresini ayarla
     const expires: string | number = rememberMe
@@ -345,7 +347,7 @@ export class AuthManager implements IAuthService {
         lang: user.lang || 'en',
         iat: Math.floor(Date.now() / 1000), // Added iat
       },
-      secret,
+      secret as jwt.Secret,
       {
         expiresIn: expires,
       } as jwt.SignOptions
