@@ -14,12 +14,24 @@ interface UserWithJWT {
 }
 
 export const generateToken = (payload: TokenPayload): string => {
-  const secret = process.env['JWT_SECRET'] || 'fallback-secret';
+  const secret =
+    process.env['JWT_SECRET_KEY'] || process.env['JWT_SECRET'];
+  if (!secret) {
+    throw new Error(
+      'JWT_SECRET_KEY or JWT_SECRET is required. Set it in config/env.'
+    );
+  }
   return jwt.sign(payload, secret, { expiresIn: '24h' });
 };
 
 export const verifyToken = (token: string): UserWithJWT => {
-  const secret = process.env['JWT_SECRET'] || 'fallback-secret';
+  const secret =
+    process.env['JWT_SECRET_KEY'] || process.env['JWT_SECRET'];
+  if (!secret) {
+    throw new Error(
+      'JWT_SECRET_KEY or JWT_SECRET is required. Set it in config/env.'
+    );
+  }
   const _JWT_COOKIE = process.env['JWT_COOKIE'] || 'token';
   const _NODE_ENV = process.env['NODE_ENV'] || 'development';
 

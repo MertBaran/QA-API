@@ -27,17 +27,17 @@ const BASE_URL = 'http://localhost:3000';
 const testUsers = [
   {
     email: 'testuser1@example.com',
-    password: 'password123',
+    password: 'Password1!',
     preferredLang: 'en',
   },
   {
     email: 'testuser2@example.com',
-    password: 'password123',
+    password: 'Password1!',
     preferredLang: 'tr',
   },
   {
     email: 'testuser3@example.com',
-    password: 'password123',
+    password: 'Password1!',
     preferredLang: 'de',
   },
 ];

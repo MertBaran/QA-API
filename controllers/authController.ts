@@ -249,7 +249,10 @@ export class AuthController {
         let userInfo;
         try {
           const { JWT_SECRET_KEY } = process.env;
-          const secret = JWT_SECRET_KEY || 'default_secret';
+          if (!JWT_SECRET_KEY) {
+            throw new Error('JWT_SECRET_KEY is required');
+          }
+          const secret = JWT_SECRET_KEY;
           const decoded = jwt.verify(token, secret) as any;
           userInfo = {
             id: decoded.id,

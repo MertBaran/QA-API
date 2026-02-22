@@ -24,6 +24,10 @@ export default defineConfig({
   datasource: {
     url:
       process.env["DATABASE_URL"] ||
-      "postgresql://postgres:mbsusurluk1905@localhost:5433/QA_Platform",
+      (() => {
+        throw new Error(
+          "DATABASE_URL is required. Set it in config/env or .env before running Prisma."
+        );
+      })(),
   },
 });

@@ -36,42 +36,42 @@ const BASE_URL = 'http://localhost:3000';
 const testUsers = [
   {
     email: 'load.test1@example.com',
-    password: 'password123',
+    password: 'Password1!',
     name: 'Load Test User 1',
   },
   {
     email: 'load.test2@example.com',
-    password: 'password123',
+    password: 'Password1!',
     name: 'Load Test User 2',
   },
   {
     email: 'load.test3@example.com',
-    password: 'password123',
+    password: 'Password1!',
     name: 'Load Test User 3',
   },
   {
     email: 'load.test4@example.com',
-    password: 'password123',
+    password: 'Password1!',
     name: 'Load Test User 4',
   },
   {
     email: 'load.test5@example.com',
-    password: 'password123',
+    password: 'Password1!',
     name: 'Load Test User 5',
   },
   {
     email: 'load.test6@example.com',
-    password: 'password123',
+    password: 'Password1!',
     name: 'Load Test User 6',
   },
   {
     email: 'load.test7@example.com',
-    password: 'password123',
+    password: 'Password1!',
     name: 'Load Test User 7',
   },
   {
     email: 'load.test8@example.com',
-    password: 'password123',
+    password: 'Password1!',
     name: 'Load Test User 8',
   },
 ];

@@ -10,7 +10,7 @@ async function createTestUserAndToken() {
     const prisma = require('../../repositories/postgresql/PrismaClientSingleton').getPrismaClient();
     let user = await prisma.user.findUnique({ where: { email: 'monitoring@example.com' } });
     if (!user) {
-      const hashedPassword = await bcrypt.hash('password123', 10);
+      const hashedPassword = await bcrypt.hash('Password1!', 10);
       user = await prisma.user.create({
         data: {
           name: 'Monitoring User',
@@ -26,7 +26,7 @@ async function createTestUserAndToken() {
       create: { userId: user.id, roleId: adminRole.id },
       update: {},
     });
-    const secret = process.env['JWT_SECRET_KEY'] || 'insaninsanderleridi';
+    const secret = process.env['JWT_SECRET_KEY'] || 'test-secret-key';
     const token = jwt.sign(
       { id: user.id, name: user.name, lang: 'en' },
       secret,
@@ -41,7 +41,7 @@ async function createTestUserAndToken() {
 
   let user = await UserMongo.findOne({ email: 'monitoring@example.com' });
   if (!user) {
-    const hashedPassword = await bcrypt.hash('password123', 10);
+    const hashedPassword = await bcrypt.hash('Password1!', 10);
     user = await UserMongo.create({
       name: 'Monitoring User',
       email: 'monitoring@example.com',
@@ -67,7 +67,7 @@ async function createTestUserAndToken() {
     });
   }
 
-  const secret = process.env['JWT_SECRET_KEY'] || 'insaninsanderleridi';
+  const secret = process.env['JWT_SECRET_KEY'] || 'test-secret-key';
   const token = jwt.sign(
     { id: String(user._id), name: user.name, lang: 'en' },
     secret,
@@ -84,7 +84,7 @@ describe('Monitoring Integration Tests', () => {
   beforeAll(async () => {
     testUser = {
       email: 'monitoring@example.com',
-      password: 'password123',
+      password: 'Password1!',
       firstName: 'Monitoring',
       lastName: 'User',
     };

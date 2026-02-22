@@ -171,7 +171,10 @@ userSchema.methods['generateJWTFromUser'] = function (
     name: this.name,
     // Role'leri JWT'de tutmuyoruz, güvenlik için veritabanından alacağız
   };
-  const secret: string = JWT_SECRET_KEY || 'default_secret';
+  if (!JWT_SECRET_KEY) {
+    throw new Error('JWT_SECRET_KEY is required. Set it in config/env.');
+  }
+  const secret: string = JWT_SECRET_KEY;
   const expires: string | number = JWT_EXPIRE ? JWT_EXPIRE : '1d';
   // @ts-expect-error jwt types bug workaround
   const token = jwt.sign(payload, secret, { expiresIn: expires });

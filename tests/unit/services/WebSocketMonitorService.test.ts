@@ -70,7 +70,7 @@ describe('WebSocketMonitorService', () => {
       REDIS_PORT: 6379,
       SMTP_HOST: 'smtp.gmail.com',
       SMTP_PORT: 465,
-      ADMIN_EMAIL: 'mertbarandev@gmail.com',
+      ADMIN_EMAIL: 'test@example.com',
     });
   });
 
@@ -231,7 +231,7 @@ describe('WebSocketMonitorService', () => {
 
       expect(fakeNotification.notify).toHaveBeenCalledWith({
         channel: 'email',
-        to: 'mertbarandev@gmail.com',
+        to: 'test@example.com',
         subject: 'Connection Alert: DATABASE',
         message: 'Test alert',
         data: {
